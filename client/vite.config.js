@@ -6,6 +6,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
+    host: true,
     // Proxya API-anrop och WebSocket till Express-servern
     // under development. I produktion serveras appen av Express.
     proxy: {
