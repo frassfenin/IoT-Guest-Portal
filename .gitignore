@@ -1,0 +1,31 @@
+# ── Hemliga filer ────────────────────────────
+.env
+
+# ── Node modules ─────────────────────────────
+node_modules/
+client/node_modules/
+
+# ── Byggfiler ─────────────────────────────────
+client/dist/
+client/.vite/
+
+# ── QR-generatorn ────────────────────────────
+gastportal_qr.png
+gastportal_kort.html
+
+# ── Python ───────────────────────────────────
+__pycache__/
+*.pyc
+
+# ── macOS ────────────────────────────────────
+.DS_Store
+
+# ── Loggar ───────────────────────────────────
+*.log
+npm-debug.log*
+
+# ── Konfiguration ────────────────────────────
+runtime-config.json
+
+# ── Matter Lagring ───────────────────────────
+server/data/
