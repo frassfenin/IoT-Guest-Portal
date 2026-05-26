@@ -7,7 +7,7 @@ Detta projekt är en helt **fristående, lokal och responsiv gästportal** för 
 ## Huvudfunktioner
 
 1. **Mobil-, Foldable- och Desktop-anpassad**:
-   - En modern, responsiv layout med en glasmorfisk sidopanel på desktop/foldables, och en smidig navigeringsbar i botten på mobila enheter.
+   - En modern, responsiv layout för desktop/smartphone/foldables/tablets.
    
 2. **Inställningshubb & Adminpanel**:
    - Öppnas via kugghjulet (`⚙️ Ändra rum`) i sidhuvudet.
@@ -21,20 +21,17 @@ Detta projekt är en helt **fristående, lokal och responsiv gästportal** för 
    - **Smart Plugs & Uttag**: Hittar och styr både lampor, LED-drivers och smarta eluttag (t.ex. IKEA dirigera smart plugs och Matter plugs) på samma gång.
 
 4. **Direct Bridge-integrationer (100% lokala nätverksbroar)**:
-   - **Matter-enheter (Lokal)**: Inbyggd lokal Matter-commissioner och Controller (använder `@project-chip/matter.js`). Söker upp oparade enheter via mDNS (`_matterc._udp`) och parpar dem säkert med 11- eller 21-siffrig PIN-kod.
+   - **Matter-enheter (Lokal)**: Inbyggd lokal Matter-commissioner och Controller (använder `@project-chip/matter.js`). Söker upp oparade enheter via mDNS (`_matterc._udp`) och kan para med Matter-koder också.
    - **Philips Hue**: Direkt kommunikation med Hue Bridge v2, med realtidsuppdateringar via Server-Sent Events (SSE).
    - **IKEA Smart Home**: Fullt stöd för både nya **Dirigera Hub** (lokalt REST API med PKCE) och äldre **Trådfri Gateway** (CoAP/DTLS), inklusive eluttag.
-   - **Govee Lights**: Stöd för Govees moderna **Cloud OpenAPI** samt det äldre **Developer API** (valjs automatiskt baserat på API-nyckeln).
-   - **Google Cast**: TLS-socketstyrning av Google Streamers, Chromecasts och smarta högtalare direkt över port 8009.
-
-5. **Sömlös Hot-Reload & Resursrensning**:
-   - Inbyggda `.destroy()`-kontroller för alla broar stänger ner DTLS-anslutningar, abortar SSE-eventströmmar och stoppar polling-timers direkt när konfigurationen sparas eller ändras, vilket eliminerar resursläckor och anslutningskonflikter.
+   - **Govee Lights**: Stöd för Govees moderna **Cloud OpenAPI** samt det äldre **Developer API** (valjs automatiskt baserat på API-nyckeln). *Ännu buggigt*
+   - **Google Cast**: TLS-socketstyrning av Google Streamers, Chromecasts och smarta högtalare direkt över port 8009. *EJ TESTAT*
 
 ---
 
 ## Säkerhet & GitHub-privacy
 
-Projektet är konfigurerat för att hålla dina privata uppgifter helt skyddade om du laddar upp källkoden till GitHub. Följande filer och mappar ingår i [`.gitignore`](.gitignore) och laddas **aldrig** upp:
+Projektet är konfigurerat för att hålla dina privata uppgifter helt skyddade. Följande filer och mappar ingår i [`.gitignore`](.gitignore) och laddas **aldrig** upp eller delas vid uppladdning till GIT:
 * `runtime-config.json` – Lagrar dina lokala bridge-API-nycklar, rumsuppdelningar och WiFi-lösenord.
 * `server/data/` – Lagrar dina lokala Matter-enheters fabric-koder, anslutningsmetadata och krypteringsnycklar.
 * `.env` – Eventuella lokala miljövariabler.
@@ -49,7 +46,7 @@ Projektet är konfigurerat för att hålla dina privata uppgifter helt skyddade 
 - Enheter anslutna på samma lokala nätverk (LAN)
 
 ### 1. Installation
-Ställ dig i projektets rotkatalog och installera alla beroenden för både server och frontend:
+Navigera till projektets rotkatalog och installera alla beroenden för både server och frontend:
 ```bash
 npm run install:all
 ```
