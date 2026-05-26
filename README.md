@@ -1,5 +1,7 @@
 # Lokal Standalone Gästportal för Smart Hem-belysning (Beta 0.1)
 
+![Appens startskärm](assets/app-screenshot.png)
+
 Detta projekt är en helt **fristående, lokal och responsiv gästportal** för smart hem-belysning och mediaspelare. Den kommunicerar direkt med dina fysiska broar (Philips Hue, IKEA, Govee, Matter och Google Cast) över det lokala nätverket – **helt utan externa smarta hem-plattformar som Home Assistant**.
 
 ---
