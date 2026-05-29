@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
+import { Lightbulb, Plug, Sun, Thermometer, Snowflake } from 'lucide-react'
 
 // Debounce: Väntar `delay`ms efter senaste anrop innan callback körs.
 // Används för sliders så att API inte spammas.
@@ -62,8 +63,26 @@ export default function LightCard({ config, state, onChange }) {
       {/* ── Header: ikon, namn, toggle ── */}
       <div className="light-card__header">
         <div className="light-card__info">
-          <div className="light-card__icon" aria-hidden="true">
-            {isOn ? '💡' : '🔆'}
+          <div className="light-card__icon" aria-hidden="true" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {config.isOutlet ? (
+              <Plug 
+                size={18} 
+                style={{ 
+                  strokeWidth: 2.2, 
+                  color: isOn ? 'var(--amber)' : 'var(--text-3)',
+                  opacity: isOn ? 1 : 0.6
+                }} 
+              />
+            ) : (
+              <Lightbulb 
+                size={18} 
+                style={{ 
+                  strokeWidth: 2.2, 
+                  color: isOn ? 'var(--amber)' : 'var(--text-3)',
+                  opacity: isOn ? 1 : 0.6
+                }} 
+              />
+            )}
           </div>
           <div>
             <div className="light-card__name">{config.name}</div>
@@ -94,7 +113,9 @@ export default function LightCard({ config, state, onChange }) {
         {/* Ljusstyrka */}
         {config.supports_brightness && (
           <div className="slider-row">
-            <span className="slider-label" aria-hidden="true" title="Ljusstyrka">🌕</span>
+            <span className="slider-label" aria-hidden="true" title="Ljusstyrka" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Sun size={14} style={{ strokeWidth: 2.2 }} />
+            </span>
             <input
               type="range"
               id={`brightness-${config.entity_id.replace(/\./g, '-')}`}
@@ -114,7 +135,9 @@ export default function LightCard({ config, state, onChange }) {
         {/* Färgtemperatur */}
         {config.supports_color_temp && (
           <div className="slider-row">
-            <span className="slider-label" aria-hidden="true" title="Färgtemperatur">🌡️</span>
+            <span className="slider-label" aria-hidden="true" title="Färgtemperatur" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Thermometer size={14} style={{ strokeWidth: 2.2 }} />
+            </span>
             <input
               type="range"
               id={`colortemp-${config.entity_id.replace(/\./g, '-')}`}
@@ -126,7 +149,9 @@ export default function LightCard({ config, state, onChange }) {
               onChange={handleColorTempChange}
               aria-label={`Färgtemperatur för ${config.name}`}
             />
-            <span className="slider-label" aria-hidden="true" title="Kallt">❄️</span>
+            <span className="slider-label" aria-hidden="true" title="Kallt" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Snowflake size={14} style={{ strokeWidth: 2.2 }} />
+            </span>
           </div>
         )}
       </div>
