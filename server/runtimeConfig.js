@@ -13,7 +13,7 @@ import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
 
 const __dirname  = dirname(fileURLToPath(import.meta.url))
-export const CONFIG_PATH = join(__dirname, '..', 'runtime-config.json')
+export const CONFIG_PATH = process.env.CONFIG_PATH || join(__dirname, '..', 'runtime-config.json')
 
 export const DEFAULT_CONFIG = {
   setupComplete: false,

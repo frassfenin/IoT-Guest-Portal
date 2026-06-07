@@ -18,6 +18,9 @@ RUN npm run build
 FROM node:20-alpine
 WORKDIR /app
 
+# Configure default path for runtime configuration storage inside mounted volume
+ENV CONFIG_PATH=/app/server/data/runtime-config.json
+
 # Copy package files and install only production dependencies
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
