@@ -84,7 +84,7 @@ export default function LightCard({ config, state, onChange }) {
               />
             )}
           </div>
-          <div>
+          <div style={{ minWidth: 0, flex: 1 }}>
             <div className="light-card__name">{config.name}</div>
             <div className="light-card__state">
               {isOn
