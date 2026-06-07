@@ -7,7 +7,5 @@ services:
     network_mode: host
     restart: unless-stopped
     volumes:
-      # Persist the setup credentials and config
-      - ./runtime-config.json:/app/runtime-config.json
-      # Persist matter fabric configurations, keys, and operational cache
+      # Persist configs, setup credentials, matter fabric keys, and operational cache
       - ./server/data:/app/server/data
