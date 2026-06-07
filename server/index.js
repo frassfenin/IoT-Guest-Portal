@@ -270,6 +270,15 @@ app.post('/api/media/:entity_id', async (req, res) => {
   }
 })
 
+// ── Serve static files from client/dist in production ────────
+const clientDistPath = join(ROOT, 'client/dist')
+if (existsSync(clientDistPath)) {
+  app.use(express.static(clientDistPath))
+  app.get('*', (req, res) => {
+    res.sendFile(join(clientDistPath, 'index.html'))
+  })
+}
+
 // ──────────────────────────────────────────────────────────────
 //  Socket.io: Lyssna på setup_complete för att ladda om bridges
 // ──────────────────────────────────────────────────────────────

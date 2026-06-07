@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  gastportal:
+    build: .
+    container_name: gastportal
+    network_mode: host
+    restart: unless-stopped
+    volumes:
+      # Persist the setup credentials and config
+      - ./runtime-config.json:/app/runtime-config.json
+      # Persist matter fabric configurations, keys, and operational cache
+      - ./server/data:/app/server/data

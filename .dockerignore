@@ -1,0 +1,7 @@
+node_modules
+client/node_modules
+client/dist
+runtime-config.json
+server/data/matter-store
+.git
+.DS_Store

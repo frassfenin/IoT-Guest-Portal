@@ -4,7 +4,14 @@ All notable changes to the Local Standalone Guest Portal will be documented in t
 
 ---
 
-## [1.3.0] - 2026-05-29
+## [0.5.0] - 2026-06-07
+### Added
+- **Docker-support**: Det går nu att installera och köra gästportalen i en Docker-container.
+- **Produktionsservering**: Express-servern serverar nu den kompilerade klienten (`client/dist`) automatiskt när den körs i produktion.
+
+---
+
+## [0.4.0] - 2026-05-29
 ### Changed
 - **Skandinavisk Minimalism Redesign (Desktop & Global)**:
   - Genomfört en total visuell och strukturell omvandling av gränssnittet till ett ljus minimalistiskt tema med dämpade pastellbakgrunder.
@@ -30,7 +37,7 @@ All notable changes to the Local Standalone Guest Portal will be documented in t
 
 ---
 
-## [1.2.0] - 2026-05-26
+## [0.3.0] - 2026-05-26
 ### Added
 - Proactive local database Git protection: Added `server/data/` (Matter commissioned fabrics and controller cache) to `.gitignore` to prevent leaking local network keys.
 - Cleaned up potential UUID credentials from sample template files (`.env.example`).
@@ -41,7 +48,7 @@ All notable changes to the Local Standalone Guest Portal will be documented in t
 
 ---
 
-## [1.1.0] - 2026-05-26
+## [0.2.0] - 2026-05-26
 ### Added
 - **Direct Matter Protocol Support**: Native integration with `@project-chip/matter.js` and `@project-chip/matter-node.js`.
 - Act as a local **Matter Commissioner & Controller**:
@@ -53,7 +60,7 @@ All notable changes to the Local Standalone Guest Portal will be documented in t
 
 ---
 
-## [1.0.0] - 2026-05-15
+## [0.1.0] - 2026-05-15
 ### Added
 - **Core Guest Portal Web Application**: Premium dark glassmorphism layout optimized for mobile screens, foldable layouts (Pixel Fold / Pixel 10 Pro Fold), and desktop displays.
 - **Dynamic Setup Wizard**: Step-by-step first-run configuration helper that auto-saves credentials in `runtime-config.json` and skips steps for unselected services.
