@@ -9,10 +9,13 @@ All notable changes to the Local Standalone Guest Portal will be documented in t
 - **Docker-support**: Det går nu att installera och köra gästportalen i en Docker-container.
 - **Produktionsservering**: Express-servern serverar nu den kompilerade klienten (`client/dist`) automatiskt när den körs i produktion.
 - **GitHub-länk**: En direktlänk till GitHub-projektet (`https://github.com/frassfenin/IoT-Guest-Portal`) längst ner i inställningsmenyn med en skräddarsydd SVG-ikon.
+- **Rums-sortering**: Stöd för att anpassa ordningen på rummen med upp/ner-pilar i rumsplaneraren (sparas i systemkonfigurationen under `rooms`).
+- **Systembackup (Exportera/Importera)**: Ladda ner en fullständig backup (.json-fil) av hela systemkonfigurationen (inklusive IP-adresser, API-nycklar och rumsindelning) och återställ den från inställningsmenyn eller direkt i Setup-guiden vid nyinstallation.
 
 ### Changed
 - **Organisera rum & lampor (Master-Detail)**: Byggt om rumsorganisatören från grunden med en modern split-pane Master-Detail-layout för widescreen/desktop/foldables, samt ett responsivt slide-in-flöde för mobiler som ersätter det gamla Kanban-gränssnittet.
 - **Glassmorfisk inställningsknapp**: Designat om inställningsknappen med en skandinavisk glassmorfisk stil (semi-transparent vit bakgrund, tunn kant, mjuk skugga och subtil hover-effekt med snurrande kugghjul).
+- **Backend-stöd för import**: Lagt till en ny `/api/setup/import`-rutt på Express-servern för att göra det möjligt att skriva över hela `runtime-config.json` via en uppladdad backup-fil.
 
 ### Fixed
 - **Prestanda & Firefox-skroll**: Optimerat bakgrundsblobar genom att flytta `border-radius` ut ur keyframe-animationer till statiska klasser, tagit bort överflödiga `backdrop-filter` och skiftat till GPU-accelererad `translate3d`-transformering för att lösa trögt scrollande ("sluggishness") på mobiler och foldables i Firefox.
