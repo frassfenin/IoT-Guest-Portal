@@ -8,6 +8,16 @@ All notable changes to the Local Standalone Guest Portal will be documented in t
 ### Added
 - **Docker-support**: Det går nu att installera och köra gästportalen i en Docker-container.
 - **Produktionsservering**: Express-servern serverar nu den kompilerade klienten (`client/dist`) automatiskt när den körs i produktion.
+- **GitHub-länk**: En direktlänk till GitHub-projektet (`https://github.com/frassfenin/IoT-Guest-Portal`) längst ner i inställningsmenyn med en skräddarsydd SVG-ikon.
+
+### Changed
+- **Organisera rum & lampor (Master-Detail)**: Byggt om rumsorganisatören från grunden med en modern split-pane Master-Detail-layout för widescreen/desktop/foldables, samt ett responsivt slide-in-flöde för mobiler som ersätter det gamla Kanban-gränssnittet.
+- **Glassmorfisk inställningsknapp**: Designat om inställningsknappen med en skandinavisk glassmorfisk stil (semi-transparent vit bakgrund, tunn kant, mjuk skugga och subtil hover-effekt med snurrande kugghjul).
+
+### Fixed
+- **Prestanda & Firefox-skroll**: Optimerat bakgrundsblobar genom att flytta `border-radius` ut ur keyframe-animationer till statiska klasser, tagit bort överflödiga `backdrop-filter` och skiftat till GPU-accelererad `translate3d`-transformering för att lösa trögt scrollande ("sluggishness") på mobiler och foldables i Firefox.
+- **Layout-låsning på mobil**: Åtgärdat en bugg där gästportalen ibland visade en tom skärm på mobila enheter på grund av felaktiga kolumn-visningslägen.
+- **Överflöde på mobiler (LightCard Overflow)**: Ändrat rutnätets kolumner från `150px` till `220px` för att tvinga fram en ren och luftig enkelkolumn på mobilskärmar istället för att lampkorten trycks ihop och flödar ut ur sina boxar. Lagt till flexbox-baserad texttrunkering på namn och status.
 
 ---
 
