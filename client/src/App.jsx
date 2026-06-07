@@ -326,14 +326,16 @@ export default function App() {
                          style={{ textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8, color: 'var(--text-2)' }}>
                         {room}
                       </p>
-                      {lights.map((light) => (
-                        <LightCard
-                          key={light.entity_id}
-                          config={light}
-                          state={states[light.entity_id]}
-                          onChange={controlLight}
-                        />
-                      ))}
+                      <div className="room-lights-grid">
+                        {lights.map((light) => (
+                          <LightCard
+                            key={light.entity_id}
+                            config={light}
+                            state={states[light.entity_id]}
+                            onChange={controlLight}
+                          />
+                        ))}
+                      </div>
                     </div>
                   ))}
                 </div>

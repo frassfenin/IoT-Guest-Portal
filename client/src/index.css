@@ -151,7 +151,8 @@ input[type="range"] {
   opacity: 0.52; /* Högre opacitet för levande pastellfärger som skiner igenom */
   pointer-events: none;
   mix-blend-mode: normal; /* Ger krispiga, rena och ljusa skandinaviska pasteller utan att mörka ner */
-  will-change: transform, border-radius;
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
 }
 
 /* Salviagrön blob (vänster uppe) */
@@ -161,6 +162,7 @@ input[type="range"] {
   width: 52vw;
   height: 52vw;
   background-color: #b5e2c5; /* Klarare och rikare pastell-salvia */
+  border-radius: 42% 58% 70% 30% / 45% 45% 55% 55%;
   animation: float-slow-1 20s ease-in-out infinite alternate;
 }
 
@@ -171,6 +173,7 @@ input[type="range"] {
   width: 58vw;
   height: 58vw;
   background-color: #fbdcbe; /* Fylligare, varmare pastell-sand */
+  border-radius: 50% 50% 30% 70% / 50% 60% 40% 50%;
   animation: float-slow-2 24s ease-in-out infinite alternate;
 }
 
@@ -181,6 +184,7 @@ input[type="range"] {
   width: 50vw;
   height: 50vw;
   background-color: #bad3fc; /* Krispigare pastell-himmelsblå */
+  border-radius: 40% 60% 40% 60% / 40% 40% 60% 60%;
   animation: float-slow-3 22s ease-in-out infinite alternate;
 }
 
@@ -191,71 +195,60 @@ input[type="range"] {
   width: 46vw;
   height: 46vw;
   background-color: #e2cffb; /* Underbar pastell-lavendel */
+  border-radius: 35% 65% 50% 50% / 45% 45% 55% 55%;
   animation: float-slow-4 26s ease-in-out infinite alternate;
 }
 
 /* 
-   Super-dynamiska, morfkraftiga flyt-animationer.
-   Genom att animera border-radius tillsammans med transform/rotation 
-   deformeras blobarna likt en flytande lavalampa för en magisk glassmorphism-känsla!
+   Super-dynamiska, morfkraftiga flyt-animationer (Optimerade för GPU/Compositor).
+   Genom att animera enbart transform (translate3d, scale, rotate) med en asymmetrisk 
+   border-radius på lagret skapas en flytande rörelse utan att belasta CPU:n med repaints.
 */
 @keyframes float-slow-1 {
   0% {
-    transform: translate(0, 0) scale(1) rotate(0deg);
-    border-radius: 42% 58% 70% 30% / 45% 45% 55% 55%;
+    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
   }
   50% {
-    transform: translate(10%, 15%) scale(1.15) rotate(180deg);
-    border-radius: 70% 30% 52% 48% / 60% 40% 60% 40%;
+    transform: translate3d(10%, 15%, 0) scale(1.15) rotate(180deg);
   }
   100% {
-    transform: translate(-5%, 8%) scale(0.95) rotate(360deg);
-    border-radius: 42% 58% 70% 30% / 45% 45% 55% 55%;
+    transform: translate3d(-5%, 8%, 0) scale(0.95) rotate(360deg);
   }
 }
 
 @keyframes float-slow-2 {
   0% {
-    transform: translate(0, 0) scale(1) rotate(0deg);
-    border-radius: 50% 50% 30% 70% / 50% 60% 40% 50%;
+    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
   }
   50% {
-    transform: translate(-12%, -8%) scale(1.1) rotate(-180deg);
-    border-radius: 30% 70% 70% 30% / 50% 30% 70% 50%;
+    transform: translate3d(-12%, -8%, 0) scale(1.1) rotate(-180deg);
   }
   100% {
-    transform: translate(6%, -12%) scale(1.18) rotate(-360deg);
-    border-radius: 50% 50% 30% 70% / 50% 60% 40% 50%;
+    transform: translate3d(6%, -12%, 0) scale(1.18) rotate(-360deg);
   }
 }
 
 @keyframes float-slow-3 {
   0% {
-    transform: translate(0, 0) scale(1) rotate(0deg);
-    border-radius: 40% 60% 40% 60% / 40% 40% 60% 60%;
+    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
   }
   50% {
-    transform: translate(-8%, 12%) scale(1.12) rotate(120deg);
-    border-radius: 60% 40% 60% 40% / 50% 60% 40% 50%;
+    transform: translate3d(-8%, 12%, 0) scale(1.12) rotate(120deg);
   }
   100% {
-    transform: translate(10%, -6%) scale(0.9) rotate(240deg);
-    border-radius: 40% 60% 40% 60% / 40% 40% 60% 60%;
+    transform: translate3d(10%, -6%, 0) scale(0.9) rotate(240deg);
   }
 }
 
 @keyframes float-slow-4 {
   0% {
-    transform: translate(0, 0) scale(1) rotate(0deg);
-    border-radius: 35% 65% 50% 50% / 45% 45% 55% 55%;
+    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
   }
   50% {
-    transform: translate(12%, -10%) scale(1.15) rotate(180deg);
-    border-radius: 55% 45% 65% 35% / 35% 65% 35% 65%;
+    transform: translate3d(12%, -10%, 0) scale(1.15) rotate(180deg);
   }
   100% {
-    transform: translate(-6%, 8%) scale(0.95) rotate(360deg);
-    border-radius: 35% 65% 50% 50% / 45% 45% 55% 55%;
+    transform: translate3d(-6%, 8%, 0) scale(0.95) rotate(360deg);
   }
 }
 
@@ -395,11 +388,12 @@ input[type="range"] {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--purple);
-  color: white;
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  color: var(--text-2);
   border-radius: var(--radius-sm);
   transition: all var(--transition);
-  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.2);
+  box-shadow: var(--shadow-sm);
 }
 
 .settings-btn-cog__icon {
@@ -407,9 +401,11 @@ input[type="range"] {
 }
 
 .settings-btn-cog:hover {
-  background: var(--purple-light);
+  background: rgba(255, 255, 255, 0.85);
+  border-color: rgba(0, 0, 0, 0.1);
+  color: var(--text-1);
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(124, 58, 237, 0.3);
+  box-shadow: var(--shadow);
 }
 
 .settings-btn-cog:hover .settings-btn-cog__icon {
@@ -454,6 +450,7 @@ input[type="range"] {
   text-align: left;
   transition: background var(--transition-fast), color var(--transition-fast);
   width: 100%;
+  text-decoration: none;
 }
 
 .settings-dropdown__icon {
@@ -1000,11 +997,9 @@ input[type="range"] {
 
 .light-card {
   background: rgba(255, 255, 255, 0.52); /* Hög transparens låter bakgrundsblobar lysa igenom */
-  backdrop-filter: blur(20px) saturate(170%);
-  -webkit-backdrop-filter: blur(20px) saturate(170%);
   border: 1px solid rgba(255, 255, 255, 0.7); /* Krispig och tunn reflekterande kant */
   border-radius: var(--radius-sm);
-  padding: var(--space-4) var(--space-5);
+  padding: var(--space-3) var(--space-3);
   transition: border-color var(--transition), box-shadow var(--transition), background var(--transition), transform var(--transition);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.01), var(--shadow-sm);
 }
@@ -1013,8 +1008,6 @@ input[type="range"] {
   background: rgba(255, 255, 255, 0.72);
   border-color: rgba(255, 255, 255, 0.95);
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.04), var(--shadow-sm);
-  backdrop-filter: blur(24px) saturate(190%);
-  -webkit-backdrop-filter: blur(24px) saturate(190%);
   transform: translateY(-2px); /* Lätt elegant lyft när lampkortet hovras */
 }
 
@@ -1022,8 +1015,6 @@ input[type="range"] {
   background: linear-gradient(135deg, rgba(255, 250, 230, 0.6) 0%, rgba(255, 253, 246, 0.35) 100%); /* Svagt varmgul tonande glasglöd */
   border-color: rgba(245, 158, 11, 0.32);
   box-shadow: 0 8px 24px rgba(245, 158, 11, 0.05), var(--shadow-sm);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
 }
 
 .light-card--on:hover {
@@ -1042,6 +1033,8 @@ input[type="range"] {
   display: flex;
   align-items: center;
   gap: var(--space-3);
+  min-width: 0;
+  flex: 1;
 }
 
 .light-card__icon {
@@ -1073,6 +1066,9 @@ input[type="range"] {
   font-size: var(--text-base);
   font-weight: 600;
   color: var(--text-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .light-card__state {
@@ -1080,6 +1076,9 @@ input[type="range"] {
   color: var(--text-3);
   margin-top: 1px;
   font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Toggle Switch */
@@ -2194,7 +2193,7 @@ input[type="range"] {
 }
 
 .portal-col {
-  display: none;
+  display: flex;
   flex-direction: column;
   gap: var(--space-4);
 }
@@ -2213,6 +2212,12 @@ input[type="range"] {
 .rooms-grid {
   display: flex;
   flex-direction: column;
+  gap: var(--space-3);
+}
+
+.room-lights-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: var(--space-3);
 }
 
@@ -2238,25 +2243,21 @@ input[type="range"] {
 
   .portal-grid {
     display: grid;
-    grid-template-columns: 1fr 1.15fr; /* Info till vänster, Controls till höger */
+    grid-template-columns: 1fr;
     gap: var(--space-6);
     padding: var(--space-4) var(--space-5) var(--space-6);
   }
 
   .portal-col {
-    display: flex !important; /* Visa båda kolumnerna samtidigt */
-  }
-
-  .portal-col--info {
-    position: sticky;
-    top: var(--space-4);
+    display: flex !important;
   }
 
   .rooms-grid {
     display: grid;
-    grid-template-columns: 1fr; /* Fortfarande 1-kolumn för rum på foldable för att hålla det kompakt */
-    gap: var(--space-3);
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
   }
+
 }
 
 /* ──────────────────────────────────────────
@@ -2264,7 +2265,7 @@ input[type="range"] {
    ────────────────────────────────────────── */
 @media (min-width: 1024px) {
   .app {
-    max-width: 1400px; /* Betydligt bredare för att utnyttja desktop skärmar */
+    max-width: 1800px; /* Betydligt bredare för att utnyttja widescreen desktop-skärmar */
     padding-bottom: 50px;
   }
 
@@ -2274,7 +2275,7 @@ input[type="range"] {
 
   .portal-grid {
     display: grid;
-    grid-template-columns: 1fr; /* Full bredd eftersom infospalten är gömd */
+    grid-template-columns: 1fr; /* Full bredd */
     gap: var(--space-6);
     padding: var(--space-4) var(--space-6) var(--space-8);
   }
@@ -2283,11 +2284,23 @@ input[type="range"] {
     display: block !important;
   }
 
-  /* Tvinga exakt två rums-kort bredvid varandra på desktop */
+  /* 3-spalt för rumskort på widescreen */
   .rooms-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(3, 1fr);
     gap: var(--space-6);
+  }
+
+
+  /* Lägg mediakort bredvid varandra på breda skärmar istället för att sträcka ut dem över hela bredden */
+  .controls-group--media {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(480px, 1fr));
+    gap: var(--space-6);
+  }
+  
+  .controls-group--media .section-header {
+    grid-column: 1 / -1;
   }
 
   /* Gör scen-knapparna 4 i rad på desktop istället för 2 */
@@ -2800,9 +2813,348 @@ input[type="range"] {
   color: var(--text-3);
   margin-top: 2px;
   line-height: 1.2;
+}/* ──────────────────────────────────────────
+   Master-Detail Room & Light Organizer CSS
+   ────────────────────────────────────────── */
+
+/* Canvas storlekar */
+.organizer-canvas {
+  max-width: 1100px !important;
+  height: 85dvh !important;
+  max-height: 760px !important;
 }
 
+/* Widescreen 2-spalts layout */
+.organizer-split-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: var(--space-6);
+  flex: 1;
+  overflow: hidden;
+  height: 100%;
+}
 
+/* Vänster spalt: Rums-sidebar */
+.rooms-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  border-right: 1px solid var(--glass-border);
+  padding-right: var(--space-4);
+  overflow-y: auto;
+  height: 100%;
+}
 
+.rooms-sidebar-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  color: var(--text-2);
+  cursor: pointer;
+  transition: all var(--transition);
+  text-align: left;
+  user-select: none;
+}
+
+.rooms-sidebar-item:hover {
+  background: var(--glass-bg-hover);
+  color: var(--text-1);
+  border-color: var(--glass-border-hover);
+}
+
+.rooms-sidebar-item--active {
+  background: var(--purple-dim);
+  border-color: var(--purple-light);
+  color: var(--purple-light);
+  font-weight: 600;
+}
+
+.rooms-sidebar-item__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--text-sm);
+  min-width: 0;
+}
+
+.rooms-sidebar-item__name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rooms-sidebar-item__count {
+  font-size: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-2);
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.rooms-sidebar-item--active .rooms-sidebar-item__count {
+  background: rgba(124, 58, 237, 0.15);
+  color: var(--purple-light);
+  font-weight: 600;
+}
+
+/* Radera-knapp i sidebar-raden */
+.rooms-sidebar-item__delete {
+  padding: var(--space-1);
+  color: var(--text-3);
+  opacity: 0;
+  transition: opacity var(--transition), color var(--transition);
+  margin-left: var(--space-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+
+.rooms-sidebar-item:hover .rooms-sidebar-item__delete {
+  opacity: 1;
+}
+
+.rooms-sidebar-item__delete:hover {
+  color: var(--red);
+  background: rgba(239, 68, 68, 0.08);
+}
+
+/* Höger spalt: Rumsdetaljer */
+.room-detail-pane {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  overflow-y: auto;
+  height: 100%;
+  padding-right: var(--space-2);
+}
+
+.room-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--glass-border);
+  padding-bottom: var(--space-3);
+  flex-shrink: 0;
+}
+
+.room-detail-header__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--text-lg);
+  font-weight: 800;
+  color: var(--text-1);
+}
+
+/* Lampsektioner */
+.detail-lights-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.detail-lights-section__title-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-1);
+}
+
+.detail-lights-section h3 {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-2);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* Rutnät för lampor i detaljvyn */
+.detail-lights-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: var(--space-3);
+}
+
+/* Enskilt lampkort i detaljvyn */
+.detail-light-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  transition: border-color var(--transition), background var(--transition);
+  min-width: 0;
+  gap: var(--space-3);
+}
+
+.detail-light-card:hover {
+  border-color: var(--glass-border-hover);
+  background: rgba(255, 255, 255, 0.01);
+}
+
+.detail-light-card__info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  flex: 1;
+}
+
+.detail-light-card__icon {
+  color: var(--text-3);
+  flex-shrink: 0;
+}
+
+.detail-light-card__meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.detail-light-card__name {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.detail-light-card__room-badge {
+  font-size: 9px;
+  color: var(--purple-light);
+  background: var(--purple-dim);
+  border: 1px solid rgba(124, 58, 237, 0.15);
+  padding: 1px 5px;
+  border-radius: 4px;
+  display: inline-block;
+  margin-top: 2px;
+  width: fit-content;
+}
+
+/* Runda Plus/Minus knappar för att tilldela/avtilldela */
+.detail-light-card__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-2);
+  cursor: pointer;
+  transition: all var(--transition);
+  flex-shrink: 0;
+}
+
+.detail-light-card__btn:hover {
+  transform: scale(1.1);
+}
+
+.detail-light-card__btn:active {
+  transform: scale(0.95);
+}
+
+.detail-light-card__btn--add {
+  border-color: rgba(52, 211, 153, 0.35);
+  color: #34d399;
+  background: rgba(52, 211, 153, 0.05);
+}
+
+.detail-light-card__btn--add:hover {
+  background: rgba(52, 211, 153, 0.2);
+  border-color: #34d399;
+  color: #a7f3d0;
+}
+
+.detail-light-card__btn--remove {
+  border-color: rgba(248, 113, 113, 0.35);
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.05);
+}
+
+.detail-light-card__btn--remove:hover {
+  background: rgba(248, 113, 113, 0.2);
+  border-color: #f87171;
+  color: #fca5a5;
+}
+
+/* Växlare för att visa alla lampor */
+.show-all-toggle-container {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  user-select: none;
+}
+
+.show-all-toggle-input {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--purple-light);
+  cursor: pointer;
+}
+
+.show-all-toggle-label {
+  font-size: var(--text-xs);
+  color: var(--text-2);
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.show-all-toggle-label:hover {
+  color: var(--text-1);
+}
+
+/* Mobil navigering & listor */
+.organizer-mobile-master {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  overflow-y: auto;
+  flex: 1;
+}
+
+.organizer-mobile-detail {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+  height: 100%;
+}
+
+.mobile-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xs);
+  color: var(--text-2);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  cursor: pointer;
+  align-self: flex-start;
+  margin-bottom: var(--space-3);
+  transition: all var(--transition);
+}
+
+.mobile-back-btn:hover {
+  background: var(--glass-bg-hover);
+  color: var(--text-1);
+}
 
 
