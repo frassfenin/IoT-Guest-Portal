@@ -12,6 +12,14 @@ import { StorageManager } from '@project-chip/matter.js/storage';
 import { OnOffCluster, LevelControlCluster } from '@project-chip/matter.js/cluster';
 import { NodeId } from '@project-chip/matter.js/datatype';
 
+// Force Matter Node IDs to be within 32-bit range (1000 - 999999)
+// to fix firmware bugs (e.g. Nanoleaf) where 64-bit Node IDs trigger "addNoc: 5" (InvalidNodeId)
+NodeId.randomOperationalNodeId = () => {
+  const min = 1000;
+  const max = 999999;
+  return NodeId(BigInt(Math.floor(Math.random() * (max - min + 1)) + min));
+};
+
 export class MatterBridge {
   constructor({ storagePath = 'server/data/matter-store' } = {}) {
     this.enabled = true;
