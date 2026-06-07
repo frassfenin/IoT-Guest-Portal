@@ -1,4 +1,20 @@
 import { useState } from 'react'
+import { Flame, BookOpen, Moon, Sparkles, Loader2, Check } from 'lucide-react'
+
+function getSceneIcon(sceneId) {
+  switch (sceneId) {
+    case 'mysigt':
+      return <Flame size={24} className="scene-btn__icon" style={{ strokeWidth: 2.2, color: '#f59e0b' }} />
+    case 'lasning':
+      return <BookOpen size={24} className="scene-btn__icon" style={{ strokeWidth: 2.2, color: '#3b82f6' }} />
+    case 'god_natt':
+      return <Moon size={24} className="scene-btn__icon" style={{ strokeWidth: 2.2, color: '#6366f1' }} />
+    case 'valkommen':
+      return <Sparkles size={24} className="scene-btn__icon" style={{ strokeWidth: 2.2, color: '#10b981' }} />
+    default:
+      return <Sparkles size={24} className="scene-btn__icon" style={{ strokeWidth: 2.2, color: 'var(--purple)' }} />
+  }
+}
 
 export default function SceneGrid({ scenes, onActivate }) {
   // Spåra vilken scen som just aktiverades (för feedback-animation)
@@ -39,9 +55,15 @@ export default function SceneGrid({ scenes, onActivate }) {
             aria-busy={isLoading}
             disabled={!!loadingScene}
           >
-            <span className="scene-btn__emoji" aria-hidden="true">
-              {isLoading ? '⏳' : isActive ? '✅' : scene.emoji}
-            </span>
+            <div className="scene-btn__icon-wrap" aria-hidden="true" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {isLoading ? (
+                <Loader2 size={24} className="scene-btn__spinner" />
+              ) : isActive ? (
+                <Check size={24} className="scene-btn__success-icon" style={{ color: 'var(--green)', strokeWidth: 2.5 }} />
+              ) : (
+                getSceneIcon(scene.id)
+              )}
+            </div>
             <span className="scene-btn__name">{scene.name}</span>
             <span className="scene-btn__desc">{scene.description}</span>
           </button>

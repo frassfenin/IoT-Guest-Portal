@@ -1,4 +1,20 @@
 import { useState, useEffect, useCallback } from 'react'
+import { Tv, Speaker, Music, Cast, Play, Pause, Volume1, Volume2 } from 'lucide-react'
+
+function getMediaIcon(iconStr) {
+  if (!iconStr) return <Cast size={20} style={{ strokeWidth: 2.2, color: 'var(--blue)' }} />
+  const lower = iconStr.toLowerCase()
+  if (lower.includes('📡') || lower.includes('cast')) {
+    return <Cast size={20} style={{ strokeWidth: 2.2, color: 'var(--blue)' }} />
+  }
+  if (lower.includes('📺') || lower.includes('tv')) {
+    return <Tv size={20} style={{ strokeWidth: 2.2, color: 'var(--blue)' }} />
+  }
+  if (lower.includes('🔊') || lower.includes('speaker') || lower.includes('högtalare')) {
+    return <Speaker size={20} style={{ strokeWidth: 2.2, color: 'var(--blue)' }} />
+  }
+  return <Music size={20} style={{ strokeWidth: 2.2, color: 'var(--blue)' }} />
+}
 
 function useDebounce(fn, delay = 250) {
   const [timer, setTimer] = useState(null)
@@ -50,8 +66,8 @@ export default function MediaCard({ config, state, onControl }) {
     >
       {/* ── Header ── */}
       <div className="media-card__header">
-        <div className="media-card__icon-wrap" aria-hidden="true">
-          {config.icon}
+        <div className="media-card__icon-wrap" aria-hidden="true" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {getMediaIcon(config.icon)}
         </div>
         <div className="media-card__meta">
           <div className="media-card__device">{config.name}</div>
@@ -59,12 +75,12 @@ export default function MediaCard({ config, state, onControl }) {
             {isUnavailable
               ? 'Inte tillgänglig'
               : isPlaying && mediaTitle
-                ? `▶ ${mediaArtist ? `${mediaArtist} – ` : ''}${mediaTitle}`
+                ? `${mediaArtist ? `${mediaArtist} – ` : ''}${mediaTitle}`
                 : isPlaying
-                  ? '▶ Spelar...'
+                  ? 'Spelar...'
                   : isPaused
-                    ? '⏸ Pausad'
-                    : 'Stannar'}
+                    ? 'Pausad'
+                    : 'Stannad'}
           </div>
         </div>
       </div>
@@ -78,13 +94,20 @@ export default function MediaCard({ config, state, onControl }) {
             className="media-btn media-btn--play"
             onClick={handlePlayPause}
             aria-label={isPlaying ? `Pausa ${config.name}` : `Spela ${config.name}`}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
-            {isPlaying ? '⏸' : '▶️'}
+            {isPlaying ? (
+              <Pause size={16} style={{ fill: 'currentColor', strokeWidth: 1.5 }} />
+            ) : (
+              <Play size={16} style={{ fill: 'currentColor', strokeWidth: 1.5, marginLeft: '2px' }} />
+            )}
           </button>
 
           {/* Volymsslider */}
           <div className="media-card__volume">
-            <span className="media-card__vol-icon" aria-hidden="true">🔈</span>
+            <span className="media-card__vol-icon" aria-hidden="true" style={{ display: 'flex', alignItems: 'center' }}>
+              <Volume1 size={14} style={{ strokeWidth: 2.2 }} />
+            </span>
             <input
               type="range"
               id={sliderId}
@@ -98,7 +121,9 @@ export default function MediaCard({ config, state, onControl }) {
               aria-label={`Volym för ${config.name}`}
               aria-valuetext={volPct}
             />
-            <span className="media-card__vol-icon" aria-hidden="true">🔊</span>
+            <span className="media-card__vol-icon" aria-hidden="true" style={{ display: 'flex', alignItems: 'center' }}>
+              <Volume2 size={16} style={{ strokeWidth: 2.2 }} />
+            </span>
           </div>
 
           {/* Volymnivå-text */}

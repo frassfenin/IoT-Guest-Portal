@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { Sparkles, Wifi, FileText, Info, Lightbulb, LightbulbOff, Copy, Check, Loader2 } from 'lucide-react'
 import { io } from 'socket.io-client'
 import Header from './components/Header.jsx'
 import SceneGrid from './components/SceneGrid.jsx'
@@ -25,15 +26,61 @@ function groupByRoom(lights) {
 }
 
 export default function App() {
-  const [tab, setTab]         = useState('home')
   const [config, setConfig]   = useState(null)
   const [states, setStates]   = useState({}) // entity_id → state-objekt
   const [connected, setConnected] = useState(false)
   const [error, setError]     = useState(null)
   const [setupNeeded, setSetupNeeded] = useState(null)
-  const [showSettingsHub, setShowSettingsHub] = useState(false)
   const [showOrganizer, setShowOrganizer] = useState(false)
   const [showSetupWizard, setShowSetupWizard] = useState(false)
+  const [activePopover, setActivePopover] = useState(null) // null | 'wifi' | 'notes' | 'status'
+  const [copied, setCopied] = useState(false)
+  const [blurEnabled, setBlurEnabled] = useState(() => {
+    const saved = localStorage.getItem('guest_portal_blur_enabled')
+    return saved !== 'false' // Standardmässigt AKTIVERAD (true)
+  })
+
+  // Toggle för suddig bakgrund med LocalStorage-lagring
+  const toggleBlur = useCallback(() => {
+    setBlurEnabled((prev) => {
+      const newVal = !prev
+      localStorage.setItem('guest_portal_blur_enabled', String(newVal))
+      return newVal
+    })
+  }, [])
+
+
+  // Stäng popovers vid klick utanför
+  useEffect(() => {
+    if (!activePopover) return
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.floating-dock-container')) {
+        setActivePopover(null)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [activePopover])
+
+  // WiFi-kopiering till urklipp
+  const handleWifiCopy = useCallback(async () => {
+    if (!config?.info?.wifi_password) return
+    try {
+      await navigator.clipboard.writeText(config.info.wifi_password)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      const el = document.createElement('textarea')
+      el.value = config.info.wifi_password
+      document.body.appendChild(el)
+      el.select()
+      document.execCommand('copy')
+      document.body.removeChild(el)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }, [config])
+
 
   const handleSaveRooms = useCallback(async (updatedLights) => {
     if (!config) return
@@ -155,6 +202,14 @@ export default function App() {
     apiCall(`/api/light/${entity_id}`, changes)
   }, [apiCall])
 
+  // ── Master-kontroll för alla lampor (på / av) ──────────
+  const toggleAllLights = useCallback((state) => {
+    if (!config?.lights) return
+    config.lights.forEach((light) => {
+      controlLight(light.entity_id, { state })
+    })
+  }, [config, controlLight])
+
   // ── Scenaktivering ───────────────────────────────────────
   const activateScene = useCallback((entity_id, transition) => {
     apiCall(`/api/scene/${entity_id}`, { transition })
@@ -211,7 +266,12 @@ export default function App() {
   if (!config && !error) {
     return (
       <>
-        <div className="app-bg" />
+        <div className="app-bg">
+          <div className="bg-blob bg-blob--sage" />
+          <div className="bg-blob bg-blob--sand" />
+          <div className="bg-blob bg-blob--blue" />
+          <div className="bg-blob bg-blob--purple" />
+        </div>
         <div className="app" style={{ alignItems: 'center', justifyContent: 'center' }}>
           <div className="spinner" style={{ width: 32, height: 32, borderWidth: 3 }} />
         </div>
@@ -223,12 +283,20 @@ export default function App() {
 
   return (
     <>
-      <div className="app-bg" />
+      <div className="app-bg">
+        <div className="bg-blob bg-blob--sage" />
+        <div className="bg-blob bg-blob--sand" />
+        <div className="bg-blob bg-blob--blue" />
+        <div className="bg-blob bg-blob--purple" />
+      </div>
       <div className="app">
         <div className="portal-header">
           <Header 
             connected={connected} 
-            onOpenOrganizer={() => setShowSettingsHub(true)} 
+            onOpenOrganizer={() => setShowOrganizer(true)} 
+            onOpenSetupWizard={() => setShowSetupWizard(true)}
+            blurEnabled={blurEnabled}
+            onToggleBlur={toggleBlur}
           />
         </div>
 
@@ -237,36 +305,14 @@ export default function App() {
             ⚠️ {error}
           </div>
         )}
-
         {!error && config && (
-          <div className="portal-grid">
-            {/* ── Left Column / Info Panel ── */}
-            <section
-              id="main-info"
-              className={`portal-col portal-col--info ${tab === 'info' ? 'portal-col--active' : ''}`}
-              aria-label="Information och WiFi"
-            >
-              <InfoPage info={config.info} />
-            </section>
-
-            {/* ── Right Column / Controls Cockpit ── */}
+          <div className={`portal-grid ${activePopover && blurEnabled ? 'content-blurred' : ''}`}>
+            {/* ── Huvudyta / Kontrollpanel ── */}
             <section
               id="main-home"
-              className={`portal-col portal-col--controls ${tab === 'home' ? 'portal-col--active' : ''}`}
+              className="portal-col portal-col--controls"
               aria-label="Belysning och scener"
             >
-              {/* Snabbscener */}
-              <div className="controls-group controls-group--scenes">
-                <div className="section-header">
-                  <span className="section-header__title">Scener</span>
-                  <div className="section-header__line" />
-                </div>
-                <SceneGrid
-                  scenes={config.scenes}
-                  onActivate={activateScene}
-                />
-              </div>
-
               {/* Belysning per rum */}
               <div className="controls-group controls-group--lights">
                 <div className="section-header">
@@ -277,7 +323,7 @@ export default function App() {
                   {Object.entries(roomGroups).map(([room, lights]) => (
                     <div key={room} className="room-section" style={{ marginBottom: 'var(--space-4)' }}>
                       <p className="text-xs text-dim font-semibold"
-                         style={{ textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+                         style={{ textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8, color: 'var(--text-2)' }}>
                         {room}
                       </p>
                       {lights.map((light) => (
@@ -314,27 +360,170 @@ export default function App() {
           </div>
         )}
 
-        {/* ── Tab-bar ──────────────────────────────────────── */}
-        <nav className="tab-bar" role="navigation" aria-label="Sidonavigering">
-          <button
-            id="tab-home"
-            className={`tab-btn ${tab === 'home' ? 'tab-btn--active' : ''}`}
-            onClick={() => setTab('home')}
-            aria-current={tab === 'home' ? 'page' : undefined}
-          >
-            <span className="tab-btn__icon">🏠</span>
-            Hem
-          </button>
-          <button
-            id="tab-info"
-            className={`tab-btn ${tab === 'info' ? 'tab-btn--active' : ''}`}
-            onClick={() => setTab('info')}
-            aria-current={tab === 'info' ? 'page' : undefined}
-          >
-            <span className="tab-btn__icon">ℹ️</span>
-            Info
-          </button>
-        </nav>
+        {/* ── Flytande Bottenmeny (Dock-bar) ── */}
+        {config && (
+          <div className="floating-dock-container">
+            <div className="floating-dock">
+              {/* Scener-knapp */}
+              <button
+                type="button"
+                className={`floating-dock__btn ${activePopover === 'scenes' ? 'floating-dock__btn--active' : ''}`}
+                onClick={() => setActivePopover(activePopover === 'scenes' ? null : 'scenes')}
+                title="Belysningsscener"
+              >
+                <Sparkles size={20} style={{ strokeWidth: 2.2 }} />
+                {activePopover === 'scenes' && (
+                  <div className="dock-popover scenes-popover" onClick={(e) => e.stopPropagation()}>
+                    <div className="section-header">
+                      <span className="section-header__title">Huvudströmbrytare</span>
+                    </div>
+                    <div className="scenes-popover__master-controls">
+                      <button 
+                        type="button" 
+                        className="master-btn master-btn--on"
+                        onClick={() => toggleAllLights('on')}
+                      >
+                        <Lightbulb size={15} style={{ strokeWidth: 2.5 }} />
+                        Tänd alla
+                      </button>
+                      <button 
+                        type="button" 
+                        className="master-btn master-btn--off"
+                        onClick={() => toggleAllLights('off')}
+                      >
+                        <LightbulbOff size={15} style={{ strokeWidth: 2.5 }} />
+                        Släck alla
+                      </button>
+                    </div>
+
+                    <div className="scenes-popover__divider" />
+
+                    <div className="section-header" style={{ marginTop: '4px' }}>
+                      <span className="section-header__title">Välj belysningsscen</span>
+                    </div>
+                    <SceneGrid
+                      scenes={config.scenes}
+                      onActivate={activateScene}
+                    />
+                  </div>
+                )}
+              </button>
+
+              {/* WiFi-knapp */}
+              <button
+                type="button"
+                className={`floating-dock__btn ${activePopover === 'wifi' ? 'floating-dock__btn--active' : ''}`}
+                onClick={() => setActivePopover(activePopover === 'wifi' ? null : 'wifi')}
+                title="WiFi information"
+              >
+                <Wifi size={20} style={{ strokeWidth: 2.2 }} />
+                {activePopover === 'wifi' && (
+                  <div className="dock-popover wifi-popover" onClick={(e) => e.stopPropagation()}>
+                    <div className="section-header">
+                      <span className="section-header__title">Wi-Fi-inloggning</span>
+                    </div>
+                    <div className="wifi-field">
+                      <span className="wifi-field__label">Nätverk</span>
+                      <span className="wifi-field__value">{config.info.wifi_name}</span>
+                    </div>
+                    <div className="wifi-field">
+                      <span className="wifi-field__label">Lösenord</span>
+                      <span className="wifi-field__value">{config.info.wifi_password}</span>
+                    </div>
+                    <div className="wifi-card__copy-hint" onClick={handleWifiCopy}>
+                      {copied ? (
+                        <>
+                          <Check size={14} style={{ strokeWidth: 2.5, color: 'var(--green)', marginRight: '6px' }} />
+                          Kopierat till urklipp!
+                        </>
+                      ) : (
+                        <>
+                          <Copy size={14} style={{ strokeWidth: 2.2, marginRight: '6px' }} />
+                          Kopiera lösenord
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </button>
+
+              {/* Anteckningar / Husmanual */}
+              <button
+                type="button"
+                className={`floating-dock__btn ${activePopover === 'notes' ? 'floating-dock__btn--active' : ''}`}
+                onClick={() => setActivePopover(activePopover === 'notes' ? null : 'notes')}
+                title="Husmanual & anteckningar"
+              >
+                <FileText size={20} style={{ strokeWidth: 2.2 }} />
+                {activePopover === 'notes' && (
+                  <div className="dock-popover notes-popover" onClick={(e) => e.stopPropagation()}>
+                    <div className="section-header">
+                      <span className="section-header__title">Husmanual</span>
+                    </div>
+                    <div style={{ maxHeight: '240px', overflowY: 'auto', paddingRight: '4px' }}>
+                      {config.info.notes?.length > 0 ? (
+                        config.info.notes.map((note, i) => (
+                          <div key={i} className="note-item">
+                            <div className="note-item__icon-wrap">{note.emoji || '📝'}</div>
+                            <div>
+                              <div className="note-item__title">{note.title}</div>
+                              <div className="note-item__text">{note.text}</div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-xs text-dim" style={{ textAlign: 'center', padding: '10px 0' }}>Inga anteckningar inlagda än.</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </button>
+
+              {/* Systemstatus / Notifikationer */}
+              <button
+                type="button"
+                className={`floating-dock__btn ${activePopover === 'status' ? 'floating-dock__btn--active' : ''}`}
+                onClick={() => setActivePopover(activePopover === 'status' ? null : 'status')}
+                title="Systemstatus"
+              >
+                <Info size={20} style={{ strokeWidth: 2.2 }} />
+                {activePopover === 'status' && (
+                  <div className="dock-popover status-popover" onClick={(e) => e.stopPropagation()}>
+                    <div className="section-header">
+                      <span className="section-header__title">Systemstatus</span>
+                    </div>
+                    <div className="status-list">
+                      <div className="status-item">
+                        <span className="status-item__label">Anslutning</span>
+                        <span className="status-item__value" style={{ color: connected ? 'var(--green)' : 'var(--red)' }}>
+                          {connected ? '● Ansluten' : '○ Frånkopplad'}
+                        </span>
+                      </div>
+                      <div className="status-item">
+                        <span className="status-item__label">Lampor</span>
+                        <span className="status-item__value">
+                          {config.lights?.length ?? 0} st enheter
+                        </span>
+                      </div>
+                      <div className="status-item">
+                        <span className="status-item__label">Mediaspelare</span>
+                        <span className="status-item__value">
+                          {config.media_players?.length ?? 0} st aktiva
+                        </span>
+                      </div>
+                      <div className="status-item">
+                        <span className="status-item__label">Gateway IP</span>
+                        <span className="status-item__value" style={{ fontFamily: 'monospace' }}>
+                          {config.ikea?.ip || config.hue?.ip || 'Lokalt API'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* ── Room Organizer Modal ── */}
         {showOrganizer && config && (
@@ -343,57 +532,6 @@ export default function App() {
             onSave={handleSaveRooms}
             onClose={() => setShowOrganizer(false)}
           />
-        )}
-
-        {/* ── Settings Hub Selector Modal ── */}
-        {showSettingsHub && (
-          <div className="settings-hub-overlay" role="dialog" aria-modal="true" aria-labelledby="hub-title">
-            <div className="settings-hub-canvas fade-in">
-              <div className="settings-hub-header">
-                <h2 id="hub-title">Inställningar & Administration</h2>
-                <button className="setup-btn setup-btn--secondary" onClick={() => setShowSettingsHub(false)}>✕ Stäng</button>
-              </div>
-              <p className="settings-hub-desc">Välj vad du vill konfigurera eller organisera i din gästportal.</p>
-              
-              <div className="settings-hub-options">
-                {/* Option 1: Room organizer (Kanban drag-and-drop) */}
-                <div 
-                  className="settings-hub-card" 
-                  onClick={() => {
-                    setShowSettingsHub(false)
-                    setShowOrganizer(true)
-                  }}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => e.key === 'Enter' && (setShowSettingsHub(false) || setShowOrganizer(true))}
-                >
-                  <div className="settings-hub-card__icon">🏠</div>
-                  <div className="settings-hub-card__content">
-                    <h3>Organisera rum</h3>
-                    <p>Dra och släpp lampor för att ändra deras rumsplacering, skapa egna rum och sortera portalen.</p>
-                  </div>
-                </div>
-
-                {/* Option 2: Setup wizard in edit mode */}
-                <div 
-                  className="settings-hub-card" 
-                  onClick={() => {
-                    setShowSettingsHub(false)
-                    setShowSetupWizard(true)
-                  }}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => e.key === 'Enter' && (setShowSettingsHub(false) || setShowSetupWizard(true))}
-                >
-                  <div className="settings-hub-card__icon">⚙️</div>
-                  <div className="settings-hub-card__content">
-                    <h3>Konfigurera enheter</h3>
-                    <p>Lägg till nya lampor (Hue, IKEA, Govee, Matter, Cast-enheter), ändra parningar, WiFi-lösenord eller anteckningar.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
         )}
 
         {/* ── Setup Wizard Modal (Edit Mode) ── */}
@@ -413,3 +551,4 @@ export default function App() {
     </>
   )
 }
+

@@ -4,7 +4,40 @@ All notable changes to the Local Standalone Guest Portal will be documented in t
 
 ---
 
-## [1.2.0] - 2026-05-26
+## [0.5.0] - 2026-06-07
+### Added
+- **Docker-support**: Det går nu att installera och köra gästportalen i en Docker-container.
+- **Produktionsservering**: Express-servern serverar nu den kompilerade klienten (`client/dist`) automatiskt när den körs i produktion.
+
+---
+
+## [0.4.0] - 2026-05-29
+### Changed
+- **Skandinavisk Minimalism Redesign (Desktop & Global)**:
+  - Genomfört en total visuell och strukturell omvandling av gränssnittet till ett ljus minimalistiskt tema med dämpade pastellbakgrunder.
+  - Flyttat rums- och belysningskontrollerna front and center på desktop.
+  - Ersatt den gamla tab-baren och informationspanelen med en flytande bottenmeny (Dock-bar) innehållande popup-bubblor (popovers) för WiFi-inloggning, husanteckningar och systemstatus.
+  - Implementerat en lila inställningsdropdown uppe till höger med snabbval till inställningsguiden och rumsorganisatören.
+  - Skapat ultratunna (3px) reglage för ljusstyrka och färgtemperatur för en renare visuell profil.
+- **Levande Bakgrundsblobar & Premium Glasdesign**:
+  - Lagt till en fjärde pastell-lavendelblobb i bakgrunden för rikare färgdjup som harmoniserar med den lila inställningsknappen.
+  - Implementerat super-dynamisk, morfkraftig keyframe-animering av blobarnas `border-radius`, rotation, skala och position (organisk lavalampa-effekt).
+  - Skärpt konturerna på bakgrundsblobarna (blur 80px, opacitet 52%) och bytt blend mode till `normal` för krispigare pasteller i ljust läge.
+  - Uppgraderat `.room-section` och `.light-card` med ökad transparens, kraftigare `backdrop-filter: blur(20px)` och saturerande färggenomsläpp (`saturate(160%)` till `saturate(170%)`) så att blobarna färgar av sig på glaset när de glider under dem.
+  - Skapat lysande varma glasgradienter (`linear-gradient`) för aktiva ljuskort (`.light-card--on` med `saturate(180%)`) och ett exklusivt indigo-blått glaskort för spelande mediespelare (`.media-card--playing`).
+  - Lagt till lyxig taktil 3D hover-övergång (`transform: translateY(-2px)`) med spring-kurvor på alla ljus- och mediekort.
+- **Modernisering av Ikoner till Lucide React**:
+  - Helt utraderat alla operativsystemsberoende och stela emojis i gränssnittet till förmån för enhetliga outline-vektorer från **Lucide React**.
+  - Utrustat den lila inställningsknappen med en rotationsanimerad `<Settings />`-ikon (snurrar mjukt 90 grader på hover).
+  - Integrerat outline-ikoner för alla dropdown-val och dock-knappar: `<Sparkles />` (Scener), `<Wifi />` (WiFi), `<FileText />` (Anteckningar/Husmanual) och `<Info />` (Status).
+  - Implementerat intelligent enhetsdetektering: visar automatiskt `<Plug />` för eluttag och `<Lightbulb />` för lampor på ljuskorten, samt `<Cast />` (Chromecast), `<Tv />` eller `<Speaker />` på mediekorten baserat på dess profil.
+  - Dimmer-reglagen har utrustats med knivskarpa vektorer för ljusstyrka (`<Sun />`) och färgtemperatur (`<Thermometer />`, `<Snowflake />`).
+  - Skapat roterande vektorspinners (`<Loader2 />` med spin-keyframes) och framgångs-bockar (`<Check />`) för scener i SceneGrid under laddnings- och bekräftelseförlopp.
+  - Ramat in manuella husanteckningsemojis i eleganta ikoncirklar (`.note-item__icon-wrap`) med subtila bakgrunder.
+
+---
+
+## [0.3.0] - 2026-05-26
 ### Added
 - Proactive local database Git protection: Added `server/data/` (Matter commissioned fabrics and controller cache) to `.gitignore` to prevent leaking local network keys.
 - Cleaned up potential UUID credentials from sample template files (`.env.example`).
@@ -15,7 +48,7 @@ All notable changes to the Local Standalone Guest Portal will be documented in t
 
 ---
 
-## [1.1.0] - 2026-05-26
+## [0.2.0] - 2026-05-26
 ### Added
 - **Direct Matter Protocol Support**: Native integration with `@project-chip/matter.js` and `@project-chip/matter-node.js`.
 - Act as a local **Matter Commissioner & Controller**:
@@ -27,7 +60,7 @@ All notable changes to the Local Standalone Guest Portal will be documented in t
 
 ---
 
-## [1.0.0] - 2026-05-15
+## [0.1.0] - 2026-05-15
 ### Added
 - **Core Guest Portal Web Application**: Premium dark glassmorphism layout optimized for mobile screens, foldable layouts (Pixel Fold / Pixel 10 Pro Fold), and desktop displays.
 - **Dynamic Setup Wizard**: Step-by-step first-run configuration helper that auto-saves credentials in `runtime-config.json` and skips steps for unselected services.
