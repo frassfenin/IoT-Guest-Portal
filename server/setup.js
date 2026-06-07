@@ -807,10 +807,10 @@ router.post('/matter/lights', async (_req, res) => {
 // ──────────────────────────────────────────────────────────────
 //  POST /api/setup/save
 //  Sparar hela konfigurationen och markerar setup som klar.
-//  Body: { cast: [{ip, name}], info: {...}, lights: [...], scenes: [...] }
+//  Body: { cast: [{ip, name}], info: {...}, lights: [...], scenes: [...], rooms: [...] }
 // ──────────────────────────────────────────────────────────────
 router.post('/save', (req, res) => {
-  const { cast, info, lights, media_players, scenes, matter } = req.body
+  const { cast, info, lights, media_players, scenes, matter, rooms } = req.body
 
   updateRuntimeConfig({
     setupComplete: true,
@@ -819,9 +819,27 @@ router.post('/save', (req, res) => {
     lights:        lights       ?? [],
     media_players: media_players ?? [],
     scenes:        scenes       ?? [],
+    rooms:         rooms        ?? [],
     ...(matter && { matter }),
   })
 
+  res.json({ ok: true })
+})
+
+// ──────────────────────────────────────────────────────────────
+//  POST /api/setup/import
+//  Importerar och skriver över en hel systemkonfiguration.
+// ──────────────────────────────────────────────────────────────
+router.post('/import', (req, res) => {
+  const config = req.body
+  if (!config || typeof config !== 'object') {
+    return res.status(400).json({ error: 'Ogiltig systemkonfiguration' })
+  }
+
+  // Säkerställ att setupComplete markeras så att portalen laddar broar vid omstart
+  config.setupComplete = true
+
+  writeRuntimeConfig(config)
   res.json({ ok: true })
 })
 

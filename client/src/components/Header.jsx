@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Settings, Sliders, LayoutGrid, Eye, KeyRound, LogOut } from 'lucide-react'
+import { Settings, Sliders, LayoutGrid, Eye, KeyRound, LogOut, Download, Upload } from 'lucide-react'
 
 // Returnerar en hälsning baserad på tidpunkt
 function getGreeting() {
@@ -22,9 +22,51 @@ function formatDate(date) {
   return date.toLocaleDateString('sv-SE', { weekday: 'long', day: 'numeric', month: 'long' })
 }
 
-export default function Header({ connected, onOpenOrganizer, onOpenSetupWizard, blurEnabled, onToggleBlur }) {
+export default function Header({ connected, config, onImportConfig, onOpenOrganizer, onOpenSetupWizard, blurEnabled, onToggleBlur }) {
   const [now, setNow] = useState(new Date())
   const [dropdownOpen, setDropdownOpen] = useState(false)
+
+  const handleExportConfig = () => {
+    setDropdownOpen(false)
+    if (!config) return
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(config, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", `gastportal-backup-${new Date().toISOString().split('T')[0]}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+  }
+
+  const handleImportConfig = (e) => {
+    setDropdownOpen(false)
+    const file = e.target.files[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = async (event) => {
+      try {
+        const imported = JSON.parse(event.target.result)
+        if (!imported || typeof imported !== 'object' || !imported.lights) {
+          alert('Ogiltig backup-fil! Den måste innehålla en giltig systemkonfiguration.')
+          return
+        }
+
+        if (!confirm('Är du säker på att du vill importera denna konfiguration? Nuvarande inställningar kommer att skrivas över.')) {
+          return
+        }
+
+        if (onImportConfig) {
+          await onImportConfig(imported)
+          alert('Systemkonfigurationen har importerats framgångsrikt!')
+        }
+      } catch (err) {
+        console.error('Import misslyckades:', err)
+        alert(`Kunde inte importera konfigurationen: ${err.message}`)
+      }
+    }
+    reader.readAsText(file)
+  }
 
   // Uppdatera klockan varje sekund
   useEffect(() => {
@@ -112,6 +154,29 @@ export default function Header({ connected, onOpenOrganizer, onOpenSetupWizard, 
               <Eye size={16} className="settings-dropdown__icon" style={{ strokeWidth: 2.2 }} />
               Suddig bakgrund: {blurEnabled ? 'PÅ' : 'AV'}
             </button>
+            <div className="settings-dropdown__divider" />
+            <button 
+              className="settings-dropdown__item" 
+              role="menuitem"
+              onClick={handleExportConfig}
+            >
+              <Download size={16} className="settings-dropdown__icon" style={{ strokeWidth: 2.2 }} />
+              Exportera backup
+            </button>
+            <label 
+              className="settings-dropdown__item" 
+              role="menuitem"
+              style={{ cursor: 'pointer', margin: 0 }}
+            >
+              <Upload size={16} className="settings-dropdown__icon" style={{ strokeWidth: 2.2 }} />
+              Importera backup
+              <input 
+                type="file" 
+                accept=".json" 
+                onChange={handleImportConfig} 
+                style={{ display: 'none' }} 
+              />
+            </label>
             <div className="settings-dropdown__divider" />
             <button 
               className="settings-dropdown__item" 

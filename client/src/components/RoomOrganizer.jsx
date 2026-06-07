@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { 
   Home, Bed, Tv, Sofa, ChefHat, Bath, Key, Flower2, Gamepad2, 
-  Lightbulb, Trash2, X, Plus, FolderOpen, ArrowLeft, PlusCircle, MinusCircle
+  Lightbulb, Trash2, X, Plus, FolderOpen, ArrowLeft, PlusCircle, MinusCircle,
+  ChevronUp, ChevronDown
 } from 'lucide-react'
 
 // Matcher för rumsnamn till Lucide-ikoner (Dashboard Outline-estetik)
@@ -19,11 +20,16 @@ function getRoomIcon(roomName) {
 }
 
 export default function RoomOrganizer({ config, onSave, onClose }) {
-  // Initiera unika rum från befintliga lampor (exkludera 'Övrigt' i huvudlistan)
+  // Initiera unika rum från befintliga lampor och bibehåll sparad ordning om den finns
   const [rooms, setRooms] = useState(() => {
     const existing = config.lights.map((l) => l.room || 'Övrigt')
     const unique = Array.from(new Set(existing)).filter((r) => r !== 'Övrigt')
-    return unique
+    const savedRooms = config.rooms || []
+    if (savedRooms.length === 0) return unique
+
+    const ordered = savedRooms.filter((r) => unique.includes(r))
+    const remaining = unique.filter((r) => !savedRooms.includes(r))
+    return [...ordered, ...remaining]
   })
 
   // Skapa en kopia av lamporna för lokal editering
@@ -101,6 +107,23 @@ export default function RoomOrganizer({ config, onSave, onClose }) {
     }
   }
 
+  // ── Flytta rum upp/ner i listan ─────────────────────────────
+  const handleMoveRoom = (roomName, direction) => {
+    const index = rooms.indexOf(roomName)
+    if (index === -1) return
+    const newRooms = [...rooms]
+    if (direction === 'up' && index > 0) {
+      const temp = newRooms[index - 1]
+      newRooms[index - 1] = newRooms[index]
+      newRooms[index] = temp
+    } else if (direction === 'down' && index < newRooms.length - 1) {
+      const temp = newRooms[index + 1]
+      newRooms[index + 1] = newRooms[index]
+      newRooms[index] = temp
+    }
+    setRooms(newRooms)
+  }
+
   // ── Lägg till lampa i aktivt rum ─────────────────────────────
   const handleAddLight = (entity_id) => {
     setLights((prev) =>
@@ -117,7 +140,7 @@ export default function RoomOrganizer({ config, onSave, onClose }) {
 
   // ── Spara alla ändringar ─────────────────────────────────────
   const handleSave = () => {
-    onSave(lights)
+    onSave(lights, rooms)
   }
 
   // Räkna antal lampor per rum
@@ -167,20 +190,60 @@ export default function RoomOrganizer({ config, onSave, onClose }) {
           <Icon size={16} style={{ strokeWidth: isActive ? 2.5 : 2.2 }} />
           <span className="rooms-sidebar-item__name">{displayName}</span>
         </span>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span className="rooms-sidebar-item__count">{count}</span>
           {!isFallback && (
-            <button
-              type="button"
-              className="rooms-sidebar-item__delete"
-              onClick={(e) => {
-                e.stopPropagation()
-                handleDeleteRoom(roomName)
-              }}
-              title={`Ta bort rummet ${roomName}`}
-            >
-              <Trash2 size={13} style={{ strokeWidth: 2.2 }} />
-            </button>
+            <>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleMoveRoom(roomName, 'up')
+                  }}
+                  disabled={rooms.indexOf(roomName) === 0}
+                  style={{ 
+                    opacity: rooms.indexOf(roomName) === 0 ? 0.25 : 0.7, 
+                    cursor: rooms.indexOf(roomName) === 0 ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                  title="Flytta upp"
+                >
+                  <ChevronUp size={12} style={{ strokeWidth: 2.5 }} />
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleMoveRoom(roomName, 'down')
+                  }}
+                  disabled={rooms.indexOf(roomName) === rooms.length - 1}
+                  style={{ 
+                    opacity: rooms.indexOf(roomName) === rooms.length - 1 ? 0.25 : 0.7, 
+                    cursor: rooms.indexOf(roomName) === rooms.length - 1 ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                  title="Flytta ner"
+                >
+                  <ChevronDown size={12} style={{ strokeWidth: 2.5 }} />
+                </button>
+              </div>
+              <button
+                type="button"
+                className="rooms-sidebar-item__delete"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleDeleteRoom(roomName)
+                }}
+                title={`Ta bort rummet ${roomName}`}
+              >
+                <Trash2 size={13} style={{ strokeWidth: 2.2 }} />
+              </button>
+            </>
           )}
         </div>
       </button>

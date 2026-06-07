@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { FolderOpen } from 'lucide-react'
 
 function LightConfigurator({ lights, onChange }) {
   if (lights.length === 0) {
@@ -64,6 +65,47 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
   const [step, setStep] = useState(1)
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
+
+  const handleImportBackup = (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = async (event) => {
+      try {
+        const config = JSON.parse(event.target.result)
+        if (!config || typeof config !== 'object' || !config.lights) {
+          alert('Ogiltig backup-fil! Den måste innehålla en giltig systemkonfiguration.')
+          return
+        }
+
+        if (!confirm('Är du säker på att du vill importera denna konfiguration? Nuvarande inställningar kommer att skrivas över.')) {
+          return
+        }
+
+        setLoading(true)
+        const res = await fetch('/api/setup/import', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(config)
+        })
+
+        if (!res.ok) {
+          const data = await res.json()
+          throw new Error(data.error || 'Kunde inte importera backupen')
+        }
+
+        alert('Konfigurationen har importerats framgångsrikt!')
+        if (onComplete) onComplete()
+      } catch (err) {
+        console.error('Import misslyckades:', err)
+        alert(`Kunde inte importera konfigurationen: ${err.message}`)
+      } finally {
+        setLoading(false)
+      }
+    }
+    reader.readAsText(file)
+  }
 
   // ── States för varje steg ───────────────────────────────
   const [services, setServices] = useState({
@@ -974,13 +1016,29 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
             </div>
           </div>
 
-          <button 
-            className="setup-btn setup-btn--primary setup-btn--large" 
-            onClick={nextStep}
-            disabled={!Object.values(services).some(v => v)}
-          >
-            Starta guiden
-          </button>
+          <div style={{ display: 'flex', gap: '12px', marginTop: '20px' }}>
+            <button 
+              className="setup-btn setup-btn--primary setup-btn--large" 
+              onClick={nextStep}
+              disabled={!Object.values(services).some(v => v)}
+              style={{ flex: 1 }}
+            >
+              Starta guiden
+            </button>
+            <label 
+              className="setup-btn setup-btn--secondary setup-btn--large" 
+              style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', gap: 6, flex: 1, margin: 0 }}
+            >
+              <FolderOpen size={16} />
+              Importera backup
+              <input
+                type="file"
+                accept=".json"
+                onChange={handleImportBackup}
+                style={{ display: 'none' }}
+              />
+            </label>
+          </div>
         </div>
       )}
 
