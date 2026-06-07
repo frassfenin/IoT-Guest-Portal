@@ -23,6 +23,7 @@ export const DEFAULT_CONFIG = {
   matter:    [],
   cast:      [],                   // [{ name, ip }]
   lights:    [],                   // Kopieras från config.json efter setup
+  rooms:     [],
   media_players: [],
   scenes:    [],
   info: {

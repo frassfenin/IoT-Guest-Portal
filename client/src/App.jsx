@@ -82,11 +82,12 @@ export default function App() {
   }, [config])
 
 
-  const handleSaveRooms = useCallback(async (updatedLights) => {
+  const handleSaveRooms = useCallback(async (updatedLights, updatedRooms) => {
     if (!config) return
     const updatedConfig = {
       ...config,
-      lights: updatedLights
+      lights: updatedLights,
+      rooms: updatedRooms
     }
 
     try {
@@ -109,6 +110,26 @@ export default function App() {
       alert('Kunde inte spara ändringarna. Kontrollera anslutningen till servern.')
     }
   }, [config])
+
+  const handleImportConfig = useCallback(async (importedConfig) => {
+    try {
+      const res = await fetch('/api/setup/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(importedConfig)
+      })
+
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || 'Kunde inte importera backupen')
+      }
+
+      socket.emit('setup_complete')
+    } catch (err) {
+      console.error('Kunde inte importera konfiguration:', err)
+      throw err
+    }
+  }, [])
 
   const loadPortal = useCallback(() => {
     Promise.all([
@@ -293,6 +314,8 @@ export default function App() {
         <div className="portal-header">
           <Header 
             connected={connected} 
+            config={config}
+            onImportConfig={handleImportConfig}
             onOpenOrganizer={() => setShowOrganizer(true)} 
             onOpenSetupWizard={() => setShowSetupWizard(true)}
             blurEnabled={blurEnabled}
@@ -320,24 +343,36 @@ export default function App() {
                   <div className="section-header__line" />
                 </div>
                 <div className="rooms-grid">
-                  {Object.entries(roomGroups).map(([room, lights]) => (
-                    <div key={room} className="room-section" style={{ marginBottom: 'var(--space-4)' }}>
-                      <p className="text-xs text-dim font-semibold"
-                         style={{ textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8, color: 'var(--text-2)' }}>
-                        {room}
-                      </p>
-                      <div className="room-lights-grid">
-                        {lights.map((light) => (
-                          <LightCard
-                            key={light.entity_id}
-                            config={light}
-                            state={states[light.entity_id]}
-                            onChange={controlLight}
-                          />
-                        ))}
+                  {Object.entries(roomGroups)
+                    .sort(([roomA], [roomB]) => {
+                      if (roomA === 'Övrigt') return 1
+                      if (roomB === 'Övrigt') return -1
+                      const savedRooms = config.rooms || []
+                      const idxA = savedRooms.indexOf(roomA)
+                      const idxB = savedRooms.indexOf(roomB)
+                      if (idxA === -1 && idxB === -1) return roomA.localeCompare(roomB)
+                      if (idxA === -1) return 1
+                      if (idxB === -1) return -1
+                      return idxA - idxB
+                    })
+                    .map(([room, lights]) => (
+                      <div key={room} className="room-section" style={{ marginBottom: 'var(--space-4)' }}>
+                        <p className="text-xs text-dim font-semibold"
+                           style={{ textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8, color: 'var(--text-2)' }}>
+                          {room}
+                        </p>
+                        <div className="room-lights-grid">
+                          {lights.map((light) => (
+                            <LightCard
+                              key={light.entity_id}
+                              config={light}
+                              state={states[light.entity_id]}
+                              onChange={controlLight}
+                            />
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
                 </div>
               </div>
 
