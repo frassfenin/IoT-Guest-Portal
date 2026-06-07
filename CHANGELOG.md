@@ -4,6 +4,10 @@ All notable changes to the Local Standalone Guest Portal will be documented in t
 
 ---
 
+## [0.5.1] - 2026-06-07
+### Fixed
+- **Matter-parning (InvalidNodeId / addNoc 5)**: Åtgärdat ett fel under parning av vissa Matter-enheter (såsom Nanoleaf NL68) där driftsättningen misslyckades med statuskod `5` under `addNoc`. Löst genom att tvinga fram 32-bitars Node ID:n (`1000` - `999999`) vid generering istället för standard 64-bitars slumpmässiga BigInts, vilket var oförenligt med enheternas firmware.
+
 ## [0.5.0] - 2026-06-07
 ### Added
 - **Docker-support**: Det går nu att installera och köra gästportalen i en Docker-container.
