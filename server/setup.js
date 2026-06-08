@@ -10,9 +10,12 @@
 import { Router } from 'express'
 import { Agent, fetch as undiciF } from 'undici'
 import { createHash, randomBytes } from 'crypto'
-import { readRuntimeConfig, writeRuntimeConfig, updateRuntimeConfig } from './runtimeConfig.js'
+import { readRuntimeConfig, writeRuntimeConfig, updateRuntimeConfig, DEFAULT_CONFIG } from './runtimeConfig.js'
 import tradfriPkg from 'node-tradfri-client'
 import dgram from 'dgram'
+import { existsSync, rmSync } from 'fs'
+import { join, dirname } from 'path'
+import { fileURLToPath } from 'url'
 
 const { TradfriClient } = tradfriPkg ?? {}
 
@@ -854,4 +857,29 @@ router.post('/reset', (_req, res) => {
   res.json({ ok: true })
 })
 
+// ──────────────────────────────────────────────────────────────
+//  POST /api/setup/factory-reset
+//  Fabriksåterställer hela systemet till noll.
+// ──────────────────────────────────────────────────────────────
+router.post('/factory-reset', (_req, res) => {
+  console.log('🧹 [FACTORY RESET] Återställer gästportalen till noll...')
+  writeRuntimeConfig(DEFAULT_CONFIG)
+
+  // Ta bort matter-store databasen
+  const __dirname = dirname(fileURLToPath(import.meta.url))
+  const ROOT = join(__dirname, '..')
+  const matterStorePath = join(ROOT, 'server/data/matter-store')
+  if (existsSync(matterStorePath)) {
+    try {
+      rmSync(matterStorePath, { recursive: true, force: true })
+      console.log('🧹 [FACTORY RESET] Tog bort matter-store databasen.')
+    } catch (err) {
+      console.error('⚠️ [FACTORY RESET] Kunde inte ta bort matter-store:', err.message)
+    }
+  }
+
+  res.json({ ok: true })
+})
+
 export default router
+

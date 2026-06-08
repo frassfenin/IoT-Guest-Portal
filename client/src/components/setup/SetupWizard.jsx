@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { FolderOpen, Plus, Trash2, ArrowLeft, Settings, Check, HelpCircle, Home, Lightbulb, Sliders, Palette, Cast, Cpu, Wifi, Save, Power, RefreshCw, Search, Zap, Server, CheckCircle2, AlertCircle, Pin } from 'lucide-react'
+import { FolderOpen, Plus, Trash2, ArrowLeft, Settings, Check, HelpCircle, Home, Lightbulb, Sliders, Palette, Cast, Cpu, Wifi, Save, Power, RefreshCw, Search, Zap, Server, CheckCircle2, AlertCircle, Pin, AlertTriangle, Loader2, Download, Upload } from 'lucide-react'
 
 function LightConfigurator({ lights, onChange, rooms = [], onAddRoom }) {
   const [newRoomForLight, setNewRoomForLight] = useState({});
@@ -154,10 +154,19 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
     const formatted = trimmed.charAt(0).toUpperCase() + trimmed.slice(1)
     if (!rooms.includes(formatted)) {
       setRooms([...rooms, formatted])
+      markDirty()
     }
   }
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [showResetConfirmation, setShowResetConfirmation] = useState(false)
+  const [resetConfirmText, setResetConfirmText] = useState('')
+  const [resetting, setResetting] = useState(false)
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+
+  const markDirty = () => {
+    if (initialConfig) setHasUnsavedChanges(true)
+  }
 
   const handleImportBackup = (e) => {
     const file = e.target.files[0]
@@ -198,6 +207,45 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
       }
     }
     reader.readAsText(file)
+  }
+
+  const handleExportBackup = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const res = await fetch('/api/config')
+      if (!res.ok) throw new Error('Kunde inte hämta konfiguration från servern.')
+      const data = await res.json()
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2))
+      const downloadAnchor = document.createElement('a')
+      downloadAnchor.setAttribute("href", dataStr)
+      downloadAnchor.setAttribute("download", `gastportal-backup-${new Date().toISOString().split('T')[0]}.json`)
+      document.body.appendChild(downloadAnchor)
+      downloadAnchor.click()
+      downloadAnchor.remove()
+    } catch (err) {
+      console.error(err)
+      setError(err.message || 'Ett fel uppstod vid export.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleFactoryReset = async () => {
+    if (resetConfirmText !== 'BEKRÄFTA') return
+    try {
+      setResetting(true)
+      setError(null)
+      const res = await fetch('/api/setup/factory-reset', { method: 'POST' })
+      if (!res.ok) {
+        throw new Error('Servern misslyckades med att fabriksåterställa.')
+      }
+      window.location.reload()
+    } catch (err) {
+      console.error(err)
+      setError(err.message || 'Ett fel uppstod vid fabriksåterställning.')
+      setResetting(false)
+    }
   }
 
   // ── States för varje steg ───────────────────────────────
@@ -732,14 +780,17 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
       copy[index].error = null
       return copy
     })
+    markDirty()
   }
 
   const addCastDevice = () => {
     setCastList((prev) => [...prev, { ip: '', name: `Cast Enhet ${prev.length + 1}`, tested: false, error: null, loading: false }])
+    markDirty()
   }
 
   const removeCastDevice = (index) => {
     setCastList((prev) => prev.filter((_, i) => i !== index))
+    markDirty()
   }
 
   // ── Helper för förändringar i lampor ─────────────────────
@@ -749,6 +800,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
       copy[index][field] = val
       return copy
     })
+    markDirty()
   }
 
   const updateIkeaLight = (index, field, val) => {
@@ -757,6 +809,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
       copy[index][field] = val
       return copy
     })
+    markDirty()
   }
 
   const updateGoveeLight = (index, field, val) => {
@@ -765,6 +818,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
       copy[index][field] = val
       return copy
     })
+    markDirty()
   }
 
   const updateMatterLight = (index, field, val) => {
@@ -773,6 +827,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
       copy[index][field] = val
       return copy
     })
+    markDirty()
   }
 
   // ── Notes manipulation ───────────────────────────────────
@@ -782,18 +837,21 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
       copy[index][field] = value
       return copy
     })
+    markDirty()
   }
 
   const addNote = () => {
     setNotes((prev) => [...prev, { emoji: '📌', title: 'Ny rubrik', text: 'Skriv text här...' }])
+    markDirty()
   }
 
   const removeNote = (index) => {
     setNotes((prev) => prev.filter((_, i) => i !== index))
+    markDirty()
   }
 
   // ── Save configuration ──────────────────────────────────
-  const saveSetup = async () => {
+  const saveSetup = async ({ closeAfter = true } = {}) => {
     setLoading(true)
     setError(null)
 
@@ -950,7 +1008,10 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
         throw new Error(errData.error || 'Kunde inte spara konfigurationen')
       }
 
-      onComplete()
+      setHasUnsavedChanges(false)
+      if (closeAfter) {
+        onComplete()
+      }
     } catch (err) {
       setError(`Kunde inte slutföra installationen: ${err.message}`)
     } finally {
@@ -958,10 +1019,17 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
     }
   }
 
-  // ── Navigering ──────────────────────────────────────────
+  const handleClose = () => {
+    if (hasUnsavedChanges) {
+      if (!confirm('Du har osparade ändringar. Vill du stänga ändå?')) return
+    }
+    if (onCancel) onCancel()
+  }
+
+  // ── Navigering ──────────────────────────────────────────────
   const getActiveStepsList = () => {
     if (initialConfig) {
-      return [12, 11, 2, 3, 4, 6, 10, 8, 9]
+      return [12, 11, 2, 3, 4, 6, 10, 8]
     }
     const list = [1] // Välkommen
     list.push(11) // Skapa rum
@@ -1008,7 +1076,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
     { id: 6, name: 'Google Cast', iconComponent: Cast, colorClass: 'cast', desc: 'Cast-enheter' },
     { id: 10, name: 'Matter-enheter', iconComponent: Cpu, colorClass: 'matter', desc: 'Lokal direktstyrning' },
     { id: 8, name: 'WiFi & info', iconComponent: Wifi, colorClass: 'wifi', desc: 'Gäst-WiFi & Husmanual' },
-    { id: 9, name: 'Spara & stäng', iconComponent: Save, colorClass: 'save', desc: 'Spara ändringar' }
+
   ]
 
   const getStepName = (stepId) => {
@@ -1026,6 +1094,41 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
       default: return `Steg ${stepId}`
     }
   }
+
+  const renderEditStepActions = () => (
+    <div className="step-actions" style={{ marginTop: 24 }}>
+      {hasUnsavedChanges ? (
+        <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
+          <button
+            className="setup-btn setup-btn--secondary"
+            onClick={() => saveSetup({ closeAfter: false })}
+            disabled={loading}
+            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+          >
+            {loading ? <Loader2 size={14} className="setup-btn-spin" /> : <Save size={14} />}
+            Spara
+          </button>
+          <button
+            className="setup-btn setup-btn--primary"
+            onClick={() => saveSetup({ closeAfter: true })}
+            disabled={loading}
+            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+          >
+            {loading ? <Loader2 size={14} className="setup-btn-spin" /> : <Save size={14} />}
+            Spara och stäng
+          </button>
+        </div>
+      ) : (
+        <button
+          className="setup-btn setup-btn--secondary"
+          onClick={handleClose}
+          style={{ width: '100%' }}
+        >
+          Stäng
+        </button>
+      )}
+    </div>
+  )
 
   const renderDashboard = () => {
     return (
@@ -1076,9 +1179,9 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
             <button
               type="button"
               className="setup-btn setup-btn--cancel"
-              onClick={onCancel}
+              onClick={handleClose}
             >
-              ✕ Avbryt
+              ✕ Stäng
             </button>
           )}
         </div>
@@ -1170,15 +1273,122 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                 <Settings size={32} className="setup-icon-svg" />
               </div>
               <h2>Generella inställningar</h2>
-              <p className="description">
-                Denna sektion fylls på med allmänna systeminställningar senare.
+              <p className="description" style={{ marginBottom: 24 }}>
+                Hantera systemets säkerhetskopior eller utför en fabriksåterställning av gästportalen.
               </p>
+
+              {/* Backup & Återställning */}
+              <div className="backup-zone-card" style={{ marginBottom: '24px' }}>
+                <h3 className="backup-zone-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--blue)', fontSize: 'var(--text-md)', fontWeight: 700, marginBottom: '8px' }}>
+                  <FolderOpen size={18} style={{ color: '#3b82f6' }} />
+                  Backup & Återställning
+                </h3>
+                <p className="backup-zone-desc" style={{ fontSize: 'var(--text-xs)', color: 'var(--text-2)', marginBottom: '16px', lineHeight: 1.4 }}>
+                  Exportera din nuvarande konfiguration till en backupfil, eller återställ systemet genom att importera en tidigare sparad backup.
+                </p>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <button
+                    type="button"
+                    className="setup-btn setup-btn--secondary"
+                    onClick={handleExportBackup}
+                    style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                    disabled={loading}
+                  >
+                    <Download size={14} />
+                    Exportera backup
+                  </button>
+                  <label
+                    className="setup-btn setup-btn--secondary"
+                    style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', gap: 6, flex: 1, margin: 0 }}
+                  >
+                    <Upload size={14} />
+                    Importera backup
+                    <input
+                      type="file"
+                      accept=".json"
+                      onChange={handleImportBackup}
+                      style={{ display: 'none' }}
+                      disabled={loading}
+                    />
+                  </label>
+                </div>
+              </div>
+
+              {/* Danger Zone för Fabriksåterställning */}
+              <div className="danger-zone-card" style={{ marginTop: '32px', borderLeft: '4px solid #dc2626' }}>
+                <h3 className="danger-zone-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#dc2626', fontSize: 'var(--text-md)', fontWeight: 700, marginBottom: '8px' }}>
+                  <AlertTriangle size={18} />
+                  Farliga inställningar (Danger Zone)
+                </h3>
+                <p className="danger-zone-desc" style={{ fontSize: 'var(--text-xs)', color: 'var(--text-2)', marginBottom: '16px', lineHeight: 1.4 }}>
+                  Genom att fabriksåterställa appen raderar du all sparad konfiguration (inklusive integrationer, rum, lampor, mediaspelare, WiFi-inställningar och scener). Detta går inte att ångra.
+                </p>
+
+                {!showResetConfirmation ? (
+                  <button 
+                    type="button" 
+                    className="setup-btn setup-btn--danger"
+                    onClick={() => {
+                      setShowResetConfirmation(true)
+                      setResetConfirmText('')
+                    }}
+                    style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                  >
+                    <Trash2 size={16} />
+                    Fabriksåterställ allt...
+                  </button>
+                ) : (
+                  <div className="danger-confirm-box fade-in" style={{ background: 'rgba(220, 38, 38, 0.03)', border: '1px solid rgba(220, 38, 38, 0.15)', borderRadius: 'var(--radius-xs)', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <p style={{ fontSize: 'var(--text-xs)', fontWeight: 600, color: '#dc2626', margin: 0 }}>
+                      Skriv <strong style={{ textDecoration: 'underline' }}>BEKRÄFTA</strong> i fältet nedan för att verkställa borttagningen:
+                    </p>
+                    <div className="input-group">
+                      <input
+                        type="text"
+                        placeholder="Skriv BEKRÄFTA..."
+                        value={resetConfirmText}
+                        onChange={(e) => setResetConfirmText(e.target.value)}
+                        disabled={resetting}
+                        style={{ textTransform: 'uppercase' }}
+                      />
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                      <button
+                        type="button"
+                        className="setup-btn setup-btn--secondary"
+                        onClick={() => setShowResetConfirmation(false)}
+                        disabled={resetting}
+                        style={{ flex: 1 }}
+                      >
+                        Avbryt
+                      </button>
+                      <button
+                        type="button"
+                        className="setup-btn setup-btn--danger-action"
+                        onClick={handleFactoryReset}
+                        disabled={resetConfirmText !== 'BEKRÄFTA' || resetting}
+                        style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                      >
+                        {resetting ? (
+                          <>
+                            <Loader2 size={14} className="setup-btn-spin" />
+                            Återställer...
+                          </>
+                        ) : (
+                          <>
+                            <Trash2 size={14} />
+                            Radera allt!
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
               
               <div className="step-actions" style={{ marginTop: 24 }}>
                 {initialConfig ? (
-                  <button className="setup-btn setup-btn--primary" onClick={() => setStep(100)} style={{ width: '100%' }}>
-                    Klar och tillbaka till översikt
-                  </button>
+                  renderEditStepActions()
                 ) : (
                   <>
                     <button className="setup-btn setup-btn--text" onClick={prevStep}>Bakåt</button>
@@ -1363,9 +1573,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                     <button className="setup-btn setup-btn--primary" onClick={nextStep}>Nästa</button>
                   </>
                 ) : (
-                  <button className="setup-btn setup-btn--primary" onClick={() => setStep(100)} style={{ width: '100%' }}>
-                    Klar och tillbaka till översikt
-                  </button>
+                  renderEditStepActions()
                 )}
               </div>
             </div>
@@ -1452,9 +1660,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                     <button className="setup-btn setup-btn--primary" onClick={nextStep}>Nästa</button>
                   </>
                 ) : (
-                  <button className="setup-btn setup-btn--primary" onClick={() => setStep(100)} style={{ width: '100%' }}>
-                    Klar och tillbaka till översikt
-                  </button>
+                  renderEditStepActions()
                 )}
               </div>
             </div>
@@ -1579,9 +1785,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                     <button className="setup-btn setup-btn--primary" onClick={nextStep}>Nästa</button>
                   </>
                 ) : (
-                  <button className="setup-btn setup-btn--primary" onClick={() => setStep(100)} style={{ width: '100%' }}>
-                    Klar och tillbaka till översikt
-                  </button>
+                  renderEditStepActions()
                 )}
               </div>
             </div>
@@ -1655,9 +1859,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                     <button className="setup-btn setup-btn--primary" onClick={nextStep}>Nästa</button>
                   </>
                 ) : (
-                  <button className="setup-btn setup-btn--primary" onClick={() => setStep(100)} style={{ width: '100%' }}>
-                    Klar och tillbaka till översikt
-                  </button>
+                  renderEditStepActions()
                 )}
               </div>
             </div>
@@ -1760,9 +1962,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                     <button className="setup-btn setup-btn--primary" onClick={nextStep}>Nästa</button>
                   </>
                 ) : (
-                  <button className="setup-btn setup-btn--primary" onClick={() => setStep(100)} style={{ width: '100%' }}>
-                    Klar och tillbaka till översikt
-                  </button>
+                  renderEditStepActions()
                 )}
               </div>
             </div>
@@ -1879,9 +2079,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                     <button className="setup-btn setup-btn--primary" onClick={nextStep}>Nästa</button>
                   </>
                 ) : (
-                  <button className="setup-btn setup-btn--primary" onClick={() => setStep(100)} style={{ width: '100%' }}>
-                    Klar och tillbaka till översikt
-                  </button>
+                  renderEditStepActions()
                 )}
               </div>
             </div>
@@ -1904,7 +2102,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                   type="text"
                   placeholder="Skriv WiFi-namn"
                   value={wifi.name}
-                  onChange={(e) => setWifi({ ...wifi, name: e.target.value })}
+                  onChange={(e) => { setWifi({ ...wifi, name: e.target.value }); markDirty() }}
                 />
               </div>
 
@@ -1914,7 +2112,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                   type="text"
                   placeholder="Skriv WiFi-lösenord"
                   value={wifi.password}
-                  onChange={(e) => setWifi({ ...wifi, password: e.target.value })}
+                  onChange={(e) => { setWifi({ ...wifi, password: e.target.value }); markDirty() }}
                 />
               </div>
 
@@ -1971,9 +2169,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                     <button className="setup-btn setup-btn--primary" onClick={nextStep}>Nästa</button>
                   </>
                 ) : (
-                  <button className="setup-btn setup-btn--primary" onClick={() => setStep(100)} style={{ width: '100%' }}>
-                    Klar och tillbaka till översikt
-                  </button>
+                  renderEditStepActions()
                 )}
               </div>
             </div>

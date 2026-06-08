@@ -3796,5 +3796,78 @@ input[type="range"] {
   animation: spin 1s linear infinite;
 }
 
+/* Backup & Restore Zone */
+.backup-zone-card {
+  padding: var(--space-5);
+  background: rgba(59, 130, 246, 0.02);
+  border: 1px solid rgba(59, 130, 246, 0.15);
+  border-radius: var(--radius);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.05);
+}
+
+/* Danger Zone & Warning Buttons */
+.danger-zone-card {
+  margin-top: 32px;
+  padding: var(--space-5);
+  background: rgba(220, 38, 38, 0.02);
+  border: 1px solid rgba(220, 38, 38, 0.15);
+  border-radius: var(--radius);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 4px 16px rgba(220, 38, 38, 0.05);
+}
+
+.setup-btn--danger {
+  background: rgba(220, 38, 38, 0.08);
+  color: #ef4444;
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition);
+}
+
+.setup-btn--danger:hover:not(:disabled) {
+  background: rgba(220, 38, 38, 0.15);
+  border-color: rgba(220, 38, 38, 0.35);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.1);
+  transform: translateY(-1px);
+}
+
+.setup-btn--danger:active {
+  transform: translateY(0);
+}
+
+.setup-btn--danger-action {
+  background: #dc2626;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-weight: 700;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);
+  transition: all var(--transition);
+}
+
+.setup-btn--danger-action:hover:not(:disabled) {
+  background: #b91c1c;
+  box-shadow: 0 6px 16px rgba(220, 38, 38, 0.4);
+  transform: translateY(-1px);
+}
+
+.setup-btn--danger-action:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.setup-btn--danger-action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+
 
 
