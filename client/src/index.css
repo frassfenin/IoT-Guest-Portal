@@ -566,10 +566,18 @@ input[type="range"] {
 }
 
 .floating-dock__btn--active {
-  background: linear-gradient(135deg, rgba(124, 58, 237, 0.85), rgba(99, 102, 241, 0.85)) !important;
-  border: 1px solid rgba(255, 255, 255, 0.35) !important;
+  background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 50%, #6366f1 100%) !important;
+  background-size: 200% 200% !important;
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
   color: #ffffff !important;
-  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.45) !important;
+  transition: all var(--transition-fast), background-position 0.4s ease !important;
+}
+
+.floating-dock__btn--active:hover {
+  background-position: 100% 50% !important;
+  box-shadow: 0 8px 25px rgba(99, 102, 241, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
+  border-color: rgba(255, 255, 255, 0.65) !important;
 }
 
 /* Popover bubblor - Premium Glassmorphic Popover */
