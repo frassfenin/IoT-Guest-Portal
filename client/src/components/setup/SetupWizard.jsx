@@ -118,7 +118,13 @@ function LightConfigurator({ lights, onChange, rooms = [], onAddRoom }) {
 }
 
 export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
-  const [step, setStep] = useState(() => initialConfig ? 100 : 1)
+  const [step, setStep] = useState(() => {
+    if (initialConfig) {
+      const isLargeScreen = typeof window !== 'undefined' && window.innerWidth >= 768
+      return isLargeScreen ? 12 : 100
+    }
+    return 1
+  })
   const [rooms, setRooms] = useState(() => {
     if (initialConfig?.rooms && initialConfig.rooms.length > 0) {
       return initialConfig.rooms
@@ -953,7 +959,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
   // ── Navigering ──────────────────────────────────────────
   const getActiveStepsList = () => {
     if (initialConfig) {
-      return [11, 2, 3, 4, 6, 10, 8, 9]
+      return [12, 11, 2, 3, 4, 6, 10, 8, 9]
     }
     const list = [1] // Välkommen
     list.push(11) // Skapa rum
@@ -992,6 +998,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
   const progressPct = (activeIndex / totalActive) * 100
 
   const editItems = [
+    { id: 12, name: 'Generella inställningar', iconComponent: Settings, colorClass: 'general', desc: 'Allmänna systeminställningar' },
     { id: 11, name: 'Hantera rum', iconComponent: Home, colorClass: 'rooms', desc: 'Skapa och ta bort rum' },
     { id: 2, name: 'Philips Hue', iconComponent: Lightbulb, colorClass: 'hue', desc: 'Lokal belysning' },
     { id: 3, name: 'IKEA Smart Home', iconComponent: Sliders, colorClass: 'ikea', desc: 'Dirigera Hub / Trådfri' },
@@ -1005,6 +1012,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
   const getStepName = (stepId) => {
     switch (stepId) {
       case 1: return 'Välkommen'
+      case 12: return 'Generella inställningar'
       case 11: return 'Skapa rum'
       case 2: return 'Philips Hue'
       case 3: return 'IKEA Smart Home'
@@ -1152,6 +1160,32 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
           )}
 
           {step === 100 && renderDashboard()}
+
+          {/* STEG 12: Generella inställningar */}
+          {step === 12 && (
+            <div className="setup-card fade-in">
+              <div className="setup-icon-wrapper setup-icon-wrapper--general">
+                <Settings size={32} className="setup-icon-svg" />
+              </div>
+              <h2>Generella inställningar</h2>
+              <p className="description">
+                Denna sektion fylls på med allmänna systeminställningar senare.
+              </p>
+              
+              <div className="step-actions" style={{ marginTop: 24 }}>
+                {initialConfig ? (
+                  <button className="setup-btn setup-btn--primary" onClick={() => setStep(100)} style={{ width: '100%' }}>
+                    Klar och tillbaka till översikt
+                  </button>
+                ) : (
+                  <>
+                    <button className="setup-btn setup-btn--text" onClick={prevStep}>Bakåt</button>
+                    <button className="setup-btn setup-btn--primary" onClick={nextStep}>Nästa</button>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* STEG 1: Välkommen */}
           {step === 1 && (
