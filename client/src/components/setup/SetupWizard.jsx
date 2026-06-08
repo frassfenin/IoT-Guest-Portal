@@ -1982,8 +1982,9 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                       type="button"
                       className="note-delete-btn"
                       onClick={() => removeNote(index)}
+                      style={{ padding: 0 }}
                     >
-                      ✕
+                      <Trash2 size={14} />
                     </button>
                   </div>
                 ))}
