@@ -4,6 +4,16 @@ All notable changes to the Local Standalone Guest Portal will be documented in t
 
 ---
 
+## [0.5.2] - 2026-06-08
+### Changed
+- **Settings-panel redesign**: Genomfört en komplett visuell uppgradering av inställningspanelen med frostig glassmorfisk bakgrund, förbättrad kontrast för ljusläge och shimmering Aurora Gradient-primärknappar.
+- **Matter-parningsflöde**: Borttaget Matter section A och gjort parningsflödet fullbredd för bättre användbarhet.
+- **Selector-knappar**: Polerat hover/active-tillstånd för selector-knappar med glassmorfiska effekter.
+- **Status-varningar**: Ersatt råa emojis med Lucide React-ikoner i status-varningar för konsekvent visuell stil.
+- **Notes-layout**: Uppdaterat anteckningssektionen med glassmorfisk layout.
+
+---
+
 ## [0.5.1] - 2026-06-07
 ### Fixed
 - **Matter-parning (InvalidNodeId / addNoc 5)**: Åtgärdat ett fel under parning av vissa Matter-enheter (såsom Nanoleaf NL68) där driftsättningen misslyckades med statuskod `5` under `addNoc`. Löst genom att tvinga fram 32-bitars Node ID:n (`1000` - `999999`) vid generering istället för standard 64-bitars slumpmässiga BigInts, vilket var oförenligt med enheternas firmware.
@@ -15,6 +25,8 @@ All notable changes to the Local Standalone Guest Portal will be documented in t
 - **GitHub-länk**: En direktlänk till GitHub-projektet (`https://github.com/frassfenin/IoT-Guest-Portal`) längst ner i inställningsmenyn med en skräddarsydd SVG-ikon.
 - **Rums-sortering**: Stöd för att anpassa ordningen på rummen med upp/ner-pilar i rumsplaneraren (sparas i systemkonfigurationen under `rooms`).
 - **Systembackup (Exportera/Importera)**: Ladda ner en fullständig backup (.json-fil) av hela systemkonfigurationen (inklusive IP-adresser, API-nycklar och rumsindelning) och återställ den från inställningsmenyn eller direkt i Setup-guiden vid nyinstallation.
+- **Fabriksåterställning**: Möjlighet att återställa hela systemet till noll via inställningsmenyn (kräver bekräftelse med texten "BEKRÄFTA"). Raderar all konfiguration inklusive Matter-databasen.
+- **QR-kod för gäster**: Generering av utskriftskort (`gastportal_qr.png` & `gastportal_kort.html`) med QR-kod för enkel åtkomst till gästportalen för besökare.
 
 ### Changed
 - **Organisera rum & lampor (Master-Detail)**: Byggt om rumsorganisatören från grunden med en modern split-pane Master-Detail-layout för widescreen/desktop/foldables, samt ett responsivt slide-in-flöde för mobiler som ersätter det gamla Kanban-gränssnittet.
