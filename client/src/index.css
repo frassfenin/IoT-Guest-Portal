@@ -1623,22 +1623,19 @@ input[type="range"] {
   text-align: center;
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--space-2);
 }
 
 .setup-title {
   font-size: var(--text-xl);
   font-weight: 800;
-  background: linear-gradient(135deg, var(--purple-light) 0%, var(--blue-light) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #ffffff;
 }
 
 .setup-subtitle {
   font-size: var(--text-sm);
-  color: var(--text-3);
-  font-weight: 500;
+  color: #9ca3af;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -1661,16 +1658,14 @@ input[type="range"] {
 }
 
 .setup-card {
-  background: var(--glass-bg);
-  backdrop-filter: var(--blur);
-  -webkit-backdrop-filter: var(--blur);
-  border: 1px solid var(--glass-border);
+  background: #1e1e24;
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: var(--radius-lg);
-  padding: var(--space-6);
+  padding: var(--space-8) var(--space-6);
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
-  box-shadow: var(--shadow-lg);
+  gap: var(--space-6);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
 .setup-card h2 {
@@ -1759,7 +1754,7 @@ input[type="range"] {
 .form-group select:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: var(--purple-light);
+  border-color: #7047eb;
   background: rgba(0, 0, 0, 0.4);
 }
 
@@ -1770,6 +1765,20 @@ input[type="range"] {
 
 .input-group input {
   flex: 1;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-xs);
+  padding: var(--space-3) var(--space-4);
+  color: var(--text-1);
+  font-family: var(--font);
+  font-size: var(--text-sm);
+  transition: border-color var(--transition), background var(--transition);
+}
+
+.input-group input:focus {
+  outline: none;
+  border-color: #7047eb;
+  background: rgba(0, 0, 0, 0.4);
 }
 
 .setup-btn {
@@ -1785,14 +1794,14 @@ input[type="range"] {
 }
 
 .setup-btn--primary {
-  background: var(--purple);
+  background: #7047eb;
   color: white;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+  box-shadow: 0 4px 12px rgba(112, 71, 235, 0.3);
 }
 
 .setup-btn--primary:hover {
-  background: #6d28d9;
+  background: #5b34d9;
   transform: translateY(-1px);
   box-shadow: 0 6px 16px rgba(124, 58, 237, 0.45);
 }
@@ -2736,13 +2745,11 @@ input[type="range"] {
   position: fixed;
   inset: 0;
   z-index: 1000;
-  background: rgba(4, 4, 15, 0.8);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background: #0d0e12;
   overflow-y: auto;
   display: flex;
   justify-content: center;
-  padding: var(--space-4) 0;
+  padding: var(--space-6) 0;
 }
 
 /* Dynamisk Väljare för Tjänster i Setup */
@@ -3177,7 +3184,8 @@ input[type="range"] {
 
 @media (min-width: 768px) {
   .setup-split-layout {
-    grid-template-columns: 240px 1fr;
+    grid-template-columns: 260px 1fr;
+    gap: var(--space-8);
   }
 }
 
@@ -3343,14 +3351,21 @@ input[type="range"] {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  border-right: 1px solid var(--glass-border);
-  padding-right: var(--space-4);
+  border-right: none;
+  padding-right: 0;
+}
+
+@media (min-width: 768px) {
+  .settings-edit-sidebar {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-md);
+    padding: var(--space-4);
+  }
 }
 
 @media (max-width: 767px) {
   .settings-edit-sidebar {
-    border-right: none;
-    padding-right: 0;
     margin-bottom: var(--space-4);
   }
 }
@@ -3361,7 +3376,7 @@ input[type="range"] {
   gap: var(--space-3);
   padding: var(--space-3);
   border-radius: var(--radius-sm);
-  color: var(--text-2);
+  color: #9ca3af;
   font-size: var(--text-sm);
   font-weight: 600;
   text-align: left;
@@ -3373,14 +3388,18 @@ input[type="range"] {
 }
 
 .settings-sidebar-item:hover {
-  background: rgba(255, 255, 255, 0.02);
-  color: var(--text-1);
+  background: rgba(255, 255, 255, 0.04);
+  color: #ffffff;
 }
 
 .settings-sidebar-item--active {
-  background: var(--purple-dim);
-  border-color: rgba(124, 58, 237, 0.2);
-  color: var(--purple-light);
+  background: #5b21b6;
+  border-color: rgba(124, 58, 237, 0.3);
+  color: #ffffff !important;
+}
+
+.settings-sidebar-item--active .sidebar-icon-svg {
+  color: #ffffff !important;
 }
 
 /* Dynamic Lights List - grid representation */
@@ -3455,24 +3474,26 @@ input[type="range"] {
 .room-builder-pill {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
-  background: var(--glass-bg-active);
-  border: 1px solid var(--glass-border);
+  gap: var(--space-3);
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
   border-radius: 100px;
-  padding: var(--space-2) var(--space-4);
-  font-size: var(--text-xs);
-  color: var(--text-1);
+  padding: 8px 16px;
+  font-size: var(--text-sm);
+  color: #111111;
   font-weight: 600;
+  margin: var(--space-1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   animation: fade-up 200ms ease both;
 }
 
 .room-builder-pill__delete {
-  color: var(--text-3);
+  color: #666666;
   border: none;
   background: none;
   cursor: pointer;
-  font-size: 14px;
-  padding: 0;
+  font-size: 13px;
+  padding: 2px;
   display: flex;
   align-items: center;
   transition: color var(--transition);
@@ -3634,6 +3655,27 @@ input[type="range"] {
 .settings-dash-card__icon--matter { background: rgba(244, 63, 94, 0.08) !important; color: #fb7185 !important; border-color: rgba(244, 63, 94, 0.18) !important; }
 .settings-dash-card__icon--wifi { background: rgba(16, 185, 129, 0.08) !important; color: #34d399 !important; border-color: rgba(16, 185, 129, 0.18) !important; }
 .settings-dash-card__icon--save { background: rgba(139, 92, 246, 0.08) !important; color: #a78bfa !important; border-color: rgba(139, 92, 246, 0.18) !important; }
+
+.setup-btn--cancel {
+  background: transparent;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 100px;
+  padding: 6px 16px;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all var(--transition);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.setup-btn--cancel:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: #ffffff;
+}
 
 
 

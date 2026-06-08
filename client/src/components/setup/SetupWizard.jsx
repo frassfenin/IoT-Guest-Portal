@@ -1073,9 +1073,8 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
           {onCancel && (
             <button
               type="button"
-              className="setup-btn setup-btn--secondary"
+              className="setup-btn setup-btn--cancel"
               onClick={onCancel}
-              style={{ padding: '4px 10px', fontSize: '11px' }}
             >
               ✕ Avbryt
             </button>
