@@ -388,12 +388,14 @@ input[type="range"] {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.65);
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.6);
   color: var(--text-2);
-  border-radius: var(--radius-sm);
+  border-radius: 50%;
   transition: all var(--transition);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  backdrop-filter: var(--blur-sm);
+  -webkit-backdrop-filter: var(--blur-sm);
 }
 
 .settings-btn-cog__icon {
@@ -402,10 +404,10 @@ input[type="range"] {
 
 .settings-btn-cog:hover {
   background: rgba(255, 255, 255, 0.85);
-  border-color: rgba(0, 0, 0, 0.1);
-  color: var(--text-1);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow);
+  border-color: rgba(255, 255, 255, 0.95);
+  color: var(--purple);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow), 0 0 12px rgba(124, 58, 237, 0.12);
 }
 
 .settings-btn-cog:hover .settings-btn-cog__icon {
@@ -413,30 +415,27 @@ input[type="range"] {
 }
 
 .settings-btn-cog:active {
-  transform: scale(0.96) translateY(0);
+  transform: scale(0.94) translateY(0);
 }
 
-/* Settings Dropdown */
+/* Settings Dropdown - Premium Glassmorphic Popover */
 .settings-dropdown {
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
   width: 240px;
-  background: #ffffff; /* Solid vit bakgrund för 100% läsbarhet */
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  border: 1px solid rgba(255, 255, 255, 0.6);
   border-radius: var(--radius-sm);
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-lg), 0 10px 40px rgba(0, 0, 0, 0.04);
   padding: 6px 0;
   z-index: 1000;
   display: flex;
   flex-direction: column;
   animation: dropdown-scale-in 200ms cubic-bezier(0.16, 1, 0.3, 1) both;
   transform-origin: top right;
-}
-
-@keyframes dropdown-scale-in {
-  from { opacity: 0; transform: scale(0.96) translateY(-4px); }
-  to   { opacity: 1; transform: scale(1) translateY(0); }
 }
 
 .settings-dropdown__item {
@@ -522,12 +521,12 @@ input[type="range"] {
   align-items: center;
   gap: var(--space-4);
   padding: 8px 20px;
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  border: 1px solid rgba(255, 255, 255, 0.6);
   border-radius: 100px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.02);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.02), inset 0 1px 0 rgba(255, 255, 255, 0.4);
   transition: transform var(--spring), box-shadow var(--transition);
 }
 
@@ -567,21 +566,25 @@ input[type="range"] {
 }
 
 .floating-dock__btn--active {
-  background: rgba(124, 58, 237, 0.07) !important;
-  color: var(--purple) !important;
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.85), rgba(99, 102, 241, 0.85)) !important;
+  border: 1px solid rgba(255, 255, 255, 0.35) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
 }
 
-/* Popover bubblor */
+/* Popover bubblor - Premium Glassmorphic Popover */
 .dock-popover {
   position: absolute;
   bottom: calc(100% + 14px);
   left: 50%;
   transform: translateX(-50%);
   width: 320px;
-  background: #ffffff; /* Solid vit bakgrund löser läsbarhetsproblem */
-  border: 1px solid rgba(0, 0, 0, 0.08); /* Lite skarpare kant för bra kontrast */
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(24px) saturate(140%);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.6);
   border-radius: var(--radius-sm);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-lg), 0 10px 40px rgba(0, 0, 0, 0.06);
   padding: var(--space-4);
   z-index: 1001;
   display: flex;
@@ -600,7 +603,7 @@ input[type="range"] {
   transform: translateX(-50%);
   border-width: 8px;
   border-style: solid;
-  border-color: #ffffff transparent transparent transparent; /* Matchar den solida vita bakgrunden */
+  border-color: rgba(255, 255, 255, 0.82) transparent transparent transparent;
 }
 
 @keyframes popover-fade-in {
@@ -743,30 +746,33 @@ input[type="range"] {
   border-radius: var(--radius-sm);
   transition: all var(--transition-fast);
   cursor: pointer;
-  border: 1px solid var(--glass-border);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
 .master-btn--on {
-  background: #fffbeb;
-  border-color: rgba(217, 119, 6, 0.15);
+  background: linear-gradient(135deg, rgba(254, 243, 199, 0.8) 0%, rgba(255, 251, 235, 0.5) 100%);
+  border-color: rgba(245, 158, 11, 0.35);
   color: var(--amber);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.1), var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
 .master-btn--on:hover {
-  background: #fef3c7;
-  border-color: rgba(217, 119, 6, 0.25);
-  box-shadow: var(--shadow-sm);
+  background: linear-gradient(135deg, rgba(254, 243, 199, 0.95) 0%, rgba(255, 251, 235, 0.7) 100%);
+  border-color: rgba(245, 158, 11, 0.5);
+  box-shadow: 0 6px 18px rgba(245, 158, 11, 0.15), var(--shadow-sm);
 }
 
 .master-btn--off {
-  background: #f8f9fa;
+  background: rgba(255, 255, 255, 0.55);
   color: var(--text-2);
 }
 
 .master-btn--off:hover {
-  background: #eef2f7;
-  border-color: rgba(0, 0, 0, 0.08);
-  box-shadow: var(--shadow-sm);
+  background: rgba(255, 255, 255, 0.75);
+  border-color: rgba(255, 255, 255, 0.9);
+  color: var(--text-1);
+  box-shadow: var(--shadow-sm), 0 4px 12px rgba(0, 0, 0, 0.02);
 }
 
 .scenes-popover__divider {
@@ -785,8 +791,8 @@ input[type="range"] {
 
 .dock-popover.scenes-popover .scene-btn {
   padding: var(--space-4) var(--space-3);
-  background: #f8f9fa;
-  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.75);
   border-radius: var(--radius-sm);
   display: flex;
   flex-direction: column;
@@ -799,17 +805,30 @@ input[type="range"] {
   width: 100%;
   transform: none !important; /* Inaktivera transform för att förhindra suddig text i popovern */
   will-change: auto !important; /* Förhindra GPU-rasterisering av texten */
+  box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
 .dock-popover.scenes-popover .scene-btn:hover {
   transform: none !important;
-  background: #eef2f7;
-  border-color: rgba(0, 0, 0, 0.08);
-  box-shadow: var(--shadow-sm); /* Mjuk skugga som hover-effekt istället för transform */
+  background: rgba(255, 255, 255, 0.85);
+  border-color: rgba(255, 255, 255, 0.95);
+  box-shadow: var(--shadow-sm), 0 4px 12px rgba(0, 0, 0, 0.03); /* Mjuk skugga som hover-effekt istället för transform */
 }
 
 .dock-popover.scenes-popover .scene-btn:active {
   transform: none !important;
+}
+
+.dock-popover.scenes-popover .scene-btn.scene-btn--success {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.85) 0%, rgba(5, 150, 105, 0.85) 100%) !important;
+  border-color: rgba(255, 255, 255, 0.35) !important;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
+}
+
+.dock-popover.scenes-popover .scene-btn.scene-btn--success .scene-btn__name,
+.dock-popover.scenes-popover .scene-btn.scene-btn--success .scene-btn__desc,
+.dock-popover.scenes-popover .scene-btn.scene-btn--success .scene-btn__icon {
+  color: #ffffff !important;
 }
 
 .dock-popover.scenes-popover .scene-btn__emoji {
@@ -974,53 +993,80 @@ input[type="range"] {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.55);
   border-radius: var(--radius-sm);
   padding: var(--space-4);
-  backdrop-filter: blur(20px) saturate(160%);
-  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  backdrop-filter: blur(24px) saturate(140%);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
   transition: border-color var(--transition), background var(--transition), box-shadow var(--transition), transform var(--transition);
   will-change: transform;
+  box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.45);
 }
 
-/* Skandinaviska Pastellbakgrunder för Rumskort (Glassmorphic - mer transparenta för perfekt färgblandning) */
-.room-section:nth-of-type(4n+1) { background-color: rgba(237, 243, 238, 0.45); border-color: rgba(223, 234, 225, 0.5); } /* Salvia-grön */
-.room-section:nth-of-type(4n+2) { background-color: rgba(247, 243, 237, 0.45); border-color: rgba(236, 228, 215, 0.5); } /* Varm sand */
-.room-section:nth-of-type(4n+3) { background-color: rgba(238, 244, 248, 0.45); border-color: rgba(224, 235, 243, 0.5); } /* Dämpad blå */
-.room-section:nth-of-type(4n+4) { background-color: rgba(249, 241, 240, 0.45); border-color: rgba(242, 226, 223, 0.5); } /* Puderrosa */
+/* Monokromatiskt Glas för Rumskort – Identitet representeras av färgad accentkant på vänster sida samt färgade rubriker */
+.room-section:nth-of-type(4n+1) {
+  border-left: 4px solid var(--green);
+}
+.room-section:nth-of-type(4n+1) > p {
+  color: var(--green) !important;
+}
+
+.room-section:nth-of-type(4n+2) {
+  border-left: 4px solid var(--amber);
+}
+.room-section:nth-of-type(4n+2) > p {
+  color: var(--amber) !important;
+}
+
+.room-section:nth-of-type(4n+3) {
+  border-left: 4px solid var(--blue);
+}
+.room-section:nth-of-type(4n+3) > p {
+  color: var(--blue) !important;
+}
+
+.room-section:nth-of-type(4n+4) {
+  border-left: 4px solid var(--purple-light);
+}
+.room-section:nth-of-type(4n+4) > p {
+  color: var(--purple-light) !important;
+}
 
 .room-section:hover {
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.02), var(--shadow-sm);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.03), var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.6);
   border-color: rgba(255, 255, 255, 0.75);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
 }
 
 .light-card {
-  background: rgba(255, 255, 255, 0.52); /* Hög transparens låter bakgrundsblobar lysa igenom */
-  border: 1px solid rgba(255, 255, 255, 0.7); /* Krispig och tunn reflekterande kant */
+  background: rgba(255, 255, 255, 0.55); /* Hög transparens låter bakgrundsblobar lysa igenom */
+  backdrop-filter: blur(16px) saturate(130%);
+  -webkit-backdrop-filter: blur(16px) saturate(130%);
+  border: 1px solid rgba(255, 255, 255, 0.65); /* Krispig och tunn reflekterande kant */
   border-radius: var(--radius-sm);
   padding: var(--space-3) var(--space-3);
   transition: border-color var(--transition), box-shadow var(--transition), background var(--transition), transform var(--transition);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.01), var(--shadow-sm);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.01), var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
 .light-card:hover {
-  background: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.75);
   border-color: rgba(255, 255, 255, 0.95);
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.04), var(--shadow-sm);
   transform: translateY(-2px); /* Lätt elegant lyft när lampkortet hovras */
 }
 
 .light-card--on {
-  background: linear-gradient(135deg, rgba(255, 250, 230, 0.6) 0%, rgba(255, 253, 246, 0.35) 100%); /* Svagt varmgul tonande glasglöd */
-  border-color: rgba(245, 158, 11, 0.32);
-  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.05), var(--shadow-sm);
+  background: linear-gradient(135deg, rgba(254, 243, 199, 0.8) 0%, rgba(255, 251, 235, 0.5) 100%) !important; /* Varmgul tonande glasglöd */
+  border-color: rgba(245, 158, 11, 0.45) !important;
+  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.15), var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
 }
 
 .light-card--on:hover {
-  background: linear-gradient(135deg, rgba(255, 250, 230, 0.7) 0%, rgba(255, 253, 246, 0.45) 100%);
-  border-color: rgba(245, 158, 11, 0.42);
-  box-shadow: 0 12px 30px rgba(245, 158, 11, 0.08), var(--shadow-sm);
+  background: linear-gradient(135deg, rgba(254, 243, 199, 0.95) 0%, rgba(255, 251, 235, 0.7) 100%) !important;
+  border-color: rgba(245, 158, 11, 0.55) !important;
+  box-shadow: 0 12px 30px rgba(245, 158, 11, 0.2), var(--shadow-sm) !important;
 }
 
 .light-card__header {
@@ -1044,16 +1090,16 @@ input[type="range"] {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f3f4f6;
-  border: 1px solid rgba(0, 0, 0, 0.02);
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: var(--radius-xs);
   transition: all var(--transition);
 }
 
 .light-card--on .light-card__icon {
-  background: #fffbeb;
-  border-color: rgba(245, 158, 11, 0.25);
-  box-shadow: 0 0 10px rgba(245, 158, 11, 0.12);
+  background: rgba(255, 255, 255, 0.6) !important;
+  border-color: rgba(245, 158, 11, 0.35) !important;
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.2) !important;
   animation: glow-pulse-light 3s ease-in-out infinite;
 }
 
@@ -1237,37 +1283,86 @@ input[type="range"] {
    11. MEDIA CARD
    ────────────────────────────────────────── */
 .media-card {
-  background: rgba(255, 255, 255, 0.52); /* Matchar ljuskortens höga transparens */
-  backdrop-filter: blur(20px) saturate(170%);
-  -webkit-backdrop-filter: blur(20px) saturate(170%);
-  border: 1px solid rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.55); /* Matchar ljuskortens höga transparens */
+  backdrop-filter: blur(16px) saturate(130%);
+  -webkit-backdrop-filter: blur(16px) saturate(130%);
+  border: 1px solid rgba(255, 255, 255, 0.65);
   border-radius: var(--radius-sm);
   padding: var(--space-5);
   transition: border-color var(--transition), box-shadow var(--transition), background var(--transition), transform var(--transition);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.01), var(--shadow-sm);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.01), var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
 .media-card:hover {
-  background: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.75);
   border-color: rgba(255, 255, 255, 0.95);
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.04), var(--shadow-sm);
-  backdrop-filter: blur(24px) saturate(190%);
-  -webkit-backdrop-filter: blur(24px) saturate(190%);
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
   transform: translateY(-2px); /* Elegant lyft på hover */
 }
 
 .media-card--playing {
-  background: linear-gradient(135deg, rgba(240, 244, 255, 0.6) 0%, rgba(245, 248, 255, 0.35) 100%); /* Underbar indigo-blå tonat glas */
-  border-color: rgba(129, 140, 248, 0.32);
-  box-shadow: 0 8px 24px rgba(129, 140, 248, 0.05), var(--shadow-sm);
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.85) 0%, rgba(59, 130, 246, 0.85) 100%) !important; /* Underbar indigo-blå tonat glas */
+  border-color: rgba(255, 255, 255, 0.25) !important;
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.25), var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
 }
 
 .media-card--playing:hover {
-  background: linear-gradient(135deg, rgba(240, 244, 255, 0.7) 0%, rgba(245, 248, 255, 0.45) 100%);
-  border-color: rgba(129, 140, 248, 0.42);
-  box-shadow: 0 12px 30px rgba(129, 140, 248, 0.08), var(--shadow-sm);
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.95) 0%, rgba(59, 130, 246, 0.95) 100%) !important;
+  border-color: rgba(255, 255, 255, 0.35) !important;
+  box-shadow: 0 12px 30px rgba(99, 102, 241, 0.35), var(--shadow-sm) !important;
+}
+
+.media-card--playing .media-card__device {
+  color: #ffffff !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.media-card--playing .media-card__now-playing {
+  color: rgba(255, 255, 255, 0.8) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.media-card--playing .media-card__now-playing--active {
+  color: #ffffff !important;
+}
+
+.media-card--playing .media-card__icon-wrap {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+}
+
+.media-card--playing .media-card__icon-wrap svg {
+  color: #ffffff !important;
+}
+
+.media-card--playing .media-btn {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+  color: #ffffff !important;
+}
+
+.media-card--playing .media-btn:hover {
+  background: rgba(255, 255, 255, 0.3) !important;
+  border-color: rgba(255, 255, 255, 0.45) !important;
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.15);
+}
+
+.media-card--playing .media-card__vol-icon {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.media-card--playing .slider-value {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.media-card--playing .slider--volume {
+  background: linear-gradient(to right,
+    #ffffff var(--vol-pct, 50%),
+    rgba(255, 255, 255, 0.25) var(--vol-pct, 50%)) !important;
 }
 
 .media-card__header {
