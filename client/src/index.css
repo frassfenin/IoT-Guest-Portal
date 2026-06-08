@@ -3157,4 +3157,371 @@ input[type="range"] {
   color: var(--text-1);
 }
 
+/* ============================================================
+   Setup Wizard & Settings Panel Redesign additions
+   ============================================================ */
+
+@media (min-width: 768px) {
+  .setup-container.setup-container--wide {
+    max-width: 960px;
+  }
+}
+
+/* Split layout for Wizard */
+.setup-split-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-6);
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .setup-split-layout {
+    grid-template-columns: 240px 1fr;
+  }
+}
+
+.setup-sidebar-stepper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-right: var(--space-4);
+  border-right: 1px solid var(--glass-border);
+}
+
+.stepper-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  color: var(--text-3);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  background: transparent;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  transition: all var(--transition);
+  width: 100%;
+}
+
+.stepper-item:hover {
+  color: var(--text-2);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.stepper-item--active {
+  color: var(--purple-light);
+  background: var(--purple-dim);
+  font-weight: 600;
+}
+
+.stepper-item--completed {
+  color: var(--green);
+}
+
+.stepper-circle {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid var(--glass-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  flex-shrink: 0;
+  transition: all var(--transition);
+}
+
+.stepper-item--active .stepper-circle {
+  border-color: var(--purple-light);
+  background: var(--purple);
+  color: white;
+  box-shadow: 0 0 8px rgba(124, 58, 237, 0.4);
+}
+
+.stepper-item--completed .stepper-circle {
+  border-color: var(--green);
+  background: rgba(52, 211, 153, 0.2);
+  color: var(--green);
+}
+
+/* Settings Dashboard for Edit Mode */
+.settings-dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+  margin-top: var(--space-2);
+}
+
+@media (min-width: 550px) {
+  .settings-dashboard-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 900px) {
+  .settings-dashboard-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.settings-dash-card {
+  background: var(--glass-bg);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  cursor: pointer;
+  text-align: left;
+  transition: all var(--spring);
+  width: 100%;
+}
+
+.settings-dash-card:hover {
+  border-color: var(--glass-border-hover);
+  background: var(--glass-bg-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.settings-dash-card:active {
+  transform: translateY(0);
+}
+
+.settings-dash-card__icon {
+  font-size: 2rem;
+  line-height: 1;
+  background: var(--glass-bg-active);
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+}
+
+.settings-dash-card__content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.settings-dash-card__title {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--text-1);
+}
+
+.settings-dash-card__desc {
+  font-size: 11px;
+  color: var(--text-3);
+  line-height: 1.4;
+}
+
+/* Edit Mode Layout with Sidebar on Desktop */
+.settings-edit-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-6);
+}
+
+@media (min-width: 768px) {
+  .settings-edit-layout {
+    grid-template-columns: 240px 1fr;
+  }
+}
+
+.settings-edit-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  border-right: 1px solid var(--glass-border);
+  padding-right: var(--space-4);
+}
+
+@media (max-width: 767px) {
+  .settings-edit-sidebar {
+    border-right: none;
+    padding-right: 0;
+    margin-bottom: var(--space-4);
+  }
+}
+
+.settings-sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  color: var(--text-2);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-align: left;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  transition: all var(--transition);
+  width: 100%;
+}
+
+.settings-sidebar-item:hover {
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-1);
+}
+
+.settings-sidebar-item--active {
+  background: var(--purple-dim);
+  border-color: rgba(124, 58, 237, 0.2);
+  color: var(--purple-light);
+}
+
+/* Dynamic Lights List - grid representation */
+@media (min-width: 600px) {
+  .dynamic-lights-list {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: var(--space-3) !important;
+  }
+}
+
+/* Room select dropdown inside light card */
+.room-select-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-top: var(--space-2);
+}
+
+.room-select-container label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-3);
+  text-transform: uppercase;
+}
+
+.room-select-dropdown {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xs);
+  padding: var(--space-2) var(--space-3);
+  color: var(--text-1);
+  font-family: var(--font);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  transition: border-color var(--transition), background var(--transition);
+  width: 100%;
+}
+
+.room-select-dropdown:focus {
+  outline: none;
+  border-color: var(--purple-light);
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.room-new-inline {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: 6px;
+  animation: fade-up 200ms ease both;
+}
+
+.room-new-inline input {
+  flex: 1;
+  padding: var(--space-2) var(--space-3) !important;
+  font-size: var(--text-xs) !important;
+}
+
+.room-new-inline button {
+  padding: var(--space-2) var(--space-4) !important;
+  font-size: var(--text-xs) !important;
+}
+
+/* Room Builder Step */
+.room-builder-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: var(--space-3) 0;
+}
+
+.room-builder-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: var(--glass-bg-active);
+  border: 1px solid var(--glass-border);
+  border-radius: 100px;
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-xs);
+  color: var(--text-1);
+  font-weight: 600;
+  animation: fade-up 200ms ease both;
+}
+
+.room-builder-pill__delete {
+  color: var(--text-3);
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  transition: color var(--transition);
+}
+
+.room-builder-pill__delete:hover {
+  color: var(--red);
+}
+
+/* Matter Page Overhaul Grid layout */
+.matter-layout-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-5);
+  margin-bottom: var(--space-4);
+}
+
+@media (min-width: 800px) {
+  .matter-layout-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.matter-section-card {
+  background: rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  height: 100%;
+}
+
+.matter-section-card h3 {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--text-1);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding-bottom: var(--space-2);
+  margin-top: 0;
+}
+
+.matter-instruction-text {
+  font-size: var(--text-xs);
+  color: var(--text-2);
+  line-height: 1.5;
+}
+
 
