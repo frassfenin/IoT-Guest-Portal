@@ -528,6 +528,7 @@ input[type="range"] {
   border-radius: 100px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.02), inset 0 1px 0 rgba(255, 255, 255, 0.4);
   transition: transform var(--spring), box-shadow var(--transition);
+  position: relative; /* Centrera popovers relativt till hela dockan */
 }
 
 .floating-dock:hover {
@@ -557,7 +558,6 @@ input[type="range"] {
   color: var(--text-2);
   background: transparent;
   transition: all var(--transition-fast);
-  position: relative;
 }
 
 .floating-dock__btn:hover {
@@ -634,43 +634,74 @@ input[type="range"] {
 }
 
 .dock-popover .wifi-field {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--space-2) 0;
-  border-bottom: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.5) !important;
+  border: 1px solid rgba(255, 255, 255, 0.8) !important;
+  border-radius: var(--radius-sm) !important;
+  padding: var(--space-3) var(--space-4) !important;
+  margin-bottom: var(--space-2) !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
 }
 
 .dock-popover .wifi-field__label {
-  font-size: var(--text-xs);
-  color: var(--text-3);
-  font-weight: 600;
+  font-size: var(--text-xs) !important;
+  color: var(--text-2) !important;
+  font-weight: 600 !important;
 }
 
 .dock-popover .wifi-field__value {
-  font-size: var(--text-sm);
-  color: var(--text-1);
-  font-weight: 600;
-  font-family: monospace;
+  font-size: var(--text-sm) !important;
+  color: var(--text-1) !important;
+  font-weight: 700 !important;
+  font-family: 'SF Mono', 'Fira Code', monospace !important;
 }
 
 .dock-popover .wifi-card__copy-hint {
   text-align: center;
   font-size: var(--text-xs);
-  color: var(--text-2);
-  margin-top: var(--space-3);
-  padding: 8px;
-  background: rgba(0, 0, 0, 0.02);
-  border-radius: var(--radius-xs);
+  color: #ffffff !important;
+  margin-top: var(--space-4) !important;
+  padding: 12px !important;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.85) 0%, rgba(59, 130, 246, 0.85) 100%) !important;
+  border-radius: var(--radius-sm) !important;
   cursor: pointer;
   transition: all var(--transition-fast);
-  border: 1px solid var(--glass-border);
-  font-weight: 500;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  font-weight: 700 !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2) !important;
 }
 
 .dock-popover .wifi-card__copy-hint:hover {
-  background: rgba(0, 0, 0, 0.04);
-  color: var(--text-1);
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.95) 0%, rgba(59, 130, 246, 0.95) 100%) !important;
+  box-shadow: 0 6px 18px rgba(99, 102, 241, 0.3) !important;
+  transform: translateY(-1px) !important;
+}
+
+.dock-popover .wifi-card__copy-hint:active {
+  transform: translateY(0) !important;
+}
+
+/* Skifta pilarna (arrow) så de pekar exakt på respektive klickad knapp i dockan */
+.dock-popover.scenes-popover::after {
+  left: 31.5% !important;
+}
+
+.dock-popover.wifi-popover::after {
+  left: 41.5% !important;
+}
+
+.dock-popover.notes-popover::after {
+  left: 58.5% !important;
+}
+
+.dock-popover.status-popover::after {
+  left: 75.5% !important;
 }
 
 .dock-popover .note-item {
