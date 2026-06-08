@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { FolderOpen, Plus, Trash2, ArrowLeft, Settings, Check, HelpCircle, Home, Lightbulb, Sliders, Palette, Cast, Cpu, Wifi, Save, Power } from 'lucide-react'
+import { FolderOpen, Plus, Trash2, ArrowLeft, Settings, Check, HelpCircle, Home, Lightbulb, Sliders, Palette, Cast, Cpu, Wifi, Save, Power, RefreshCw, Search, Zap, Server, CheckCircle2, AlertCircle, Pin } from 'lucide-react'
 
 function LightConfigurator({ lights, onChange, rooms = [], onAddRoom }) {
   const [newRoomForLight, setNewRoomForLight] = useState({});
@@ -27,7 +27,9 @@ function LightConfigurator({ lights, onChange, rooms = [], onAddRoom }) {
                   onChange={(e) => onChange(index, 'enabled', e.target.checked)}
                   className="light-checkbox"
                 />
-                <span className="light-emoji">{light.supports_color_temp ? '💡' : '🌈'}</span>
+                <span className="light-emoji">
+                  <Lightbulb size={18} style={{ color: light.supports_color_temp ? '#fbbf24' : '#f472b6' }} />
+                </span>
                 <div className="light-names">
                   <span className="light-discovered-name">{light.discoveredName}</span>
                   <span className="light-capabilities">
@@ -68,7 +70,7 @@ function LightConfigurator({ lights, onChange, rooms = [], onAddRoom }) {
                       {rooms.map((room) => (
                         <option key={room} value={room}>{room}</option>
                       ))}
-                      <option value="__new__">➕ Skapa nytt rum...</option>
+                      <option value="__new__">+ Skapa nytt rum...</option>
                     </select>
                   ) : (
                     <div className="room-new-inline">
@@ -392,7 +394,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
       fetchHueLights(hue.ip, data.apiKey)
     } catch (err) {
       setError(err.message === 'link button not pressed'
-        ? '💡 Tryck på den runda knappen på din Philips Hue Bridge först, tryck sedan på "Koppla" här inom 30 sekunder!'
+        ? 'Tryck på den runda knappen på din Philips Hue Bridge först, tryck sedan på "Koppla" här inom 30 sekunder!'
         : `Fel: ${err.message}`
       )
     } finally {
@@ -1134,7 +1136,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                     style={{ cursor: (isCompleted || isActive) ? 'pointer' : 'not-allowed' }}
                   >
                     <div className="stepper-circle">
-                      {isCompleted ? '✓' : idx + 1}
+                      {isCompleted ? <Check size={12} strokeWidth={3} /> : idx + 1}
                     </div>
                     <span>{getStepName(stepId)}</span>
                   </button>
@@ -1147,7 +1149,8 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
         <div className="setup-content-pane" style={{ width: '100%' }}>
           {error && (
             <div className="setup-alert setup-alert--error" role="alert" style={{ marginBottom: '20px' }}>
-              {error}
+              <AlertCircle size={16} style={{ flexShrink: 0 }} />
+              <span>{error}</span>
             </div>
           )}
 
@@ -1210,7 +1213,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                       onChange={(e) => setServices({ ...services, hue: e.target.checked })}
                       style={{ marginRight: 8 }}
                     />
-                    <span className="service-icon">💡</span>
+                    <span className="service-icon"><Lightbulb className="sidebar-icon-svg sidebar-icon-svg--hue" size={24} /></span>
                     <div className="service-info">
                       <span className="service-name">Philips Hue</span>
                       <span className="service-desc">Lokal realtidsbelysning (SSE)</span>
@@ -1224,7 +1227,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                       onChange={(e) => setServices({ ...services, ikea: e.target.checked })}
                       style={{ marginRight: 8 }}
                     />
-                    <span className="service-icon">🏮</span>
+                    <span className="service-icon"><Sliders className="sidebar-icon-svg sidebar-icon-svg--ikea" size={24} /></span>
                     <div className="service-info">
                       <span className="service-name">IKEA Smart Home</span>
                       <span className="service-desc">Dirigera Hub / Trådfri Gateway</span>
@@ -1238,7 +1241,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                       onChange={(e) => setServices({ ...services, govee: e.target.checked })}
                       style={{ marginRight: 8 }}
                     />
-                    <span className="service-icon">🌈</span>
+                    <span className="service-icon"><Palette className="sidebar-icon-svg sidebar-icon-svg--govee" size={24} /></span>
                     <div className="service-info">
                       <span className="service-name">Govee Lights</span>
                       <span className="service-desc">Integration via Cloud API</span>
@@ -1252,7 +1255,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                       onChange={(e) => setServices({ ...services, cast: e.target.checked })}
                       style={{ marginRight: 8 }}
                     />
-                    <span className="service-icon">📡</span>
+                    <span className="service-icon"><Cast className="sidebar-icon-svg sidebar-icon-svg--cast" size={24} /></span>
                     <div className="service-info">
                       <span className="service-name">Google Cast</span>
                       <span className="service-desc">Streamer, Chromecast, Högtalare</span>
@@ -1266,7 +1269,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                       onChange={(e) => setServices({ ...services, matter: e.target.checked })}
                       style={{ marginRight: 8 }}
                     />
-                    <span className="service-icon">🧱</span>
+                    <span className="service-icon"><Cpu className="sidebar-icon-svg sidebar-icon-svg--matter" size={24} /></span>
                     <div className="service-info">
                       <span className="service-name">Matter-enheter</span>
                       <span className="service-desc">Lokal direktstyrning över LAN (PIN-kod)</span>
@@ -1405,7 +1408,8 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
 
               {hue.paired ? (
                 <div className="setup-success-badge">
-                  ✓ Kopplad! Hittade {hueLights.length} lampor på din Hue Bridge.
+                  <CheckCircle2 size={16} style={{ flexShrink: 0, color: '#10b981' }} />
+                  <span>Kopplad! Hittade {hueLights.length} lampor på din Philips Hue Bridge.</span>
                 </div>
               ) : (
                 <button
@@ -1430,7 +1434,8 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                       disabled={loading}
                       style={{ padding: '6px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px', margin: 0 }}
                     >
-                      🔄 Sök igen
+                      <RefreshCw size={12} className={loading ? 'setup-btn-spin' : ''} />
+                      <span>Sök igen</span>
                     </button>
                   </div>
                   <p className="text-xs text-dim" style={{ marginBottom: 12 }}>
@@ -1472,14 +1477,14 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                   className={`selector-btn ${ikea.type === 'dirigera' ? 'active' : ''}`}
                   onClick={() => setIkea({ ...ikea, type: 'dirigera', paired: false })}
                 >
-                  🚀 Dirigera Hub (Nyare)
+                  <Zap size={16} /> Dirigera Hub (Nyare)
                 </button>
                 <button
                   type="button"
                   className={`selector-btn ${ikea.type === 'tradfri' ? 'active' : ''}`}
                   onClick={() => setIkea({ ...ikea, type: 'tradfri', paired: false })}
                 >
-                  📟 Trådfri Gateway (Äldre)
+                  <Server size={16} /> Trådfri Gateway (Äldre)
                 </button>
               </div>
 
@@ -1531,7 +1536,8 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
 
               {ikea.paired ? (
                 <div className="setup-success-badge">
-                  ✓ Ansluten till IKEA! Hittade {ikeaLights.length} lampor.
+                  <CheckCircle2 size={16} style={{ flexShrink: 0, color: '#10b981' }} />
+                  <span>Ansluten till IKEA! Hittade {ikeaLights.length} lampor.</span>
                 </div>
               ) : (
                 <button
@@ -1555,7 +1561,8 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                       disabled={loading}
                       style={{ padding: '6px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px', margin: 0 }}
                     >
-                      🔄 Sök igen
+                      <RefreshCw size={12} className={loading ? 'setup-btn-spin' : ''} />
+                      <span>Sök igen</span>
                     </button>
                   </div>
                   <p className="text-xs text-dim" style={{ marginBottom: 12 }}>
@@ -1605,7 +1612,8 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
 
               {govee.paired ? (
                 <div className="setup-success-badge">
-                  ✓ Ansluten till Govee! Hittade {goveeLights.length} enheter.
+                  <CheckCircle2 size={16} style={{ flexShrink: 0, color: '#10b981' }} />
+                  <span>Ansluten till Govee! Hittade {goveeLights.length} enheter.</span>
                 </div>
               ) : (
                 <button
@@ -1629,7 +1637,8 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                       disabled={loading}
                       style={{ padding: '6px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px', margin: 0 }}
                     >
-                      🔄 Sök igen
+                      <RefreshCw size={12} className={loading ? 'setup-btn-spin' : ''} />
+                      <span>Sök igen</span>
                     </button>
                   </div>
                   <p className="text-xs text-dim" style={{ marginBottom: 12 }}>
@@ -1670,7 +1679,8 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                     disabled={loading}
                     style={{ padding: '6px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px', margin: 0 }}
                   >
-                    🔄 Testa alla
+                    <RefreshCw size={12} className={loading ? 'setup-btn-spin' : ''} />
+                    <span>Testa alla</span>
                   </button>
                 )}
               </div>
@@ -1710,8 +1720,16 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                       </div>
                     </div>
 
-                    {cast.tested && <div className="setup-success-text">✓ Lyckad TLS-anslutning!</div>}
-                    {cast.error && <div className="setup-error-text">❌ {cast.error}</div>}
+                    {cast.tested && (
+                      <div className="setup-success-text" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <CheckCircle2 size={12} /> Lyckad TLS-anslutning!
+                      </div>
+                    )}
+                    {cast.error && (
+                      <div className="setup-error-text" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <AlertCircle size={12} /> {cast.error}
+                      </div>
+                    )}
 
                     {castList.length > 1 && (
                       <button
@@ -1774,9 +1792,16 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                     className="setup-btn setup-btn--primary"
                     onClick={fetchMatterLights}
                     disabled={loading}
-                    style={{ width: '100%', marginTop: 'auto' }}
+                    style={{ width: '100%', marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                   >
-                    {loading ? <span className="spinner" /> : '🔄 Sök & synka befintliga enheter'}
+                    {loading ? (
+                      <span className="spinner" />
+                    ) : (
+                      <>
+                        <RefreshCw size={14} className={loading ? 'setup-btn-spin' : ''} />
+                        <span>Sök & synka befintliga enheter</span>
+                      </>
+                    )}
                   </button>
                 </div>
 
@@ -1793,14 +1818,19 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                       className="setup-btn setup-btn--secondary"
                       onClick={discoverMatterDevices}
                       disabled={matterScan.loading || loading}
-                      style={{ width: '100%' }}
+                      style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                     >
                       {matterScan.loading ? (
                         <>
-                          <span className="spinner" style={{ marginRight: 8 }} />
-                          Söker oparade enheter (4s)...
+                          <span className="spinner" />
+                          <span>Söker oparade enheter (4s)...</span>
                         </>
-                      ) : '🔍 Sök oparade enheter på LAN'}
+                      ) : (
+                        <>
+                          <Search size={14} />
+                          <span>Sök oparade enheter på LAN</span>
+                        </>
+                      )}
                     </button>
 
                     {matterScan.devices.length > 0 && (
@@ -1830,9 +1860,10 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                     )}
 
                     {selectedDevice && (
-                      <div className="setup-alert" style={{ background: 'rgba(99,102,241,0.12)', borderColor: 'var(--accent)', padding: 10 }}>
+                      <div className="setup-alert" style={{ background: 'rgba(99,102,241,0.12)', borderColor: 'var(--accent)', padding: 10, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Pin size={14} style={{ flexShrink: 0, color: 'var(--accent)' }} />
                         <span style={{ fontSize: '11px' }}>
-                          📍 <strong>Vald enhet:</strong> {selectedDevice.name} ({selectedDevice.discriminator})
+                          <strong>Vald enhet:</strong> {selectedDevice.name} ({selectedDevice.discriminator})
                         </span>
                       </div>
                     )}
@@ -1996,14 +2027,80 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
 
               <div className="setup-summary-box">
                 <h3>Konfigurationssammanfattning</h3>
-                <ul>
-                  <li>Philips Hue: {hue.paired ? `✓ Redo (${hueLights.filter(l => l.enabled).length} lampor valda)` : '❌ Ej konfigurerad'}</li>
-                  <li>IKEA Smart Home: {ikea.paired ? `✓ Redo (${ikeaLights.filter(l => l.enabled).length} lampor valda)` : '❌ Ej konfigurerad'}</li>
-                  <li>Govee Lights: {govee.paired ? `✓ Redo (${goveeLights.filter(l => l.enabled).length} lampor valda)` : '❌ Ej konfigurerad'}</li>
-                  <li>Matter-enheter: {matterPaired ? `✓ Redo (${matterLights.filter(l => l.enabled).length} enheter valda)` : '❌ Ej konfigurerad'}</li>
-                  <li>Google Cast: {castList.filter(c => c.tested).length} enheter redo</li>
-                  <li>Gäst-WiFi: "{wifi.name}"</li>
-                  <li>Rum: {rooms.length} st skapade</li>
+                <ul style={{ listStyleType: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <li style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
+                    <Lightbulb size={14} className="sidebar-icon-svg--hue" />
+                    <strong>Philips Hue:</strong>
+                    {hue.paired ? (
+                      <span className="setup-success-text" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px', marginLeft: 'auto' }}>
+                        <Check size={14} /> Redo ({hueLights.filter(l => l.enabled).length} valda)
+                      </span>
+                    ) : (
+                      <span className="setup-error-text" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px', marginLeft: 'auto' }}>
+                        <AlertCircle size={14} /> Ej konfigurerad
+                      </span>
+                    )}
+                  </li>
+                  <li style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
+                    <Sliders size={14} className="sidebar-icon-svg--ikea" />
+                    <strong>IKEA Smart Home:</strong>
+                    {ikea.paired ? (
+                      <span className="setup-success-text" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px', marginLeft: 'auto' }}>
+                        <Check size={14} /> Redo ({ikeaLights.filter(l => l.enabled).length} valda)
+                      </span>
+                    ) : (
+                      <span className="setup-error-text" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px', marginLeft: 'auto' }}>
+                        <AlertCircle size={14} /> Ej konfigurerad
+                      </span>
+                    )}
+                  </li>
+                  <li style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
+                    <Palette size={14} className="sidebar-icon-svg--govee" />
+                    <strong>Govee Lights:</strong>
+                    {govee.paired ? (
+                      <span className="setup-success-text" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px', marginLeft: 'auto' }}>
+                        <Check size={14} /> Redo ({goveeLights.filter(l => l.enabled).length} valda)
+                      </span>
+                    ) : (
+                      <span className="setup-error-text" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px', marginLeft: 'auto' }}>
+                        <AlertCircle size={14} /> Ej konfigurerad
+                      </span>
+                    )}
+                  </li>
+                  <li style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
+                    <Cpu size={14} className="sidebar-icon-svg--matter" />
+                    <strong>Matter-enheter:</strong>
+                    {matterPaired ? (
+                      <span className="setup-success-text" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px', marginLeft: 'auto' }}>
+                        <Check size={14} /> Redo ({matterLights.filter(l => l.enabled).length} valda)
+                      </span>
+                    ) : (
+                      <span className="setup-error-text" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px', marginLeft: 'auto' }}>
+                        <AlertCircle size={14} /> Ej konfigurerad
+                      </span>
+                    )}
+                  </li>
+                  <li style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
+                    <Cast size={14} className="sidebar-icon-svg--cast" />
+                    <strong>Google Cast:</strong>
+                    <span style={{ fontSize: '12px', marginLeft: 'auto', fontWeight: 600, color: 'var(--text-2)' }}>
+                      {castList.filter(c => c.tested).length} enheter redo
+                    </span>
+                  </li>
+                  <li style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
+                    <Wifi size={14} className="sidebar-icon-svg--wifi" />
+                    <strong>Gäst-WiFi:</strong>
+                    <span style={{ fontSize: '12px', marginLeft: 'auto', fontWeight: 600, color: 'var(--text-2)' }}>
+                      "{wifi.name}"
+                    </span>
+                  </li>
+                  <li style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
+                    <Home size={14} className="sidebar-icon-svg--rooms" />
+                    <strong>Rum:</strong>
+                    <span style={{ fontSize: '12px', marginLeft: 'auto', fontWeight: 600, color: 'var(--text-2)' }}>
+                      {rooms.length} st skapade
+                    </span>
+                  </li>
                 </ul>
               </div>
 
