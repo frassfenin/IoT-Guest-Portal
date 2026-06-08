@@ -3524,4 +3524,107 @@ input[type="range"] {
   line-height: 1.5;
 }
 
+/* ============================================================
+   Setup Icons styling with colorful glowing backdrops
+   ============================================================ */
+
+.setup-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-sm);
+  margin: 0 auto var(--space-4);
+  border: 1px solid var(--glass-border);
+  transition: all var(--transition);
+}
+
+.setup-icon-svg {
+  stroke-width: 2.2;
+}
+
+.setup-icon-wrapper--rooms {
+  background: rgba(99, 102, 241, 0.1);
+  color: #818cf8;
+  border-color: rgba(99, 102, 241, 0.2);
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.15);
+}
+
+.setup-icon-wrapper--hue {
+  background: rgba(245, 158, 11, 0.1);
+  color: #fbbf24;
+  border-color: rgba(245, 158, 11, 0.2);
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.15);
+}
+
+.setup-icon-wrapper--ikea {
+  background: rgba(59, 130, 246, 0.1);
+  color: #60a5fa;
+  border-color: rgba(59, 130, 246, 0.2);
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.15);
+}
+
+.setup-icon-wrapper--govee {
+  background: rgba(236, 72, 153, 0.1);
+  color: #f472b6;
+  border-color: rgba(236, 72, 153, 0.2);
+  box-shadow: 0 0 20px rgba(236, 72, 153, 0.15);
+}
+
+.setup-icon-wrapper--cast {
+  background: rgba(20, 184, 166, 0.1);
+  color: #2dd4bf;
+  border-color: rgba(20, 184, 166, 0.2);
+  box-shadow: 0 0 20px rgba(20, 184, 166, 0.15);
+}
+
+.setup-icon-wrapper--matter {
+  background: rgba(244, 63, 94, 0.1);
+  color: #fb7185;
+  border-color: rgba(244, 63, 94, 0.2);
+  box-shadow: 0 0 20px rgba(244, 63, 94, 0.15);
+}
+
+.setup-icon-wrapper--wifi {
+  background: rgba(16, 185, 129, 0.1);
+  color: #34d399;
+  border-color: rgba(16, 185, 129, 0.2);
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.15);
+}
+
+.setup-icon-wrapper--save {
+  background: rgba(139, 92, 246, 0.1);
+  color: #a78bfa;
+  border-color: rgba(139, 92, 246, 0.2);
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.15);
+}
+
+/* Sidebar list icons */
+.sidebar-icon-svg {
+  stroke-width: 2.2;
+  transition: all var(--transition);
+  flex-shrink: 0;
+}
+
+.sidebar-icon-svg--rooms { color: #818cf8; }
+.sidebar-icon-svg--hue { color: #fbbf24; }
+.sidebar-icon-svg--ikea { color: #60a5fa; }
+.sidebar-icon-svg--govee { color: #f472b6; }
+.sidebar-icon-svg--cast { color: #2dd4bf; }
+.sidebar-icon-svg--matter { color: #fb7185; }
+.sidebar-icon-svg--wifi { color: #34d399; }
+.sidebar-icon-svg--save { color: #a78bfa; }
+
+/* Dashboard Cards Icons */
+.settings-dash-card__icon--rooms { background: rgba(99, 102, 241, 0.08) !important; color: #818cf8 !important; border-color: rgba(99, 102, 241, 0.18) !important; }
+.settings-dash-card__icon--hue { background: rgba(245, 158, 11, 0.08) !important; color: #fbbf24 !important; border-color: rgba(245, 158, 11, 0.18) !important; }
+.settings-dash-card__icon--ikea { background: rgba(59, 130, 246, 0.08) !important; color: #60a5fa !important; border-color: rgba(59, 130, 246, 0.18) !important; }
+.settings-dash-card__icon--govee { background: rgba(236, 72, 153, 0.08) !important; color: #f472b6 !important; border-color: rgba(236, 72, 153, 0.18) !important; }
+.settings-dash-card__icon--cast { background: rgba(20, 184, 166, 0.08) !important; color: #2dd4bf !important; border-color: rgba(20, 184, 166, 0.18) !important; }
+.settings-dash-card__icon--matter { background: rgba(244, 63, 94, 0.08) !important; color: #fb7185 !important; border-color: rgba(244, 63, 94, 0.18) !important; }
+.settings-dash-card__icon--wifi { background: rgba(16, 185, 129, 0.08) !important; color: #34d399 !important; border-color: rgba(16, 185, 129, 0.18) !important; }
+.settings-dash-card__icon--save { background: rgba(139, 92, 246, 0.08) !important; color: #a78bfa !important; border-color: rgba(139, 92, 246, 0.18) !important; }
+
+
 

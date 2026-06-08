@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { FolderOpen, Plus, Trash2, ArrowLeft, Settings, Check, HelpCircle } from 'lucide-react'
+import { FolderOpen, Plus, Trash2, ArrowLeft, Settings, Check, HelpCircle, Home, Lightbulb, Sliders, Palette, Cast, Cpu, Wifi, Save, Power } from 'lucide-react'
 
 function LightConfigurator({ lights, onChange, rooms = [], onAddRoom }) {
   const [newRoomForLight, setNewRoomForLight] = useState({});
@@ -992,14 +992,14 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
   const progressPct = (activeIndex / totalActive) * 100
 
   const editItems = [
-    { id: 11, name: 'Hantera rum', icon: '🏠', desc: 'Skapa och ta bort rum' },
-    { id: 2, name: 'Philips Hue', icon: '💡', desc: 'Lokal belysning' },
-    { id: 3, name: 'IKEA Smart Home', icon: '🏮', desc: 'Dirigera Hub / Trådfri' },
-    { id: 4, name: 'Govee Lights', icon: '🌈', desc: 'Cloud API belysning' },
-    { id: 6, name: 'Google Cast', icon: '📡', desc: 'Cast-enheter' },
-    { id: 10, name: 'Matter-enheter', icon: '🧱', desc: 'Lokal direktstyrning' },
-    { id: 8, name: 'WiFi & info', icon: 'ℹ️', desc: 'Gäst-WiFi & Husmanual' },
-    { id: 9, name: 'Spara & stäng', icon: '🚀', desc: 'Spara ändringar' }
+    { id: 11, name: 'Hantera rum', iconComponent: Home, colorClass: 'rooms', desc: 'Skapa och ta bort rum' },
+    { id: 2, name: 'Philips Hue', iconComponent: Lightbulb, colorClass: 'hue', desc: 'Lokal belysning' },
+    { id: 3, name: 'IKEA Smart Home', iconComponent: Sliders, colorClass: 'ikea', desc: 'Dirigera Hub / Trådfri' },
+    { id: 4, name: 'Govee Lights', iconComponent: Palette, colorClass: 'govee', desc: 'Cloud API belysning' },
+    { id: 6, name: 'Google Cast', iconComponent: Cast, colorClass: 'cast', desc: 'Cast-enheter' },
+    { id: 10, name: 'Matter-enheter', iconComponent: Cpu, colorClass: 'matter', desc: 'Lokal direktstyrning' },
+    { id: 8, name: 'WiFi & info', iconComponent: Wifi, colorClass: 'wifi', desc: 'Gäst-WiFi & Husmanual' },
+    { id: 9, name: 'Spara & stäng', iconComponent: Save, colorClass: 'save', desc: 'Spara ändringar' }
   ]
 
   const getStepName = (stepId) => {
@@ -1020,34 +1020,42 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
   const renderDashboard = () => {
     return (
       <div className="setup-card fade-in" style={{ maxWidth: '100%' }}>
-        <div className="setup-icon">⚙️</div>
-        <h2>Inställningspanel</h2>
-        <p className="description">
+        <div className="setup-icon-wrapper setup-icon-wrapper--save">
+          <Settings size={36} className="setup-icon-svg" />
+        </div>
+        <h2 style={{ textAlign: 'center' }}>Inställningspanel</h2>
+        <p className="description" style={{ textAlign: 'center' }}>
           Välj den kategori eller integration du vill konfigurera nedan. Dina ändringar sparas på systemet när du går till "Spara & stäng".
         </p>
 
         <div className="settings-dashboard-grid">
-          {editItems.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              className="settings-dash-card"
-              onClick={() => setStep(item.id)}
-            >
-              <span className="settings-dash-card__icon">{item.icon}</span>
-              <div className="settings-dash-card__content">
-                <span className="settings-dash-card__title">{item.name}</span>
-                <span className="settings-dash-card__desc">{item.desc}</span>
-              </div>
-            </button>
-          ))}
+          {editItems.map((item) => {
+            const Icon = item.iconComponent;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                className="settings-dash-card"
+                onClick={() => setStep(item.id)}
+              >
+                <span className={`settings-dash-card__icon settings-dash-card__icon--${item.colorClass}`}>
+                  <Icon size={22} className="setup-icon-svg" />
+                </span>
+                <div className="settings-dash-card__content">
+                  <span className="settings-dash-card__title">{item.name}</span>
+                  <span className="settings-dash-card__desc">{item.desc}</span>
+                </div>
+              </button>
+            )
+          })}
         </div>
       </div>
     )
   }
 
-  const showSplitLayout = !isMobile && (initialConfig || step > 1);
-  const containerClass = `setup-container ${showSplitLayout ? 'setup-container--wide' : ''}`;
+  const showSplitLayout = !isMobile && (initialConfig || step > 1) && step !== 100;
+  const isWideContainer = !isMobile && (showSplitLayout || step === 100 || step === 10);
+  const containerClass = `setup-container ${isWideContainer ? 'setup-container--wide' : ''}`;
 
   return (
     <div className={containerClass}>
@@ -1084,17 +1092,20 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
           initialConfig ? (
             /* Edit Mode Sidebar */
             <div className="settings-edit-sidebar">
-              {editItems.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  className={`settings-sidebar-item ${step === item.id ? 'settings-sidebar-item--active' : ''}`}
-                  onClick={() => setStep(item.id)}
-                >
-                  <span style={{ fontSize: '16px' }}>{item.icon}</span>
-                  <span>{item.name}</span>
-                </button>
-              ))}
+              {editItems.map((item) => {
+                const Icon = item.iconComponent;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className={`settings-sidebar-item ${step === item.id ? 'settings-sidebar-item--active' : ''}`}
+                    onClick={() => setStep(item.id)}
+                  >
+                    <Icon size={16} className={`sidebar-icon-svg sidebar-icon-svg--${item.colorClass}`} />
+                    <span>{item.name}</span>
+                  </button>
+                )
+              })}
             </div>
           ) : (
             /* Wizard Mode Stepper */
@@ -1145,7 +1156,9 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
           {/* STEG 1: Välkommen */}
           {step === 1 && (
             <div className="setup-card fade-in">
-              <div className="setup-icon">🏠</div>
+              <div className="setup-icon-wrapper setup-icon-wrapper--rooms">
+                <Home size={32} className="setup-icon-svg" />
+              </div>
               <h2>Välkommen till Gästportalen!</h2>
               <p>
                 Denna guide hjälper dig att ansluta dina smarta lampor och mediaspelare. 
@@ -1258,7 +1271,9 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
           {/* STEG 11: Skapa rum */}
           {step === 11 && (
             <div className="setup-card fade-in">
-              <div className="setup-icon">🏠</div>
+              <div className="setup-icon-wrapper setup-icon-wrapper--rooms">
+                <Home size={32} className="setup-icon-svg" />
+              </div>
               <h2>Skapa rum</h2>
               <p className="description">
                 Skapa rummen i ditt hem där du har smart belysning. 
@@ -1323,7 +1338,9 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
           {/* STEG 2: Philips Hue */}
           {step === 2 && (
             <div className="setup-card fade-in">
-              <div className="setup-icon">💡</div>
+              <div className="setup-icon-wrapper setup-icon-wrapper--hue">
+                <Lightbulb size={32} className="setup-icon-svg" />
+              </div>
               <h2>1. Philips Hue Bridge</h2>
               <p className="description">
                 Vi kommunicerar lokalt och i realtid med din Hue Bridge. Tryck på den runda länkningsknappen på din Hue Bridge innan du kopplar.
@@ -1408,7 +1425,9 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
           {/* STEG 3: IKEA Smart Home */}
           {step === 3 && (
             <div className="setup-card fade-in">
-              <div className="setup-icon">🏮</div>
+              <div className="setup-icon-wrapper setup-icon-wrapper--ikea">
+                <Sliders size={32} className="setup-icon-svg" />
+              </div>
               <h2>2. IKEA Smart Home</h2>
               <p className="description">
                 Välj om du har den nyare **Dirigera Hub** (med app-anslutning) eller den äldre **Trådfri Gateway** (CoAP-baserad).
@@ -1531,7 +1550,9 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
           {/* STEG 4: Govee Cloud API */}
           {step === 4 && (
             <div className="setup-card fade-in">
-              <div className="setup-icon">🌈</div>
+              <div className="setup-icon-wrapper setup-icon-wrapper--govee">
+                <Palette size={32} className="setup-icon-svg" />
+              </div>
               <h2>3. Govee Lights</h2>
               <p className="description">
                 Ange din personliga API-nyckel för att styra dina Govee-slingor eller lampor. 
@@ -1603,7 +1624,9 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
           {/* STEG 6: Google Cast */}
           {step === 6 && (
             <div className="setup-card fade-in">
-              <div className="setup-icon">📡</div>
+              <div className="setup-icon-wrapper setup-icon-wrapper--cast">
+                <Cast size={32} className="setup-icon-svg" />
+              </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: '8px' }}>
                 <h2 style={{ margin: 0 }}>5. Google Cast (Google Streamer/TV)</h2>
                 {castList.some(c => c.ip) && (
@@ -1697,7 +1720,9 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
           {/* STEG 10: Matter Setup */}
           {step === 10 && (
             <div className="setup-card fade-in" style={{ maxWidth: '100%' }}>
-              <div className="setup-icon">🧱</div>
+              <div className="setup-icon-wrapper setup-icon-wrapper--matter">
+                <Cpu size={32} className="setup-icon-svg" />
+              </div>
               <h2>Matter-enheter (Lokal direktstyrning)</h2>
               <p className="description">
                 Matter gör att du kan styra lampor och eluttag helt lokalt över ditt nätverk utan behov av moln eller externa hubbar.
@@ -1835,7 +1860,9 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
           {/* STEG 8: Guest Wi-Fi & Info */}
           {step === 8 && (
             <div className="setup-card fade-in">
-              <div className="setup-icon">ℹ️</div>
+              <div className="setup-icon-wrapper setup-icon-wrapper--wifi">
+                <Wifi size={32} className="setup-icon-svg" />
+              </div>
               <h2>6. Gäst-WiFi & Husinformation</h2>
               <p className="description">
                 Gästerna kommer att se denna information i Info-fliken. Det gör det enkelt för dem att ansluta utan krångel.
@@ -1924,7 +1951,9 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
           {/* STEG 9: Bekräftelse & Slutför */}
           {step === 9 && (
             <div className="setup-card fade-in">
-              <div className="setup-icon">🚀</div>
+              <div className="setup-icon-wrapper setup-icon-wrapper--save">
+                <Save size={32} className="setup-icon-svg" />
+              </div>
               <h2>{initialConfig ? 'Spara dina ändringar' : '7. Klar för start!'}</h2>
               <p>
                 {initialConfig 
