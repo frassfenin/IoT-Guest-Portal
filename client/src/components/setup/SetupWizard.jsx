@@ -1776,121 +1776,87 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
               </div>
               <h2>Matter-enheter (Lokal direktstyrning)</h2>
               <p className="description">
-                Matter gör att du kan styra lampor och eluttag helt lokalt över ditt nätverk utan behov av moln eller externa hubbar.
-                Välj funktion beroende på om du ska synka dina befintliga enheter eller parkoppla en helt ny enhet.
+                Matter gör att du kan ansluta lampor och eluttag helt lokalt över ditt nätverk utan behov av moln eller externa hubbar. 
+                Sätt enheten i parningsläge (fabriksåterställ den vid behov), sök eller ange parningskod nedan för att ansluta den.
               </p>
 
-              <div className="matter-layout-grid">
-                {/* Sektion A: Befintliga enheter */}
-                <div className="matter-section-card">
-                  <h3>1. Hämta befintliga enheter</h3>
-                  <p className="matter-instruction-text">
-                    Använd detta om dina Matter-lampor redan är anslutna till ditt hemma-WiFi (t.ex. konfigurerade i en annan app) eller om du har gjort ändringar och vill söka upp dem igen lokalt.
-                  </p>
-                  <button
-                    type="button"
-                    className="setup-btn setup-btn--primary"
-                    onClick={fetchMatterLights}
-                    disabled={loading}
-                    style={{ width: '100%', marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-                  >
-                    {loading ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <button
+                  type="button"
+                  className="setup-btn setup-btn--secondary"
+                  onClick={discoverMatterDevices}
+                  disabled={matterScan.loading || loading}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                >
+                  {matterScan.loading ? (
+                    <>
                       <span className="spinner" />
-                    ) : (
-                      <>
-                        <RefreshCw size={14} className={loading ? 'setup-btn-spin' : ''} />
-                        <span>Sök & synka befintliga enheter</span>
-                      </>
-                    )}
-                  </button>
-                </div>
+                      <span>Söker oparade enheter (4s)...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Search size={14} />
+                      <span>Sök oparade enheter på LAN</span>
+                    </>
+                  )}
+                </button>
 
-                {/* Sektion B: Parkoppla ny enhet */}
-                <div className="matter-section-card">
-                  <h3>2. Parkoppla en NY enhet</h3>
-                  <p className="matter-instruction-text">
-                    Använd detta för att ansluta en helt ny lampa eller uttag till gästportalen. Sätt enheten i parningsläge (fabriksåterställ den vid behov), sök eller ange parningskod nedan.
-                  </p>
-                  
-                  <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    <button
-                      type="button"
-                      className="setup-btn setup-btn--secondary"
-                      onClick={discoverMatterDevices}
-                      disabled={matterScan.loading || loading}
-                      style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-                    >
-                      {matterScan.loading ? (
-                        <>
-                          <span className="spinner" />
-                          <span>Söker oparade enheter (4s)...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Search size={14} />
-                          <span>Sök oparade enheter på LAN</span>
-                        </>
-                      )}
-                    </button>
-
-                    {matterScan.devices.length > 0 && (
-                      <div className="dynamic-lights-list" style={{ marginTop: 8, display: 'flex', flexDirection: 'column' }}>
-                        {matterScan.devices.map((dev) => (
-                          <div key={dev.id} className="cast-device-card" style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <div>
-                              <div style={{ fontWeight: 600, fontSize: '12px' }}>{dev.name}</div>
-                              <div style={{ fontSize: '10px', color: 'var(--text-dim)' }}>
-                                Discriminator: {dev.discriminator}
-                              </div>
-                            </div>
-                            <button
-                              type="button"
-                              className={`setup-btn ${selectedDevice?.id === dev.id ? 'setup-btn--primary' : 'setup-btn--secondary'}`}
-                              style={{ padding: '3px 8px', fontSize: '10px', margin: 0 }}
-                              onClick={() => {
-                                setSelectedDevice(selectedDevice?.id === dev.id ? null : dev);
-                                setError(null);
-                              }}
-                            >
-                              {selectedDevice?.id === dev.id ? 'Vald' : 'Välj'}
-                            </button>
+                {matterScan.devices.length > 0 && (
+                  <div className="dynamic-lights-list" style={{ display: 'flex', flexDirection: 'column' }}>
+                    {matterScan.devices.map((dev) => (
+                      <div key={dev.id} className="cast-device-card" style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div>
+                          <div style={{ fontWeight: 600, fontSize: '12px' }}>{dev.name}</div>
+                          <div style={{ fontSize: '10px', color: 'var(--text-dim)' }}>
+                            Discriminator: {dev.discriminator}
                           </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {selectedDevice && (
-                      <div className="setup-alert" style={{ background: 'rgba(99,102,241,0.12)', borderColor: 'var(--accent)', padding: 10, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <Pin size={14} style={{ flexShrink: 0, color: 'var(--accent)' }} />
-                        <span style={{ fontSize: '11px' }}>
-                          <strong>Vald enhet:</strong> {selectedDevice.name} ({selectedDevice.discriminator})
-                        </span>
-                      </div>
-                    )}
-
-                    <div className="form-group" style={{ marginTop: 8 }}>
-                      <label>Parningskod / PIN-kod (11 eller 21 siffror)</label>
-                      <div className="input-group">
-                        <input
-                          type="text"
-                          placeholder="t.ex. 34905741252"
-                          value={matterCode}
-                          onChange={(e) => {
-                            setMatterCode(e.target.value.replace(/[^0-9]/g, ''));
-                            setError(null);
-                          }}
-                          disabled={loading}
-                        />
+                        </div>
                         <button
                           type="button"
-                          className="setup-btn setup-btn--primary"
-                          onClick={pairMatterDevice}
-                          disabled={loading || !matterCode}
+                          className={`setup-btn ${selectedDevice?.id === dev.id ? 'setup-btn--primary' : 'setup-btn--secondary'}`}
+                          style={{ padding: '3px 8px', fontSize: '10px', margin: 0 }}
+                          onClick={() => {
+                            setSelectedDevice(selectedDevice?.id === dev.id ? null : dev);
+                            setError(null);
+                          }}
                         >
-                          Koppla
+                          {selectedDevice?.id === dev.id ? 'Vald' : 'Välj'}
                         </button>
                       </div>
-                    </div>
+                    ))}
+                  </div>
+                )}
+
+                {selectedDevice && (
+                  <div className="setup-alert" style={{ background: 'rgba(99,102,241,0.12)', borderColor: 'var(--accent)', padding: 10, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Pin size={14} style={{ flexShrink: 0, color: 'var(--accent)' }} />
+                    <span style={{ fontSize: '11px' }}>
+                      <strong>Vald enhet:</strong> {selectedDevice.name} ({selectedDevice.discriminator})
+                    </span>
+                  </div>
+                )}
+
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label>Parningskod / PIN-kod (11 eller 21 siffror)</label>
+                  <div className="input-group">
+                    <input
+                      type="text"
+                      placeholder="t.ex. 34905741252"
+                      value={matterCode}
+                      onChange={(e) => {
+                        setMatterCode(e.target.value.replace(/[^0-9]/g, ''));
+                        setError(null);
+                      }}
+                      disabled={loading}
+                    />
+                    <button
+                      type="button"
+                      className="setup-btn setup-btn--primary"
+                      onClick={pairMatterDevice}
+                      disabled={loading || !matterCode}
+                    >
+                      Koppla
+                    </button>
                   </div>
                 </div>
               </div>
