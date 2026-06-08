@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Sparkles, Wifi, FileText, Info, Lightbulb, LightbulbOff, Copy, Check, Loader2 } from 'lucide-react'
 import { io } from 'socket.io-client'
+import QRCode from 'qrcode'
 import Header from './components/Header.jsx'
 import SceneGrid from './components/SceneGrid.jsx'
 import LightCard from './components/LightCard.jsx'
@@ -34,6 +35,8 @@ export default function App() {
   const [showOrganizer, setShowOrganizer] = useState(false)
   const [showSetupWizard, setShowSetupWizard] = useState(false)
   const [activePopover, setActivePopover] = useState(null) // null | 'wifi' | 'notes' | 'status'
+  const [qrMode, setQrMode] = useState('wifi') // 'wifi' | 'portal'
+  const [qrDataUrl, setQrDataUrl] = useState('')
   const [copied, setCopied] = useState(false)
   const [blurEnabled, setBlurEnabled] = useState(() => {
     const saved = localStorage.getItem('guest_portal_blur_enabled')
@@ -61,6 +64,28 @@ export default function App() {
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [activePopover])
+
+  // Generera QR-kod
+  useEffect(() => {
+    if (activePopover === 'wifi' && config?.info) {
+      const text = qrMode === 'wifi'
+        ? `WIFI:S:${config.info.wifi_name};T:WPA;P:${config.info.wifi_password};;`
+        : window.location.origin;
+
+      QRCode.toDataURL(text, {
+        width: 180,
+        margin: 1,
+        color: {
+          dark: '#1f2937',
+          light: '#ffffff'
+        }
+      })
+        .then((url) => setQrDataUrl(url))
+        .catch((err) => console.error('Kunde inte generera QR-kod:', err))
+    } else {
+      setQrDataUrl('')
+    }
+  }, [activePopover, qrMode, config])
 
   // WiFi-kopiering till urklipp
   const handleWifiCopy = useCallback(async () => {
@@ -437,28 +462,102 @@ export default function App() {
                 {activePopover === 'wifi' && (
                   <div className="dock-popover wifi-popover" onClick={(e) => e.stopPropagation()}>
                     <div className="section-header">
-                      <span className="section-header__title">Wi-Fi-inloggning</span>
+                      <span className="section-header__title">Wi-Fi &amp; Gästportal</span>
                     </div>
-                    <div className="wifi-field">
-                      <span className="wifi-field__label">Nätverk</span>
-                      <span className="wifi-field__value">{config.info.wifi_name}</span>
+
+                    {/* Flikväljare för WiFi / Portal */}
+                    <div className="wifi-popover__tabs">
+                      <button
+                        type="button"
+                        className={`wifi-popover__tab ${qrMode === 'wifi' ? 'wifi-popover__tab--active' : ''}`}
+                        onClick={() => setQrMode('wifi')}
+                      >
+                        <Wifi size={13} style={{ marginRight: '6px' }} />
+                        1. Anslut WiFi
+                      </button>
+                      <button
+                        type="button"
+                        className={`wifi-popover__tab ${qrMode === 'portal' ? 'wifi-popover__tab--active' : ''}`}
+                        onClick={() => setQrMode('portal')}
+                      >
+                        <Sparkles size={13} style={{ marginRight: '6px' }} />
+                        2. Öppna Portal
+                      </button>
                     </div>
-                    <div className="wifi-field">
-                      <span className="wifi-field__label">Lösenord</span>
-                      <span className="wifi-field__value">{config.info.wifi_password}</span>
-                    </div>
-                    <div className="wifi-card__copy-hint" onClick={handleWifiCopy}>
-                      {copied ? (
-                        <>
-                          <Check size={14} style={{ strokeWidth: 2.5, color: 'var(--green)', marginRight: '6px' }} />
-                          Kopierat till urklipp!
-                        </>
+
+                    {qrMode === 'wifi' ? (
+                      <>
+                        <div className="wifi-field">
+                          <span className="wifi-field__label">Nätverk</span>
+                          <span className="wifi-field__value">{config.info.wifi_name}</span>
+                        </div>
+                        <div className="wifi-field">
+                          <span className="wifi-field__label">Lösenord</span>
+                          <span className="wifi-field__value">{config.info.wifi_password}</span>
+                        </div>
+                        <div className="wifi-card__copy-hint" onClick={handleWifiCopy}>
+                          {copied ? (
+                            <>
+                              <Check size={14} style={{ strokeWidth: 2.5, color: '#ffffff', marginRight: '6px' }} />
+                              Kopierat till urklipp!
+                            </>
+                          ) : (
+                            <>
+                              <Copy size={14} style={{ strokeWidth: 2.2, marginRight: '6px' }} />
+                              Kopiera lösenord
+                            </>
+                          )}
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="wifi-field">
+                          <span className="wifi-field__label">Adress</span>
+                          <span className="wifi-field__value" style={{ fontSize: '0.85rem' }}>
+                            {window.location.origin}
+                          </span>
+                        </div>
+                        <div className="wifi-field">
+                          <span className="wifi-field__label">Status</span>
+                          <span className="wifi-field__value">Lokalt ansluten</span>
+                        </div>
+                        <div 
+                          className="wifi-card__copy-hint" 
+                          onClick={() => {
+                            navigator.clipboard.writeText(window.location.origin)
+                            setCopied(true)
+                            setTimeout(() => setCopied(false), 2000)
+                          }}
+                        >
+                          {copied ? (
+                            <>
+                              <Check size={14} style={{ strokeWidth: 2.5, color: '#ffffff', marginRight: '6px' }} />
+                              Länk kopierad!
+                            </>
+                          ) : (
+                            <>
+                              <Copy size={14} style={{ strokeWidth: 2.2, marginRight: '6px' }} />
+                              Kopiera länk
+                            </>
+                          )}
+                        </div>
+                      </>
+                    )}
+
+                    {/* QR-kod Generator */}
+                    <div className="wifi-popover__qr-container">
+                      {qrDataUrl ? (
+                        <img src={qrDataUrl} alt="QR Code" className="wifi-popover__qr-image" />
                       ) : (
-                        <>
-                          <Copy size={14} style={{ strokeWidth: 2.2, marginRight: '6px' }} />
-                          Kopiera lösenord
-                        </>
+                        <div className="wifi-popover__qr-placeholder">
+                          <Loader2 size={24} className="wifi-popover__qr-spinner" />
+                        </div>
                       )}
+                      <p className="wifi-popover__qr-tip">
+                        {qrMode === 'wifi' 
+                          ? 'Skanna för att ansluta automatiskt' 
+                          : 'Skanna för att öppna gästportalen'}
+                      </p>
                     </div>
                   </div>
                 )}
