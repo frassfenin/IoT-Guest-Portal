@@ -537,6 +537,10 @@ export default function App() {
                             {window.location.origin}
                           </span>
                         </div>
+                        <div className="wifi-field">
+                          <span className="wifi-field__label">Status</span>
+                          <span className="wifi-field__value">Lokalt ansluten</span>
+                        </div>
                         <div 
                           className="wifi-card__copy-hint" 
                           onClick={() => {
