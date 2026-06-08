@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react'
-import { FolderOpen } from 'lucide-react'
+import { FolderOpen, Plus, Trash2, ArrowLeft, Settings, Check, HelpCircle, Home, Lightbulb, Sliders, Palette, Cast, Cpu, Wifi, Save, Power, RefreshCw, Search, Zap, Server, CheckCircle2, AlertCircle, Pin, AlertTriangle, Loader2, Download, Upload } from 'lucide-react'
 
-function LightConfigurator({ lights, onChange }) {
+function LightConfigurator({ lights, onChange, rooms = [], onAddRoom }) {
+  const [newRoomForLight, setNewRoomForLight] = useState({});
+  const [showInlineNewRoom, setShowInlineNewRoom] = useState({});
+
   if (lights.length === 0) {
     return (
       <div className="setup-info-box" style={{ textAlign: 'center', borderStyle: 'solid' }}>
@@ -12,59 +15,158 @@ function LightConfigurator({ lights, onChange }) {
 
   return (
     <div className="dynamic-lights-list">
-      {lights.map((light, index) => (
-        <div key={light.id} className={`dynamic-light-card ${light.enabled ? 'active' : ''}`}>
-          <div className="light-row-main">
-            <label className="light-label-clickable">
-              <input
-                type="checkbox"
-                checked={light.enabled}
-                onChange={(e) => onChange(index, 'enabled', e.target.checked)}
-                className="light-checkbox"
-              />
-              <span className="light-emoji">{light.supports_color_temp ? '💡' : '🌈'}</span>
-              <div className="light-names">
-                <span className="light-discovered-name">{light.discoveredName}</span>
-                <span className="light-capabilities">
-                  {light.supports_brightness ? 'Ljusstyrka' : ''}
-                  {light.supports_color_temp ? ' • Färgtemp' : ''}
+      {lights.map((light, index) => {
+        const isCreatingRoom = showInlineNewRoom[index];
+        return (
+          <div key={light.id} className={`dynamic-light-card ${light.enabled ? 'active' : ''}`}>
+            <div className="light-row-main">
+              <label className="light-label-clickable">
+                <input
+                  type="checkbox"
+                  checked={light.enabled}
+                  onChange={(e) => onChange(index, 'enabled', e.target.checked)}
+                  className="light-checkbox"
+                />
+                <span className="light-emoji">
+                  <Lightbulb size={18} style={{ color: light.supports_color_temp ? '#fbbf24' : '#f472b6' }} />
                 </span>
-              </div>
-            </label>
-          </div>
-          
-          {light.enabled && (
-            <div className="light-row-edit fade-in">
-              <div className="form-group">
-                <label>Visningsnamn</label>
-                <input
-                  type="text"
-                  value={light.name}
-                  onChange={(e) => onChange(index, 'name', e.target.value)}
-                  placeholder="Visningsnamn i portalen"
-                />
-              </div>
-              <div className="form-group">
-                <label>Rum</label>
-                <input
-                  type="text"
-                  value={light.room}
-                  onChange={(e) => onChange(index, 'room', e.target.value)}
-                  placeholder="t.ex. Vardagsrum, Kök..."
-                />
-              </div>
+                <div className="light-names">
+                  <span className="light-discovered-name">{light.discoveredName}</span>
+                  <span className="light-capabilities">
+                    {light.supports_brightness ? 'Ljusstyrka' : ''}
+                    {light.supports_color_temp ? ' • Färgtemp' : ''}
+                  </span>
+                </div>
+              </label>
             </div>
-          )}
-        </div>
-      ))}
+            
+            {light.enabled && (
+              <div className="light-row-edit fade-in">
+                <div className="form-group">
+                  <label>Visningsnamn</label>
+                  <input
+                    type="text"
+                    value={light.name}
+                    onChange={(e) => onChange(index, 'name', e.target.value)}
+                    placeholder="Visningsnamn i portalen"
+                  />
+                </div>
+                <div className="room-select-container">
+                  <label>Rum</label>
+                  {!isCreatingRoom ? (
+                    <select
+                      className="room-select-dropdown"
+                      value={light.room || ''}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === '__new__') {
+                          setShowInlineNewRoom({ ...showInlineNewRoom, [index]: true });
+                        } else {
+                          onChange(index, 'room', val);
+                        }
+                      }}
+                    >
+                      <option value="" disabled>-- Välj rum --</option>
+                      {rooms.map((room) => (
+                        <option key={room} value={room}>{room}</option>
+                      ))}
+                      <option value="__new__">+ Skapa nytt rum...</option>
+                    </select>
+                  ) : (
+                    <div className="room-new-inline">
+                      <input
+                        type="text"
+                        placeholder="Nytt rum..."
+                        value={newRoomForLight[index] || ''}
+                        onChange={(e) => setNewRoomForLight({ ...newRoomForLight, [index]: e.target.value })}
+                        autoFocus
+                      />
+                      <button
+                        type="button"
+                        className="setup-btn setup-btn--primary"
+                        onClick={() => {
+                          const name = (newRoomForLight[index] || '').trim();
+                          if (name) {
+                            const formatted = name.charAt(0).toUpperCase() + name.slice(1);
+                            onAddRoom(formatted);
+                            onChange(index, 'room', formatted);
+                          }
+                          setShowInlineNewRoom({ ...showInlineNewRoom, [index]: false });
+                          setNewRoomForLight({ ...newRoomForLight, [index]: '' });
+                        }}
+                      >
+                        Ok
+                      </button>
+                      <button
+                        type="button"
+                        className="setup-btn setup-btn--secondary"
+                        onClick={() => {
+                          setShowInlineNewRoom({ ...showInlineNewRoom, [index]: false });
+                          setNewRoomForLight({ ...newRoomForLight, [index]: '' });
+                        }}
+                      >
+                        Avbryt
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   )
 }
 
 export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
-  const [step, setStep] = useState(1)
+  const [step, setStep] = useState(() => {
+    if (initialConfig) {
+      const isLargeScreen = typeof window !== 'undefined' && window.innerWidth >= 768
+      return isLargeScreen ? 12 : 100
+    }
+    return 1
+  })
+  const [rooms, setRooms] = useState(() => {
+    if (initialConfig?.rooms && initialConfig.rooms.length > 0) {
+      return initialConfig.rooms
+    }
+    const existing = (initialConfig?.lights ?? []).map((l) => l.room).filter(Boolean)
+    const unique = Array.from(new Set(existing))
+    return unique.length > 0 ? unique : ['Vardagsrum', 'Kök', 'Sovrum', 'Hall']
+  })
+
+  const [isMobile, setIsMobile] = useState(() => {
+    return typeof window !== 'undefined' ? window.innerWidth < 768 : false
+  })
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
+  const handleAddRoomName = (roomName) => {
+    const trimmed = roomName.trim()
+    if (!trimmed) return
+    const formatted = trimmed.charAt(0).toUpperCase() + trimmed.slice(1)
+    if (!rooms.includes(formatted)) {
+      setRooms([...rooms, formatted])
+      markDirty()
+    }
+  }
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [showResetConfirmation, setShowResetConfirmation] = useState(false)
+  const [resetConfirmText, setResetConfirmText] = useState('')
+  const [resetting, setResetting] = useState(false)
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+
+  const markDirty = () => {
+    if (initialConfig) setHasUnsavedChanges(true)
+  }
 
   const handleImportBackup = (e) => {
     const file = e.target.files[0]
@@ -105,6 +207,45 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
       }
     }
     reader.readAsText(file)
+  }
+
+  const handleExportBackup = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const res = await fetch('/api/config')
+      if (!res.ok) throw new Error('Kunde inte hämta konfiguration från servern.')
+      const data = await res.json()
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2))
+      const downloadAnchor = document.createElement('a')
+      downloadAnchor.setAttribute("href", dataStr)
+      downloadAnchor.setAttribute("download", `gastportal-backup-${new Date().toISOString().split('T')[0]}.json`)
+      document.body.appendChild(downloadAnchor)
+      downloadAnchor.click()
+      downloadAnchor.remove()
+    } catch (err) {
+      console.error(err)
+      setError(err.message || 'Ett fel uppstod vid export.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleFactoryReset = async () => {
+    if (resetConfirmText !== 'BEKRÄFTA') return
+    try {
+      setResetting(true)
+      setError(null)
+      const res = await fetch('/api/setup/factory-reset', { method: 'POST' })
+      if (!res.ok) {
+        throw new Error('Servern misslyckades med att fabriksåterställa.')
+      }
+      window.location.reload()
+    } catch (err) {
+      console.error(err)
+      setError(err.message || 'Ett fel uppstod vid fabriksåterställning.')
+      setResetting(false)
+    }
   }
 
   // ── States för varje steg ───────────────────────────────
@@ -301,7 +442,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
       fetchHueLights(hue.ip, data.apiKey)
     } catch (err) {
       setError(err.message === 'link button not pressed'
-        ? '💡 Tryck på den runda knappen på din Philips Hue Bridge först, tryck sedan på "Koppla" här inom 30 sekunder!'
+        ? 'Tryck på den runda knappen på din Philips Hue Bridge först, tryck sedan på "Koppla" här inom 30 sekunder!'
         : `Fel: ${err.message}`
       )
     } finally {
@@ -639,14 +780,17 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
       copy[index].error = null
       return copy
     })
+    markDirty()
   }
 
   const addCastDevice = () => {
     setCastList((prev) => [...prev, { ip: '', name: `Cast Enhet ${prev.length + 1}`, tested: false, error: null, loading: false }])
+    markDirty()
   }
 
   const removeCastDevice = (index) => {
     setCastList((prev) => prev.filter((_, i) => i !== index))
+    markDirty()
   }
 
   // ── Helper för förändringar i lampor ─────────────────────
@@ -656,6 +800,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
       copy[index][field] = val
       return copy
     })
+    markDirty()
   }
 
   const updateIkeaLight = (index, field, val) => {
@@ -664,6 +809,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
       copy[index][field] = val
       return copy
     })
+    markDirty()
   }
 
   const updateGoveeLight = (index, field, val) => {
@@ -672,6 +818,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
       copy[index][field] = val
       return copy
     })
+    markDirty()
   }
 
   const updateMatterLight = (index, field, val) => {
@@ -680,6 +827,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
       copy[index][field] = val
       return copy
     })
+    markDirty()
   }
 
   // ── Notes manipulation ───────────────────────────────────
@@ -689,18 +837,21 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
       copy[index][field] = value
       return copy
     })
+    markDirty()
   }
 
   const addNote = () => {
     setNotes((prev) => [...prev, { emoji: '📌', title: 'Ny rubrik', text: 'Skriv text här...' }])
+    markDirty()
   }
 
   const removeNote = (index) => {
     setNotes((prev) => prev.filter((_, i) => i !== index))
+    markDirty()
   }
 
   // ── Save configuration ──────────────────────────────────
-  const saveSetup = async () => {
+  const saveSetup = async ({ closeAfter = true } = {}) => {
     setLoading(true)
     setError(null)
 
@@ -836,6 +987,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
         info: finalInfo,
         lights: finalLights,
         scenes: scenes,
+        rooms: rooms,
         media_players: finalCast.map((c) => ({
           entity_id: `cast_${c.ip.replace(/\./g, '_')}`,
           bridge: 'cast',
@@ -856,7 +1008,10 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
         throw new Error(errData.error || 'Kunde inte spara konfigurationen')
       }
 
-      onComplete()
+      setHasUnsavedChanges(false)
+      if (closeAfter) {
+        onComplete()
+      }
     } catch (err) {
       setError(`Kunde inte slutföra installationen: ${err.message}`)
     } finally {
@@ -864,9 +1019,20 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
     }
   }
 
-  // ── Navigering ──────────────────────────────────────────
+  const handleClose = () => {
+    if (hasUnsavedChanges) {
+      if (!confirm('Du har osparade ändringar. Vill du stänga ändå?')) return
+    }
+    if (onCancel) onCancel()
+  }
+
+  // ── Navigering ──────────────────────────────────────────────
   const getActiveStepsList = () => {
+    if (initialConfig) {
+      return [12, 11, 2, 3, 4, 6, 10, 8]
+    }
     const list = [1] // Välkommen
+    list.push(11) // Skapa rum
     if (services.hue) list.push(2)
     if (services.ikea) list.push(3)
     if (services.govee) list.push(4)
@@ -901,759 +1067,1227 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
   const totalActive = activeSteps.length
   const progressPct = (activeIndex / totalActive) * 100
 
+  const editItems = [
+    { id: 12, name: 'Generella inställningar', iconComponent: Settings, colorClass: 'general', desc: 'Allmänna systeminställningar' },
+    { id: 11, name: 'Hantera rum', iconComponent: Home, colorClass: 'rooms', desc: 'Skapa och ta bort rum' },
+    { id: 2, name: 'Philips Hue', iconComponent: Lightbulb, colorClass: 'hue', desc: 'Lokal belysning' },
+    { id: 3, name: 'IKEA Smart Home', iconComponent: Sliders, colorClass: 'ikea', desc: 'Dirigera Hub / Trådfri' },
+    { id: 4, name: 'Govee Lights', iconComponent: Palette, colorClass: 'govee', desc: 'Cloud API belysning' },
+    { id: 6, name: 'Google Cast', iconComponent: Cast, colorClass: 'cast', desc: 'Cast-enheter' },
+    { id: 10, name: 'Matter-enheter', iconComponent: Cpu, colorClass: 'matter', desc: 'Lokal direktstyrning' },
+    { id: 8, name: 'WiFi & info', iconComponent: Wifi, colorClass: 'wifi', desc: 'Gäst-WiFi & Husmanual' },
+
+  ]
+
+  const getStepName = (stepId) => {
+    switch (stepId) {
+      case 1: return 'Välkommen'
+      case 12: return 'Generella inställningar'
+      case 11: return 'Skapa rum'
+      case 2: return 'Philips Hue'
+      case 3: return 'IKEA Smart Home'
+      case 4: return 'Govee Lights'
+      case 6: return 'Google Cast'
+      case 10: return 'Matter-enheter'
+      case 8: return 'WiFi & info'
+      case 9: return 'Spara & starta'
+      default: return `Steg ${stepId}`
+    }
+  }
+
+  const renderEditStepActions = () => (
+    <div className="step-actions" style={{ marginTop: 24 }}>
+      {hasUnsavedChanges ? (
+        <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
+          <button
+            className="setup-btn setup-btn--secondary"
+            onClick={() => saveSetup({ closeAfter: false })}
+            disabled={loading}
+            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+          >
+            {loading ? <Loader2 size={14} className="setup-btn-spin" /> : <Save size={14} />}
+            Spara
+          </button>
+          <button
+            className="setup-btn setup-btn--primary"
+            onClick={() => saveSetup({ closeAfter: true })}
+            disabled={loading}
+            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+          >
+            {loading ? <Loader2 size={14} className="setup-btn-spin" /> : <Save size={14} />}
+            Spara och stäng
+          </button>
+        </div>
+      ) : (
+        <button
+          className="setup-btn setup-btn--secondary"
+          onClick={handleClose}
+          style={{ width: '100%' }}
+        >
+          Stäng
+        </button>
+      )}
+    </div>
+  )
+
+  const renderDashboard = () => {
+    return (
+      <div className="setup-card fade-in" style={{ maxWidth: '100%' }}>
+        <div className="setup-icon-wrapper setup-icon-wrapper--save">
+          <Settings size={36} className="setup-icon-svg" />
+        </div>
+        <h2 style={{ textAlign: 'center' }}>Inställningspanel</h2>
+        <p className="description" style={{ textAlign: 'center' }}>
+          Välj den kategori eller integration du vill konfigurera nedan. Dina ändringar sparas på systemet när du går till "Spara & stäng".
+        </p>
+
+        <div className="settings-dashboard-grid">
+          {editItems.map((item) => {
+            const Icon = item.iconComponent;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                className="settings-dash-card"
+                onClick={() => setStep(item.id)}
+              >
+                <span className={`settings-dash-card__icon settings-dash-card__icon--${item.colorClass}`}>
+                  <Icon size={22} className="setup-icon-svg" />
+                </span>
+                <div className="settings-dash-card__content">
+                  <span className="settings-dash-card__title">{item.name}</span>
+                  <span className="settings-dash-card__desc">{item.desc}</span>
+                </div>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+    )
+  }
+
+  const showSplitLayout = !isMobile && (initialConfig || step > 1) && step !== 100;
+  const isWideContainer = !isMobile && (showSplitLayout || step === 100 || step === 10);
+  const containerClass = `setup-container ${isWideContainer ? 'setup-container--wide' : ''}`;
+
   return (
-    <div className="setup-container">
+    <div className={containerClass}>
       <div className="setup-header">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h1 className="setup-title">Systemkonfiguration</h1>
+          <h1 className="setup-title">{initialConfig ? 'Systeminställningar' : 'Systemkonfiguration'}</h1>
           {onCancel && (
             <button
               type="button"
-              className="setup-btn setup-btn--secondary"
-              onClick={onCancel}
-              style={{ padding: '4px 10px', fontSize: '11px' }}
+              className="setup-btn setup-btn--cancel"
+              onClick={handleClose}
             >
-              ✕ Avbryt
+              ✕ Stäng
             </button>
           )}
         </div>
-        <p className="setup-subtitle">Steg {activeIndex} av {totalActive}</p>
-        <div className="setup-progress-bar">
-          <div className="setup-progress-fill" style={{ width: `${progressPct}%` }} />
-        </div>
+        {!initialConfig ? (
+          <>
+            <p className="setup-subtitle">Steg {activeIndex} av {totalActive}</p>
+            <div className="setup-progress-bar">
+              <div className="setup-progress-fill" style={{ width: `${progressPct}%` }} />
+            </div>
+          </>
+        ) : (
+          <p className="setup-subtitle" style={{ textAlign: 'left', marginTop: '4px' }}>
+            Hantera dina smarta enheter, rum och nätverksinställningar
+          </p>
+        )}
       </div>
 
-      {error && (
-        <div className="setup-alert setup-alert--error" role="alert">
-          {error}
-        </div>
-      )}
-
-      {/* STEG 1: Välkommen */}
-      {step === 1 && (
-        <div className="setup-card fade-in">
-          <div className="setup-icon">🏠</div>
-          <h2>Välkommen till Gästportalen!</h2>
-          <p>
-            Denna guide hjälper dig att ansluta dina smarta lampor och mediaspelare. 
-            Vi söker upp, parkopplar och läser in alla dina enheter automatiskt.
-          </p>
-
-          <div className="services-selector" style={{ margin: '12px 0 20px' }}>
-            <p className="text-xs text-dim font-semibold" style={{ textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>
-              Välj enheter att konfigurera:
-            </p>
-            <div className="services-grid">
-              <label className={`service-select-card ${services.hue ? 'active' : ''}`}>
-                <input
-                  type="checkbox"
-                  checked={services.hue}
-                  onChange={(e) => setServices({ ...services, hue: e.target.checked })}
-                  style={{ marginRight: 8 }}
-                />
-                <span className="service-icon">💡</span>
-                <div className="service-info">
-                  <span className="service-name">Philips Hue</span>
-                  <span className="service-desc">Lokal realtidsbelysning (SSE)</span>
-                </div>
-              </label>
-
-              <label className={`service-select-card ${services.ikea ? 'active' : ''}`}>
-                <input
-                  type="checkbox"
-                  checked={services.ikea}
-                  onChange={(e) => setServices({ ...services, ikea: e.target.checked })}
-                  style={{ marginRight: 8 }}
-                />
-                <span className="service-icon">🏮</span>
-                <div className="service-info">
-                  <span className="service-name">IKEA Smart Home</span>
-                  <span className="service-desc">Dirigera Hub / Trådfri Gateway</span>
-                </div>
-              </label>
-
-              <label className={`service-select-card ${services.govee ? 'active' : ''}`}>
-                <input
-                  type="checkbox"
-                  checked={services.govee}
-                  onChange={(e) => setServices({ ...services, govee: e.target.checked })}
-                  style={{ marginRight: 8 }}
-                />
-                <span className="service-icon">🌈</span>
-                <div className="service-info">
-                  <span className="service-name">Govee Lights</span>
-                  <span className="service-desc">Integration via Cloud API</span>
-                </div>
-              </label>
-
-              <label className={`service-select-card ${services.cast ? 'active' : ''}`}>
-                <input
-                  type="checkbox"
-                  checked={services.cast}
-                  onChange={(e) => setServices({ ...services, cast: e.target.checked })}
-                  style={{ marginRight: 8 }}
-                />
-                <span className="service-icon">📡</span>
-                <div className="service-info">
-                  <span className="service-name">Google Cast</span>
-                  <span className="service-desc">Streamer, Chromecast, Högtalare</span>
-                </div>
-              </label>
-
-              <label className={`service-select-card ${services.matter ? 'active' : ''}`}>
-                <input
-                  type="checkbox"
-                  checked={services.matter}
-                  onChange={(e) => setServices({ ...services, matter: e.target.checked })}
-                  style={{ marginRight: 8 }}
-                />
-                <span className="service-icon">🧱</span>
-                <div className="service-info">
-                  <span className="service-name">Matter-enheter</span>
-                  <span className="service-desc">Lokal direktstyrning över LAN (PIN-kod)</span>
-                </div>
-              </label>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', gap: '12px', marginTop: '20px' }}>
-            <button 
-              className="setup-btn setup-btn--primary setup-btn--large" 
-              onClick={nextStep}
-              disabled={!Object.values(services).some(v => v)}
-              style={{ flex: 1 }}
-            >
-              Starta guiden
-            </button>
-            <label 
-              className="setup-btn setup-btn--secondary setup-btn--large" 
-              style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', gap: 6, flex: 1, margin: 0 }}
-            >
-              <FolderOpen size={16} />
-              Importera backup
-              <input
-                type="file"
-                accept=".json"
-                onChange={handleImportBackup}
-                style={{ display: 'none' }}
-              />
-            </label>
-          </div>
-        </div>
-      )}
-
-      {/* STEG 2: Philips Hue */}
-      {step === 2 && (
-        <div className="setup-card fade-in">
-          <div className="setup-icon">💡</div>
-          <h2>1. Philips Hue Bridge</h2>
-          <p className="description">
-            Vi kommunicerar lokalt och i realtid med din Hue Bridge. Tryck på den runda länkningsknappen på din Hue Bridge innan du kopplar.
-          </p>
-
-          <div className="form-group">
-            <label>IP-adress för Bridge</label>
-            <div className="input-group">
-              <input
-                type="text"
-                placeholder="t.ex. 192.168.1.50"
-                value={hue.ip}
-                onChange={(e) => {
-                  setHue({ ...hue, ip: e.target.value })
-                  setError(null)
-                }}
-                disabled={hue.paired}
-              />
-              <button 
-                type="button" 
-                className="setup-btn setup-btn--secondary" 
-                onClick={discoverHue}
-                disabled={loading || hue.paired}
-              >
-                Sök automatiskt
-              </button>
-            </div>
-          </div>
-
-          {hue.paired ? (
-            <div className="setup-success-badge">
-              ✓ Kopplad! Hittade {hueLights.length} lampor på din Hue Bridge.
+      <div className={showSplitLayout ? 'setup-split-layout' : ''}>
+        {showSplitLayout && (
+          initialConfig ? (
+            /* Edit Mode Sidebar */
+            <div className="settings-edit-sidebar">
+              {editItems.map((item) => {
+                const Icon = item.iconComponent;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className={`settings-sidebar-item ${step === item.id ? 'settings-sidebar-item--active' : ''}`}
+                    onClick={() => setStep(item.id)}
+                  >
+                    <Icon size={16} className={`sidebar-icon-svg sidebar-icon-svg--${item.colorClass}`} />
+                    <span>{item.name}</span>
+                  </button>
+                )
+              })}
             </div>
           ) : (
-            <button
-              type="button"
-              className="setup-btn setup-btn--primary"
-              onClick={pairHue}
-              disabled={loading || !hue.ip}
-            >
-              {loading ? <span className="spinner" /> : 'Tryck på Hue-knappen & Koppla'}
+            /* Wizard Mode Stepper */
+            <div className="setup-sidebar-stepper">
+              {activeSteps.map((stepId, idx) => {
+                const isActive = step === stepId;
+                const isCompleted = activeSteps.indexOf(step) > idx;
+                return (
+                  <button
+                    key={stepId}
+                    type="button"
+                    className={`stepper-item ${isActive ? 'stepper-item--active' : ''} ${isCompleted ? 'stepper-item--completed' : ''}`}
+                    onClick={() => {
+                      if (isCompleted || isActive) {
+                        setStep(stepId);
+                      }
+                    }}
+                    disabled={!isCompleted && !isActive}
+                    style={{ cursor: (isCompleted || isActive) ? 'pointer' : 'not-allowed' }}
+                  >
+                    <div className="stepper-circle">
+                      {isCompleted ? <Check size={12} strokeWidth={3} /> : idx + 1}
+                    </div>
+                    <span>{getStepName(stepId)}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )
+        )}
+
+        <div className="setup-content-pane" style={{ width: '100%' }}>
+          {error && (
+            <div className="setup-alert setup-alert--error" role="alert" style={{ marginBottom: '20px' }}>
+              <AlertCircle size={16} style={{ flexShrink: 0 }} />
+              <span>{error}</span>
+            </div>
+          )}
+
+          {/* Show mobile back button in edit mode sub-step */}
+          {initialConfig && step !== 100 && isMobile && (
+            <button className="mobile-back-btn" onClick={() => setStep(100)} style={{ marginBottom: '16px' }}>
+              ← Tillbaka till översikt
             </button>
           )}
 
-          {/* Välj lampor och rum */}
-          {hue.paired && (
-            <div className="mapping-section">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <h3 style={{ margin: 0 }}>Välj lampor för portalen</h3>
-                <button
-                  type="button"
-                  className="setup-btn setup-btn--secondary"
-                  onClick={() => fetchHueLights(hue.ip, hue.apiKey)}
-                  disabled={loading}
-                  style={{ padding: '6px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px', margin: 0 }}
-                >
-                  🔄 Sök igen
-                </button>
+          {step === 100 && renderDashboard()}
+
+          {/* STEG 12: Generella inställningar */}
+          {step === 12 && (
+            <div className="setup-card fade-in">
+              <div className="setup-icon-wrapper setup-icon-wrapper--general">
+                <Settings size={32} className="setup-icon-svg" />
               </div>
-              <p className="text-xs text-dim" style={{ marginBottom: 12 }}>
-                Kryssa i de Hue-lampor dina gäster ska kunna styra, döp dem och placera dem i rum:
+              <h2>Generella inställningar</h2>
+              <p className="description" style={{ marginBottom: 24 }}>
+                Hantera systemets säkerhetskopior eller utför en fabriksåterställning av gästportalen.
               </p>
-              <LightConfigurator lights={hueLights} onChange={updateHueLight} />
-            </div>
-          )}
 
-          <div className="step-actions">
-            <button className="setup-btn setup-btn--text" onClick={prevStep}>Bakåt</button>
-            <button className="setup-btn setup-btn--primary" onClick={nextStep}>Nästa</button>
-          </div>
-        </div>
-      )}
-
-      {/* STEG 3: IKEA Smart Home */}
-      {step === 3 && (
-        <div className="setup-card fade-in">
-          <div className="setup-icon">🏮</div>
-          <h2>2. IKEA Smart Home</h2>
-          <p className="description">
-            Välj om du har den nyare **Dirigera Hub** (med app-anslutning) eller den äldre **Trådfri Gateway** (CoAP-baserad).
-          </p>
-
-          <div className="bridge-selector">
-            <button
-              type="button"
-              className={`selector-btn ${ikea.type === 'dirigera' ? 'active' : ''}`}
-              onClick={() => setIkea({ ...ikea, type: 'dirigera', paired: false })}
-            >
-              🚀 Dirigera Hub (Nyare)
-            </button>
-            <button
-              type="button"
-              className={`selector-btn ${ikea.type === 'tradfri' ? 'active' : ''}`}
-              onClick={() => setIkea({ ...ikea, type: 'tradfri', paired: false })}
-            >
-              📟 Trådfri Gateway (Äldre)
-            </button>
-          </div>
-
-          <div className="form-group">
-            <label>IP-adress för {ikea.type === 'dirigera' ? 'Hub' : 'Gateway'}</label>
-            <input
-              type="text"
-              placeholder="t.ex. 192.168.1.60"
-              value={ikea.ip}
-              onChange={(e) => {
-                setIkea({ ...ikea, ip: e.target.value })
-                setError(null)
-              }}
-              disabled={ikea.paired}
-            />
-          </div>
-
-          {ikea.type === 'dirigera' ? (
-            <div className="form-group">
-              <label>9-siffrig PIN-kod</label>
-              <input
-                type="text"
-                placeholder="t.ex. 123 456 789"
-                value={ikea.code}
-                onChange={(e) => {
-                  setIkea({ ...ikea, code: e.target.value })
-                  setError(null)
-                }}
-                disabled={ikea.paired}
-              />
-              <span className="text-xs text-dim">Finns tryckt på klistermärket på undersidan av hubben.</span>
-            </div>
-          ) : (
-            <div className="form-group">
-              <label>Säkerhetskod (Security Code)</label>
-              <input
-                type="password"
-                placeholder="Säkerhetskod från undersidan"
-                value={ikea.securityCode}
-                onChange={(e) => {
-                  setIkea({ ...ikea, securityCode: e.target.value })
-                  setError(null)
-                }}
-                disabled={ikea.paired}
-              />
-              <span className="text-xs text-dim">Koden står bredvid streckkoden på baksidan av din gateway.</span>
-            </div>
-          )}
-
-          {ikea.paired ? (
-            <div className="setup-success-badge">
-              ✓ Ansluten till IKEA! Hittade {ikeaLights.length} lampor.
-            </div>
-          ) : (
-            <button
-              type="button"
-              className="setup-btn setup-btn--primary"
-              onClick={pairIkea}
-              disabled={loading || !ikea.ip}
-            >
-              {loading ? <span className="spinner" /> : 'Koppla IKEA'}
-            </button>
-          )}
-
-          {ikea.paired && (
-            <div className="mapping-section">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <h3 style={{ margin: 0 }}>Välj IKEA-lampor för portalen</h3>
-                <button
-                  type="button"
-                  className="setup-btn setup-btn--secondary"
-                  onClick={() => fetchIkeaLights(ikea.type, ikea.ip, ikea.token, ikea.identity, ikea.psk)}
-                  disabled={loading}
-                  style={{ padding: '6px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px', margin: 0 }}
-                >
-                  🔄 Sök igen
-                </button>
-              </div>
-              <p className="text-xs text-dim" style={{ marginBottom: 12 }}>
-                Kryssa i de IKEA-lampor dina gäster ska kunna styra, döp dem och placera dem i rum:
-              </p>
-              <LightConfigurator lights={ikeaLights} onChange={updateIkeaLight} />
-            </div>
-          )}
-
-          <div className="step-actions">
-            <button className="setup-btn setup-btn--text" onClick={prevStep}>Bakåt</button>
-            <button className="setup-btn setup-btn--primary" onClick={nextStep}>Nästa</button>
-          </div>
-        </div>
-      )}
-
-      {/* STEG 4: Govee Cloud API */}
-      {step === 4 && (
-        <div className="setup-card fade-in">
-          <div className="setup-icon">🌈</div>
-          <h2>3. Govee Lights</h2>
-          <p className="description">
-            Ange din personliga API-nyckel för att styra dina Govee-slingor eller lampor. 
-            Du kan hämta en API-nyckel gratis via Govee Home-mobilappen.
-          </p>
-
-          <div className="form-group">
-            <label>Govee API-nyckel (API Key)</label>
-            <input
-              type="password"
-              placeholder="Fyll i Govee API-nyckel"
-              value={govee.apiKey}
-              onChange={(e) => setGovee({ ...govee, apiKey: e.target.value })}
-              disabled={govee.paired}
-            />
-          </div>
-
-          {govee.paired ? (
-            <div className="setup-success-badge">
-              ✓ Ansluten till Govee! Hittade {goveeLights.length} enheter.
-            </div>
-          ) : (
-            <button
-              type="button"
-              className="setup-btn setup-btn--primary"
-              onClick={testGovee}
-              disabled={loading || !govee.apiKey}
-            >
-              {loading ? <span className="spinner" /> : 'Testa API-nyckel'}
-            </button>
-          )}
-
-          {govee.paired && (
-            <div className="mapping-section">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <h3 style={{ margin: 0 }}>Välj Govee-lampor för portalen</h3>
-                <button
-                  type="button"
-                  className="setup-btn setup-btn--secondary"
-                  onClick={() => fetchGoveeLights(govee.apiKey)}
-                  disabled={loading}
-                  style={{ padding: '6px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px', margin: 0 }}
-                >
-                  🔄 Sök igen
-                </button>
-              </div>
-              <p className="text-xs text-dim" style={{ marginBottom: 12 }}>
-                Kryssa i de Govee-lampor dina gäster ska kunna styra, döp dem och placera dem i rum:
-              </p>
-              <LightConfigurator lights={goveeLights} onChange={updateGoveeLight} />
-            </div>
-          )}
-
-          <div className="step-actions">
-            <button className="setup-btn setup-btn--text" onClick={prevStep}>Bakåt</button>
-            <button className="setup-btn setup-btn--primary" onClick={nextStep}>Nästa</button>
-          </div>
-        </div>
-      )}
-
-
-
-      {/* STEG 6: Google Cast */}
-      {step === 6 && (
-        <div className="setup-card fade-in">
-          <div className="setup-icon">📡</div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: '8px' }}>
-            <h2 style={{ margin: 0 }}>5. Google Cast (Google Streamer/TV)</h2>
-            {castList.some(c => c.ip) && (
-              <button
-                type="button"
-                className="setup-btn setup-btn--secondary"
-                onClick={testAllCastDevices}
-                disabled={loading}
-                style={{ padding: '6px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px', margin: 0 }}
-              >
-                🔄 Testa alla
-              </button>
-            )}
-          </div>
-          <p className="description">
-            Lägg till de Google Cast-enheter som gäster ska kunna starta, pausa och styra volym på lokalt.
-          </p>
-
-          <div className="cast-devices-list">
-            {castList.map((cast, index) => (
-              <div key={index} className="cast-device-card">
-                <div className="form-group">
-                  <label>Namn på enheten</label>
-                  <input
-                    type="text"
-                    placeholder="t.ex. Google Streamer"
-                    value={cast.name}
-                    onChange={(e) => handleCastChange(index, 'name', e.target.value)}
-                  />
-                </div>
-                <div className="form-group">
-                  <label>IP-adress</label>
-                  <div className="input-group">
-                    <input
-                      type="text"
-                      placeholder="t.ex. 192.168.1.80"
-                      value={cast.ip}
-                      onChange={(e) => handleCastChange(index, 'ip', e.target.value)}
-                    />
-                    <button
-                      type="button"
-                      className="setup-btn setup-btn--secondary"
-                      onClick={() => testCastDevice(index)}
-                      disabled={cast.loading || !cast.ip}
-                    >
-                      {cast.loading ? <span className="spinner" /> : 'Testa'}
-                    </button>
-                  </div>
-                </div>
-
-                {cast.tested && <div className="setup-success-text">✓ Lyckad TLS-anslutning!</div>}
-                {cast.error && <div className="setup-error-text">❌ {cast.error}</div>}
-
-                {castList.length > 1 && (
+              {/* Backup & Återställning */}
+              <div className="backup-zone-card" style={{ marginBottom: '24px' }}>
+                <h3 className="backup-zone-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--blue)', fontSize: 'var(--text-md)', fontWeight: 700, marginBottom: '8px' }}>
+                  <FolderOpen size={18} style={{ color: '#3b82f6' }} />
+                  Backup & Återställning
+                </h3>
+                <p className="backup-zone-desc" style={{ fontSize: 'var(--text-xs)', color: 'var(--text-2)', marginBottom: '16px', lineHeight: 1.4 }}>
+                  Exportera din nuvarande konfiguration till en backupfil, eller återställ systemet genom att importera en tidigare sparad backup.
+                </p>
+                <div style={{ display: 'flex', gap: '12px' }}>
                   <button
                     type="button"
-                    className="remove-cast-btn"
-                    onClick={() => removeCastDevice(index)}
+                    className="setup-btn setup-btn--secondary"
+                    onClick={handleExportBackup}
+                    style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                    disabled={loading}
                   >
-                    Ta bort enhet
+                    <Download size={14} />
+                    Exportera backup
                   </button>
+                  <label
+                    className="setup-btn setup-btn--secondary"
+                    style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', gap: 6, flex: 1, margin: 0 }}
+                  >
+                    <Upload size={14} />
+                    Importera backup
+                    <input
+                      type="file"
+                      accept=".json"
+                      onChange={handleImportBackup}
+                      style={{ display: 'none' }}
+                      disabled={loading}
+                    />
+                  </label>
+                </div>
+              </div>
+
+              {/* Danger Zone för Fabriksåterställning */}
+              <div className="danger-zone-card" style={{ marginTop: '32px', borderLeft: '4px solid #dc2626' }}>
+                <h3 className="danger-zone-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#dc2626', fontSize: 'var(--text-md)', fontWeight: 700, marginBottom: '8px' }}>
+                  <AlertTriangle size={18} />
+                  Farliga inställningar (Danger Zone)
+                </h3>
+                <p className="danger-zone-desc" style={{ fontSize: 'var(--text-xs)', color: 'var(--text-2)', marginBottom: '16px', lineHeight: 1.4 }}>
+                  Genom att fabriksåterställa appen raderar du all sparad konfiguration (inklusive integrationer, rum, lampor, mediaspelare, WiFi-inställningar och scener). Detta går inte att ångra.
+                </p>
+
+                {!showResetConfirmation ? (
+                  <button 
+                    type="button" 
+                    className="setup-btn setup-btn--danger"
+                    onClick={() => {
+                      setShowResetConfirmation(true)
+                      setResetConfirmText('')
+                    }}
+                    style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                  >
+                    <Trash2 size={16} />
+                    Fabriksåterställ allt...
+                  </button>
+                ) : (
+                  <div className="danger-confirm-box fade-in" style={{ background: 'rgba(220, 38, 38, 0.03)', border: '1px solid rgba(220, 38, 38, 0.15)', borderRadius: 'var(--radius-xs)', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <p style={{ fontSize: 'var(--text-xs)', fontWeight: 600, color: '#dc2626', margin: 0 }}>
+                      Skriv <strong style={{ textDecoration: 'underline' }}>BEKRÄFTA</strong> i fältet nedan för att verkställa borttagningen:
+                    </p>
+                    <div className="input-group">
+                      <input
+                        type="text"
+                        placeholder="Skriv BEKRÄFTA..."
+                        value={resetConfirmText}
+                        onChange={(e) => setResetConfirmText(e.target.value)}
+                        disabled={resetting}
+                        style={{ textTransform: 'uppercase' }}
+                      />
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                      <button
+                        type="button"
+                        className="setup-btn setup-btn--secondary"
+                        onClick={() => setShowResetConfirmation(false)}
+                        disabled={resetting}
+                        style={{ flex: 1 }}
+                      >
+                        Avbryt
+                      </button>
+                      <button
+                        type="button"
+                        className="setup-btn setup-btn--danger-action"
+                        onClick={handleFactoryReset}
+                        disabled={resetConfirmText !== 'BEKRÄFTA' || resetting}
+                        style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                      >
+                        {resetting ? (
+                          <>
+                            <Loader2 size={14} className="setup-btn-spin" />
+                            Återställer...
+                          </>
+                        ) : (
+                          <>
+                            <Trash2 size={14} />
+                            Radera allt!
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
                 )}
               </div>
-            ))}
-          </div>
+              
+              <div className="step-actions" style={{ marginTop: 24 }}>
+                {initialConfig ? (
+                  renderEditStepActions()
+                ) : (
+                  <>
+                    <button className="setup-btn setup-btn--text" onClick={prevStep}>Bakåt</button>
+                    <button className="setup-btn setup-btn--primary" onClick={nextStep}>Nästa</button>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
 
-          <button
-            type="button"
-            className="setup-btn setup-btn--secondary"
-            style={{ width: '100%', marginTop: 8 }}
-            onClick={addCastDevice}
-          >
-            + Lägg till ytterligare Cast-enhet
-          </button>
+          {/* STEG 1: Välkommen */}
+          {step === 1 && (
+            <div className="setup-card fade-in">
+              <div className="setup-icon-wrapper setup-icon-wrapper--rooms">
+                <Home size={32} className="setup-icon-svg" />
+              </div>
+              <h2>Välkommen till Gästportalen!</h2>
+              <p>
+                Denna guide hjälper dig att ansluta dina smarta lampor och mediaspelare. 
+                Vi söker upp, parkopplar och läser in alla dina enheter automatiskt.
+              </p>
 
-          <div className="step-actions" style={{ marginTop: 24 }}>
-            <button className="setup-btn setup-btn--text" onClick={prevStep}>Bakåt</button>
-            <button className="setup-btn setup-btn--primary" onClick={nextStep}>Nästa</button>
-          </div>
-        </div>
-      )}
-
-      {/* STEG 10: Matter Setup */}
-      {step === 10 && (
-        <div className="setup-card fade-in">
-          <div className="setup-icon">🧱</div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: '8px' }}>
-            <h2 style={{ margin: 0 }}>Matter-enheter (Lokal)</h2>
-            {matterPaired && (
-              <button
-                type="button"
-                className="setup-btn setup-btn--secondary"
-                onClick={fetchMatterLights}
-                disabled={loading}
-                style={{ padding: '6px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px', margin: 0 }}
-              >
-                🔄 Sök igen
-              </button>
-            )}
-          </div>
-          <p className="description">
-            Driftsätt och styr dina Matter-kompatibla lampor och eluttag helt lokalt utan externa molntjänster eller hubbar. 
-            Sätt din enhet i parningsläge (t.ex. genom att nollställa den) och ange dess PIN-kod nedan.
-          </p>
-
-          <div style={{ marginBottom: 24, borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: 20 }}>
-            <h3 style={{ fontSize: '15px', marginBottom: 10 }}>Sök oparade enheter</h3>
-            <p className="text-xs text-dim" style={{ marginBottom: 12 }}>
-              Sök efter oparade enheter som annonserar sig på nätverket via mDNS:
-            </p>
-            
-            <button
-              type="button"
-              className="setup-btn setup-btn--secondary"
-              onClick={discoverMatterDevices}
-              disabled={matterScan.loading || loading}
-              style={{ width: '100%', marginBottom: 12 }}
-            >
-              {matterScan.loading ? (
-                <>
-                  <span className="spinner" style={{ marginRight: 8 }} />
-                  Söker efter enheter (4s)...
-                </>
-              ) : '🔍 Sök oparade enheter'}
-            </button>
-
-            {matterScan.error && (
-              <div className="setup-error-text" style={{ marginBottom: 12 }}>❌ {matterScan.error}</div>
-            )}
-
-            {matterScan.devices.length > 0 ? (
-              <div className="dynamic-lights-list" style={{ marginBottom: 12 }}>
-                {matterScan.devices.map((dev) => (
-                  <div key={dev.id} className="cast-device-card" style={{ padding: '10px 14px', marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <span style={{ fontSize: 20 }}>🧱</span>
-                      <div>
-                        <div style={{ fontWeight: 600, fontSize: 13 }}>{dev.name}</div>
-                        <div style={{ fontSize: 11, color: 'var(--text-dim)' }}>
-                          Discriminator: {dev.discriminator} • Vendor: {dev.vendorId} • Product: {dev.productId}
-                        </div>
-                      </div>
+              <div className="services-selector" style={{ margin: '12px 0 20px' }}>
+                <p className="text-xs text-dim font-semibold" style={{ textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>
+                  Välj enheter att konfigurera:
+                </p>
+                <div className="services-grid">
+                  <label className={`service-select-card ${services.hue ? 'active' : ''}`}>
+                    <input
+                      type="checkbox"
+                      checked={services.hue}
+                      onChange={(e) => setServices({ ...services, hue: e.target.checked })}
+                      style={{ marginRight: 8 }}
+                    />
+                    <span className="service-icon"><Lightbulb className="sidebar-icon-svg sidebar-icon-svg--hue" size={24} /></span>
+                    <div className="service-info">
+                      <span className="service-name">Philips Hue</span>
+                      <span className="service-desc">Lokal realtidsbelysning (SSE)</span>
                     </div>
-                    <button
-                      type="button"
-                      className={`setup-btn ${selectedDevice?.id === dev.id ? 'setup-btn--primary' : 'setup-btn--secondary'}`}
-                      style={{ padding: '4px 10px', fontSize: '11px', margin: 0 }}
-                      onClick={() => {
-                        setSelectedDevice(selectedDevice?.id === dev.id ? null : dev);
-                        setError(null);
-                      }}
-                    >
-                      {selectedDevice?.id === dev.id ? 'Vald ✓' : 'Välj'}
-                    </button>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              !matterScan.loading && matterScan.devices.length === 0 && (
-                <div className="setup-info-box" style={{ fontSize: 12, marginBottom: 12 }}>
-                  Inga nya oparade Matter-enheter annonserades via mDNS just nu. Kontrollera att enheten är i parningsläge.
+                  </label>
+
+                  <label className={`service-select-card ${services.ikea ? 'active' : ''}`}>
+                    <input
+                      type="checkbox"
+                      checked={services.ikea}
+                      onChange={(e) => setServices({ ...services, ikea: e.target.checked })}
+                      style={{ marginRight: 8 }}
+                    />
+                    <span className="service-icon"><Sliders className="sidebar-icon-svg sidebar-icon-svg--ikea" size={24} /></span>
+                    <div className="service-info">
+                      <span className="service-name">IKEA Smart Home</span>
+                      <span className="service-desc">Dirigera Hub / Trådfri Gateway</span>
+                    </div>
+                  </label>
+
+                  <label className={`service-select-card ${services.govee ? 'active' : ''}`}>
+                    <input
+                      type="checkbox"
+                      checked={services.govee}
+                      onChange={(e) => setServices({ ...services, govee: e.target.checked })}
+                      style={{ marginRight: 8 }}
+                    />
+                    <span className="service-icon"><Palette className="sidebar-icon-svg sidebar-icon-svg--govee" size={24} /></span>
+                    <div className="service-info">
+                      <span className="service-name">Govee Lights</span>
+                      <span className="service-desc">Integration via Cloud API</span>
+                    </div>
+                  </label>
+
+                  <label className={`service-select-card ${services.cast ? 'active' : ''}`}>
+                    <input
+                      type="checkbox"
+                      checked={services.cast}
+                      onChange={(e) => setServices({ ...services, cast: e.target.checked })}
+                      style={{ marginRight: 8 }}
+                    />
+                    <span className="service-icon"><Cast className="sidebar-icon-svg sidebar-icon-svg--cast" size={24} /></span>
+                    <div className="service-info">
+                      <span className="service-name">Google Cast</span>
+                      <span className="service-desc">Streamer, Chromecast, Högtalare</span>
+                    </div>
+                  </label>
+
+                  <label className={`service-select-card ${services.matter ? 'active' : ''}`}>
+                    <input
+                      type="checkbox"
+                      checked={services.matter}
+                      onChange={(e) => setServices({ ...services, matter: e.target.checked })}
+                      style={{ marginRight: 8 }}
+                    />
+                    <span className="service-icon"><Cpu className="sidebar-icon-svg sidebar-icon-svg--matter" size={24} /></span>
+                    <div className="service-info">
+                      <span className="service-name">Matter-enheter</span>
+                      <span className="service-desc">Lokal direktstyrning över LAN (PIN-kod)</span>
+                    </div>
+                  </label>
                 </div>
-              )
-            )}
-
-            {selectedDevice && (
-              <div className="setup-alert" style={{ marginTop: 12, marginBottom: 0, background: 'rgba(99,102,241,0.12)', borderColor: 'var(--accent)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '13px' }}>
-                  📍 <strong>Vald enhet för parning:</strong> {selectedDevice.name} (Discriminator: {selectedDevice.discriminator})
-                </span>
-                <button
-                  type="button"
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px', padding: '0 4px', color: 'var(--text-dim)' }}
-                  onClick={() => setSelectedDevice(null)}
-                >
-                  ✕
-                </button>
               </div>
-            )}
-          </div>
 
-          <div style={{ marginBottom: 20 }}>
-            <h3 style={{ fontSize: '15px', marginBottom: 10 }}>Parkoppla ny enhet</h3>
-            <div className="form-group">
-              <label>Manuell parningskod (11 eller 21 siffror)</label>
-              <div className="input-group">
+              <div style={{ display: 'flex', gap: '12px', marginTop: '20px' }}>
+                <button 
+                  className="setup-btn setup-btn--primary setup-btn--large" 
+                  onClick={nextStep}
+                  disabled={!Object.values(services).some(v => v)}
+                  style={{ flex: 1 }}
+                >
+                  Starta guiden
+                </button>
+                <label 
+                  className="setup-btn setup-btn--secondary setup-btn--large" 
+                  style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', gap: 6, flex: 1, margin: 0 }}
+                >
+                  <FolderOpen size={16} />
+                  Importera backup
+                  <input
+                    type="file"
+                    accept=".json"
+                    onChange={handleImportBackup}
+                    style={{ display: 'none' }}
+                  />
+                </label>
+              </div>
+            </div>
+          )}
+
+          {/* STEG 11: Skapa rum */}
+          {step === 11 && (
+            <div className="setup-card fade-in">
+              <div className="setup-icon-wrapper setup-icon-wrapper--rooms">
+                <Home size={32} className="setup-icon-svg" />
+              </div>
+              <h2>Skapa rum</h2>
+              <p className="description">
+                Skapa rummen i ditt hem där du har smart belysning. 
+                Det gör det enkelt för dina gäster att hitta rätt lampa.
+              </p>
+
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const input = e.target.elements.roomInput;
+                  const name = input.value.trim();
+                  if (name) {
+                    handleAddRoomName(name);
+                    input.value = '';
+                  }
+                }}
+                className="input-group"
+                style={{ margin: '10px 0' }}
+              >
                 <input
+                  name="roomInput"
                   type="text"
-                  placeholder="t.ex. 34905741252"
-                  value={matterCode}
-                  onChange={(e) => {
-                    setMatterCode(e.target.value.replace(/[^0-9]/g, ''));
-                    setError(null);
-                  }}
+                  placeholder="t.ex. Vardagsrum, Kök, Sovrum..."
                   disabled={loading}
                 />
+                <button type="submit" className="setup-btn setup-btn--primary" disabled={loading}>
+                  Lägg till
+                </button>
+              </form>
+
+              <div className="room-builder-list">
+                {rooms.map((room) => (
+                  <span key={room} className="room-builder-pill">
+                    <span>{room}</span>
+                    <button
+                      type="button"
+                      className="room-builder-pill__delete"
+                      onClick={() => setRooms(rooms.filter(r => r !== room))}
+                      title={`Ta bort ${room}`}
+                    >
+                      ✕
+                    </button>
+                  </span>
+                ))}
+              </div>
+
+              <div className="step-actions">
+                {!initialConfig ? (
+                  <>
+                    <button className="setup-btn setup-btn--text" onClick={prevStep}>Bakåt</button>
+                    <button className="setup-btn setup-btn--primary" onClick={nextStep}>Nästa</button>
+                  </>
+                ) : (
+                  renderEditStepActions()
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* STEG 2: Philips Hue */}
+          {step === 2 && (
+            <div className="setup-card fade-in">
+              <div className="setup-icon-wrapper setup-icon-wrapper--hue">
+                <Lightbulb size={32} className="setup-icon-svg" />
+              </div>
+              <h2>1. Philips Hue Bridge</h2>
+              <p className="description">
+                Vi kommunicerar lokalt och i realtid med din Hue Bridge. Tryck på den runda länkningsknappen på din Hue Bridge innan du kopplar.
+              </p>
+
+              <div className="form-group">
+                <label>IP-adress för Bridge</label>
+                <div className="input-group">
+                  <input
+                    type="text"
+                    placeholder="t.ex. 192.168.1.50"
+                    value={hue.ip}
+                    onChange={(e) => {
+                      setHue({ ...hue, ip: e.target.value })
+                      setError(null)
+                    }}
+                    disabled={hue.paired}
+                  />
+                  <button 
+                    type="button" 
+                    className="setup-btn setup-btn--secondary" 
+                    onClick={discoverHue}
+                    disabled={loading || hue.paired}
+                  >
+                    Sök automatiskt
+                  </button>
+                </div>
+              </div>
+
+              {hue.paired ? (
+                <div className="setup-success-badge">
+                  <CheckCircle2 size={16} style={{ flexShrink: 0, color: '#10b981' }} />
+                  <span>Kopplad! Hittade {hueLights.length} lampor på din Philips Hue Bridge.</span>
+                </div>
+              ) : (
                 <button
                   type="button"
                   className="setup-btn setup-btn--primary"
-                  onClick={pairMatterDevice}
-                  disabled={loading || !matterCode}
+                  onClick={pairHue}
+                  disabled={loading || !hue.ip}
                 >
-                  {loading ? <span className="spinner" /> : 'Koppla enhet'}
+                  {loading ? <span className="spinner" /> : 'Tryck på Hue-knappen & Koppla'}
                 </button>
-              </div>
-              <span className="text-xs text-dim">
-                Koden hittar du vanligtvis bredvid QR-koden på enhetens klistermärke eller i bruksanvisningen.
-              </span>
-            </div>
-          </div>
+              )}
 
-          {(matterPaired || matterLights.length > 0) && (
-            <div className="mapping-section" style={{ marginTop: 24 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <h3 style={{ margin: 0 }}>Konfigurera dina Matter-lampor & uttag</h3>
+              {/* Välj lampor och rum */}
+              {hue.paired && (
+                <div className="mapping-section">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                    <h3 style={{ margin: 0 }}>Välj lampor för portalen</h3>
+                    <button
+                      type="button"
+                      className="setup-btn setup-btn--secondary"
+                      onClick={() => fetchHueLights(hue.ip, hue.apiKey)}
+                      disabled={loading}
+                      style={{ padding: '6px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px', margin: 0 }}
+                    >
+                      <RefreshCw size={12} className={loading ? 'setup-btn-spin' : ''} />
+                      <span>Sök igen</span>
+                    </button>
+                  </div>
+                  <p className="text-xs text-dim" style={{ marginBottom: 12 }}>
+                    Kryssa i de Hue-lampor dina gäster ska kunna styra, döp dem och placera dem i rum:
+                  </p>
+                  <LightConfigurator lights={hueLights} onChange={updateHueLight} rooms={rooms} onAddRoom={handleAddRoomName} />
+                </div>
+              )}
+
+              <div className="step-actions">
+                {!initialConfig ? (
+                  <>
+                    <button className="setup-btn setup-btn--text" onClick={prevStep}>Bakåt</button>
+                    <button className="setup-btn setup-btn--primary" onClick={nextStep}>Nästa</button>
+                  </>
+                ) : (
+                  renderEditStepActions()
+                )}
               </div>
-              <p className="text-xs text-dim" style={{ marginBottom: 12 }}>
-                Aktivera enheterna du vill visa i gästportalen, ge dem vänliga visningsnamn och placera dem i rätt rum:
-              </p>
-              <LightConfigurator lights={matterLights} onChange={updateMatterLight} />
             </div>
           )}
 
-          <div className="step-actions" style={{ marginTop: 24 }}>
-            <button className="setup-btn setup-btn--text" onClick={prevStep}>Bakåt</button>
-            <button className="setup-btn setup-btn--primary" onClick={nextStep}>Nästa</button>
-          </div>
-        </div>
-      )}
+          {/* STEG 3: IKEA Smart Home */}
+          {step === 3 && (
+            <div className="setup-card fade-in">
+              <div className="setup-icon-wrapper setup-icon-wrapper--ikea">
+                <Sliders size={32} className="setup-icon-svg" />
+              </div>
+              <h2>2. IKEA Smart Home</h2>
+              <p className="description">
+                Välj om du har den nyare **Dirigera Hub** (med app-anslutning) eller den äldre **Trådfri Gateway** (CoAP-baserad).
+              </p>
 
-
-
-      {/* STEG 8: Guest Wi-Fi & Info */}
-      {step === 8 && (
-        <div className="setup-card fade-in">
-          <div className="setup-icon">ℹ️</div>
-          <h2>6. Gäst-WiFi & Husinformation</h2>
-          <p className="description">
-            Gästerna kommer att se denna information i Info-fliken. Det gör det enkelt för dem att ansluta utan krångel.
-          </p>
-
-          <div className="form-group">
-            <label>Gäst-WiFi (SSID)</label>
-            <input
-              type="text"
-              placeholder="Skriv WiFi-namn"
-              value={wifi.name}
-              onChange={(e) => setWifi({ ...wifi, name: e.target.value })}
-            />
-          </div>
-
-          <div className="form-group">
-            <label>WiFi-lösenord</label>
-            <input
-              type="text"
-              placeholder="Skriv WiFi-lösenord"
-              value={wifi.password}
-              onChange={(e) => setWifi({ ...wifi, password: e.target.value })}
-            />
-          </div>
-
-          <div className="notes-editor-section">
-            <h3>Husanteckningar & Regler</h3>
-            {notes.map((note, index) => (
-              <div key={index} className="note-edit-row">
-                <input
-                  type="text"
-                  className="note-emoji-input"
-                  value={note.emoji}
-                  onChange={(e) => handleNoteChange(index, 'emoji', e.target.value)}
-                  placeholder="⚙️"
-                />
-                <div className="note-text-inputs">
-                  <input
-                    type="text"
-                    className="note-title-input"
-                    value={note.title}
-                    onChange={(e) => handleNoteChange(index, 'title', e.target.value)}
-                    placeholder="Titel"
-                  />
-                  <textarea
-                    className="note-body-input"
-                    value={note.text}
-                    onChange={(e) => handleNoteChange(index, 'text', e.target.value)}
-                    placeholder="Beskrivning..."
-                  />
-                </div>
+              <div className="bridge-selector">
                 <button
                   type="button"
-                  className="note-delete-btn"
-                  onClick={() => removeNote(index)}
+                  className={`selector-btn ${ikea.type === 'dirigera' ? 'active' : ''}`}
+                  onClick={() => setIkea({ ...ikea, type: 'dirigera', paired: false })}
                 >
-                  ✕
+                  <Zap size={16} /> Dirigera Hub (Nyare)
+                </button>
+                <button
+                  type="button"
+                  className={`selector-btn ${ikea.type === 'tradfri' ? 'active' : ''}`}
+                  onClick={() => setIkea({ ...ikea, type: 'tradfri', paired: false })}
+                >
+                  <Server size={16} /> Trådfri Gateway (Äldre)
                 </button>
               </div>
-            ))}
-            <button
-              type="button"
-              className="setup-btn setup-btn--secondary"
-              style={{ width: '100%', marginTop: 8 }}
-              onClick={addNote}
-            >
-              + Lägg till anteckning
-            </button>
-          </div>
 
-          <div className="step-actions" style={{ marginTop: 24 }}>
-            <button className="setup-btn setup-btn--text" onClick={prevStep}>Bakåt</button>
-            <button className="setup-btn setup-btn--primary" onClick={nextStep}>Nästa</button>
-          </div>
+              <div className="form-group">
+                <label>IP-adress för {ikea.type === 'dirigera' ? 'Hub' : 'Gateway'}</label>
+                <input
+                  type="text"
+                  placeholder="t.ex. 192.168.1.60"
+                  value={ikea.ip}
+                  onChange={(e) => {
+                    setIkea({ ...ikea, ip: e.target.value })
+                    setError(null)
+                  }}
+                  disabled={ikea.paired}
+                />
+              </div>
+
+              {ikea.type === 'dirigera' ? (
+                <div className="form-group">
+                  <label>9-siffrig PIN-kod</label>
+                  <input
+                    type="text"
+                    placeholder="t.ex. 123 456 789"
+                    value={ikea.code}
+                    onChange={(e) => {
+                      setIkea({ ...ikea, code: e.target.value })
+                      setError(null)
+                    }}
+                    disabled={ikea.paired}
+                  />
+                  <span className="text-xs text-dim">Finns tryckt på klistermärket på undersidan av hubben.</span>
+                </div>
+              ) : (
+                <div className="form-group">
+                  <label>Säkerhetskod (Security Code)</label>
+                  <input
+                    type="password"
+                    placeholder="Säkerhetskod från undersidan"
+                    value={ikea.securityCode}
+                    onChange={(e) => {
+                      setIkea({ ...ikea, securityCode: e.target.value })
+                      setError(null)
+                    }}
+                    disabled={ikea.paired}
+                  />
+                  <span className="text-xs text-dim">Koden står bredvid streckkoden på baksidan av din gateway.</span>
+                </div>
+              )}
+
+              {ikea.paired ? (
+                <div className="setup-success-badge">
+                  <CheckCircle2 size={16} style={{ flexShrink: 0, color: '#10b981' }} />
+                  <span>Ansluten till IKEA! Hittade {ikeaLights.length} lampor.</span>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  className="setup-btn setup-btn--primary"
+                  onClick={pairIkea}
+                  disabled={loading || !ikea.ip}
+                >
+                  {loading ? <span className="spinner" /> : 'Koppla IKEA'}
+                </button>
+              )}
+
+              {ikea.paired && (
+                <div className="mapping-section">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                    <h3 style={{ margin: 0 }}>Välj IKEA-lampor för portalen</h3>
+                    <button
+                      type="button"
+                      className="setup-btn setup-btn--secondary"
+                      onClick={() => fetchIkeaLights(ikea.type, ikea.ip, ikea.token, ikea.identity, ikea.psk)}
+                      disabled={loading}
+                      style={{ padding: '6px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px', margin: 0 }}
+                    >
+                      <RefreshCw size={12} className={loading ? 'setup-btn-spin' : ''} />
+                      <span>Sök igen</span>
+                    </button>
+                  </div>
+                  <p className="text-xs text-dim" style={{ marginBottom: 12 }}>
+                    Kryssa i de IKEA-lampor dina gäster ska kunna styra, döp dem och placera dem i rum:
+                  </p>
+                  <LightConfigurator lights={ikeaLights} onChange={updateIkeaLight} rooms={rooms} onAddRoom={handleAddRoomName} />
+                </div>
+              )}
+
+              <div className="step-actions">
+                {!initialConfig ? (
+                  <>
+                    <button className="setup-btn setup-btn--text" onClick={prevStep}>Bakåt</button>
+                    <button className="setup-btn setup-btn--primary" onClick={nextStep}>Nästa</button>
+                  </>
+                ) : (
+                  renderEditStepActions()
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* STEG 4: Govee Cloud API */}
+          {step === 4 && (
+            <div className="setup-card fade-in">
+              <div className="setup-icon-wrapper setup-icon-wrapper--govee">
+                <Palette size={32} className="setup-icon-svg" />
+              </div>
+              <h2>3. Govee Lights</h2>
+              <p className="description">
+                Ange din personliga API-nyckel för att styra dina Govee-slingor eller lampor. 
+                Du kan hämta en API-nyckel gratis via Govee Home-mobilappen.
+              </p>
+
+              <div className="form-group">
+                <label>Govee API-nyckel (API Key)</label>
+                <input
+                  type="password"
+                  placeholder="Fyll i Govee API-nyckel"
+                  value={govee.apiKey}
+                  onChange={(e) => setGovee({ ...govee, apiKey: e.target.value })}
+                  disabled={govee.paired}
+                />
+              </div>
+
+              {govee.paired ? (
+                <div className="setup-success-badge">
+                  <CheckCircle2 size={16} style={{ flexShrink: 0, color: '#10b981' }} />
+                  <span>Ansluten till Govee! Hittade {goveeLights.length} enheter.</span>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  className="setup-btn setup-btn--primary"
+                  onClick={testGovee}
+                  disabled={loading || !govee.apiKey}
+                >
+                  {loading ? <span className="spinner" /> : 'Testa API-nyckel'}
+                </button>
+              )}
+
+              {govee.paired && (
+                <div className="mapping-section">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                    <h3 style={{ margin: 0 }}>Välj Govee-lampor för portalen</h3>
+                    <button
+                      type="button"
+                      className="setup-btn setup-btn--secondary"
+                      onClick={() => fetchGoveeLights(govee.apiKey)}
+                      disabled={loading}
+                      style={{ padding: '6px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px', margin: 0 }}
+                    >
+                      <RefreshCw size={12} className={loading ? 'setup-btn-spin' : ''} />
+                      <span>Sök igen</span>
+                    </button>
+                  </div>
+                  <p className="text-xs text-dim" style={{ marginBottom: 12 }}>
+                    Kryssa i de Govee-lampor dina gäster ska kunna styra, döp dem och placera dem i rum:
+                  </p>
+                  <LightConfigurator lights={goveeLights} onChange={updateGoveeLight} rooms={rooms} onAddRoom={handleAddRoomName} />
+                </div>
+              )}
+
+              <div className="step-actions">
+                {!initialConfig ? (
+                  <>
+                    <button className="setup-btn setup-btn--text" onClick={prevStep}>Bakåt</button>
+                    <button className="setup-btn setup-btn--primary" onClick={nextStep}>Nästa</button>
+                  </>
+                ) : (
+                  renderEditStepActions()
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* STEG 6: Google Cast */}
+          {step === 6 && (
+            <div className="setup-card fade-in">
+              <div className="setup-icon-wrapper setup-icon-wrapper--cast">
+                <Cast size={32} className="setup-icon-svg" />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: '8px' }}>
+                <h2 style={{ margin: 0 }}>5. Google Cast (Google Streamer/TV)</h2>
+                {castList.some(c => c.ip) && (
+                  <button
+                    type="button"
+                    className="setup-btn setup-btn--secondary"
+                    onClick={testAllCastDevices}
+                    disabled={loading}
+                    style={{ padding: '6px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px', margin: 0 }}
+                  >
+                    <RefreshCw size={12} className={loading ? 'setup-btn-spin' : ''} />
+                    <span>Testa alla</span>
+                  </button>
+                )}
+              </div>
+              <p className="description">
+                Lägg till de Google Cast-enheter som gäster ska kunna starta, pausa och styra volym på lokalt.
+              </p>
+
+              <div className="cast-devices-list">
+                {castList.map((cast, index) => (
+                  <div key={index} className="cast-device-card">
+                    <div className="form-group">
+                      <label>Namn på enheten</label>
+                      <input
+                        type="text"
+                        placeholder="t.ex. Google Streamer"
+                        value={cast.name}
+                        onChange={(e) => handleCastChange(index, 'name', e.target.value)}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>IP-adress</label>
+                      <div className="input-group">
+                        <input
+                          type="text"
+                          placeholder="t.ex. 192.168.1.80"
+                          value={cast.ip}
+                          onChange={(e) => handleCastChange(index, 'ip', e.target.value)}
+                        />
+                        <button
+                          type="button"
+                          className="setup-btn setup-btn--secondary"
+                          onClick={() => testCastDevice(index)}
+                          disabled={cast.loading || !cast.ip}
+                        >
+                          {cast.loading ? <span className="spinner" /> : 'Testa'}
+                        </button>
+                      </div>
+                    </div>
+
+                    {cast.tested && (
+                      <div className="setup-success-text" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <CheckCircle2 size={12} /> Lyckad TLS-anslutning!
+                      </div>
+                    )}
+                    {cast.error && (
+                      <div className="setup-error-text" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <AlertCircle size={12} /> {cast.error}
+                      </div>
+                    )}
+
+                    {castList.length > 1 && (
+                      <button
+                        type="button"
+                        className="remove-cast-btn"
+                        onClick={() => removeCastDevice(index)}
+                      >
+                        Ta bort enhet
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                className="setup-btn setup-btn--secondary"
+                style={{ width: '100%', marginTop: 8 }}
+                onClick={addCastDevice}
+              >
+                + Lägg till ytterligare Cast-enhet
+              </button>
+
+              <div className="step-actions" style={{ marginTop: 24 }}>
+                {!initialConfig ? (
+                  <>
+                    <button className="setup-btn setup-btn--text" onClick={prevStep}>Bakåt</button>
+                    <button className="setup-btn setup-btn--primary" onClick={nextStep}>Nästa</button>
+                  </>
+                ) : (
+                  renderEditStepActions()
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* STEG 10: Matter Setup */}
+          {step === 10 && (
+            <div className="setup-card fade-in" style={{ maxWidth: '100%' }}>
+              <div className="setup-icon-wrapper setup-icon-wrapper--matter">
+                <Cpu size={32} className="setup-icon-svg" />
+              </div>
+              <h2>Matter-enheter (Lokal direktstyrning)</h2>
+              <p className="description">
+                Matter gör att du kan ansluta lampor och eluttag helt lokalt över ditt nätverk utan behov av moln eller externa hubbar. 
+                Sätt enheten i parningsläge (fabriksåterställ den vid behov), sök eller ange parningskod nedan för att ansluta den.
+              </p>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <button
+                  type="button"
+                  className="setup-btn setup-btn--secondary"
+                  onClick={discoverMatterDevices}
+                  disabled={matterScan.loading || loading}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                >
+                  {matterScan.loading ? (
+                    <>
+                      <span className="spinner" />
+                      <span>Söker oparade enheter (4s)...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Search size={14} />
+                      <span>Sök oparade enheter på LAN</span>
+                    </>
+                  )}
+                </button>
+
+                {matterScan.devices.length > 0 && (
+                  <div className="dynamic-lights-list" style={{ display: 'flex', flexDirection: 'column' }}>
+                    {matterScan.devices.map((dev) => (
+                      <div key={dev.id} className="cast-device-card" style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div>
+                          <div style={{ fontWeight: 600, fontSize: '12px' }}>{dev.name}</div>
+                          <div style={{ fontSize: '10px', color: 'var(--text-dim)' }}>
+                            Discriminator: {dev.discriminator}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          className={`setup-btn ${selectedDevice?.id === dev.id ? 'setup-btn--primary' : 'setup-btn--secondary'}`}
+                          style={{ padding: '3px 8px', fontSize: '10px', margin: 0 }}
+                          onClick={() => {
+                            setSelectedDevice(selectedDevice?.id === dev.id ? null : dev);
+                            setError(null);
+                          }}
+                        >
+                          {selectedDevice?.id === dev.id ? 'Vald' : 'Välj'}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {selectedDevice && (
+                  <div className="setup-alert" style={{ background: 'rgba(99,102,241,0.12)', borderColor: 'var(--accent)', padding: 10, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Pin size={14} style={{ flexShrink: 0, color: 'var(--accent)' }} />
+                    <span style={{ fontSize: '11px' }}>
+                      <strong>Vald enhet:</strong> {selectedDevice.name} ({selectedDevice.discriminator})
+                    </span>
+                  </div>
+                )}
+
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label>Parningskod / PIN-kod (11 eller 21 siffror)</label>
+                  <div className="input-group">
+                    <input
+                      type="text"
+                      placeholder="t.ex. 34905741252"
+                      value={matterCode}
+                      onChange={(e) => {
+                        setMatterCode(e.target.value.replace(/[^0-9]/g, ''));
+                        setError(null);
+                      }}
+                      disabled={loading}
+                    />
+                    <button
+                      type="button"
+                      className="setup-btn setup-btn--primary"
+                      onClick={pairMatterDevice}
+                      disabled={loading || !matterCode}
+                    >
+                      Koppla
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Konfigurera hittade lampor */}
+              {(matterPaired || matterLights.length > 0) && (
+                <div className="mapping-section" style={{ marginTop: 24 }}>
+                  <h3>Konfigurera dina Matter-lampor & uttag</h3>
+                  <p className="text-xs text-dim" style={{ marginBottom: 12 }}>
+                    Aktivera enheterna du vill visa i gästportalen, ge dem vänliga visningsnamn och placera dem i rätt rum:
+                  </p>
+                  <LightConfigurator lights={matterLights} onChange={updateMatterLight} rooms={rooms} onAddRoom={handleAddRoomName} />
+                </div>
+              )}
+
+              <div className="step-actions" style={{ marginTop: 24 }}>
+                {!initialConfig ? (
+                  <>
+                    <button className="setup-btn setup-btn--text" onClick={prevStep}>Bakåt</button>
+                    <button className="setup-btn setup-btn--primary" onClick={nextStep}>Nästa</button>
+                  </>
+                ) : (
+                  renderEditStepActions()
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* STEG 8: Guest Wi-Fi & Info */}
+          {step === 8 && (
+            <div className="setup-card fade-in">
+              <div className="setup-icon-wrapper setup-icon-wrapper--wifi">
+                <Wifi size={32} className="setup-icon-svg" />
+              </div>
+              <h2>6. Gäst-WiFi & Husinformation</h2>
+              <p className="description">
+                Gästerna kommer att se denna information i Info-fliken. Det gör det enkelt för dem att ansluta utan krångel.
+              </p>
+
+              <div className="form-group">
+                <label>Gäst-WiFi (SSID)</label>
+                <input
+                  type="text"
+                  placeholder="Skriv WiFi-namn"
+                  value={wifi.name}
+                  onChange={(e) => { setWifi({ ...wifi, name: e.target.value }); markDirty() }}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>WiFi-lösenord</label>
+                <input
+                  type="text"
+                  placeholder="Skriv WiFi-lösenord"
+                  value={wifi.password}
+                  onChange={(e) => { setWifi({ ...wifi, password: e.target.value }); markDirty() }}
+                />
+              </div>
+
+              <div className="notes-editor-section">
+                <h3>Husanteckningar & Regler</h3>
+                {notes.map((note, index) => (
+                  <div key={index} className="note-edit-row">
+                    <input
+                      type="text"
+                      className="note-emoji-input"
+                      value={note.emoji}
+                      onChange={(e) => handleNoteChange(index, 'emoji', e.target.value)}
+                      placeholder="⚙️"
+                    />
+                    <div className="note-text-inputs">
+                      <input
+                        type="text"
+                        className="note-title-input"
+                        value={note.title}
+                        onChange={(e) => handleNoteChange(index, 'title', e.target.value)}
+                        placeholder="Titel"
+                      />
+                      <textarea
+                        className="note-body-input"
+                        value={note.text}
+                        onChange={(e) => handleNoteChange(index, 'text', e.target.value)}
+                        placeholder="Beskrivning..."
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      className="note-delete-btn"
+                      onClick={() => removeNote(index)}
+                      style={{ padding: 0 }}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  className="setup-btn setup-btn--secondary"
+                  style={{ width: '100%', marginTop: 8 }}
+                  onClick={addNote}
+                >
+                  + Lägg till anteckning
+                </button>
+              </div>
+
+              <div className="step-actions" style={{ marginTop: 24 }}>
+                {!initialConfig ? (
+                  <>
+                    <button className="setup-btn setup-btn--text" onClick={prevStep}>Bakåt</button>
+                    <button className="setup-btn setup-btn--primary" onClick={nextStep}>Nästa</button>
+                  </>
+                ) : (
+                  renderEditStepActions()
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* STEG 9: Bekräftelse & Slutför */}
+          {step === 9 && (
+            <div className="setup-card fade-in">
+              <div className="setup-icon-wrapper setup-icon-wrapper--save">
+                <Save size={32} className="setup-icon-svg" />
+              </div>
+              <h2>{initialConfig ? 'Spara dina ändringar' : '7. Klar för start!'}</h2>
+              <p>
+                {initialConfig 
+                  ? 'Klicka nedan för att spara dina ändringar på servern och ladda om portalen.'
+                  : 'Konfigurationen är klar att sparas på din hemaserver. Detta kommer att starta upp alla lokala anslutningar och gästportalen kommer att gå live direkt.'}
+              </p>
+
+              <div className="setup-summary-box">
+                <h3>Konfigurationssammanfattning</h3>
+                <ul style={{ listStyleType: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <li style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
+                    <Lightbulb size={14} className="sidebar-icon-svg--hue" />
+                    <strong>Philips Hue:</strong>
+                    {hue.paired ? (
+                      <span className="setup-success-text" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px', marginLeft: 'auto' }}>
+                        <Check size={14} /> Redo ({hueLights.filter(l => l.enabled).length} valda)
+                      </span>
+                    ) : (
+                      <span className="setup-error-text" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px', marginLeft: 'auto' }}>
+                        <AlertCircle size={14} /> Ej konfigurerad
+                      </span>
+                    )}
+                  </li>
+                  <li style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
+                    <Sliders size={14} className="sidebar-icon-svg--ikea" />
+                    <strong>IKEA Smart Home:</strong>
+                    {ikea.paired ? (
+                      <span className="setup-success-text" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px', marginLeft: 'auto' }}>
+                        <Check size={14} /> Redo ({ikeaLights.filter(l => l.enabled).length} valda)
+                      </span>
+                    ) : (
+                      <span className="setup-error-text" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px', marginLeft: 'auto' }}>
+                        <AlertCircle size={14} /> Ej konfigurerad
+                      </span>
+                    )}
+                  </li>
+                  <li style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
+                    <Palette size={14} className="sidebar-icon-svg--govee" />
+                    <strong>Govee Lights:</strong>
+                    {govee.paired ? (
+                      <span className="setup-success-text" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px', marginLeft: 'auto' }}>
+                        <Check size={14} /> Redo ({goveeLights.filter(l => l.enabled).length} valda)
+                      </span>
+                    ) : (
+                      <span className="setup-error-text" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px', marginLeft: 'auto' }}>
+                        <AlertCircle size={14} /> Ej konfigurerad
+                      </span>
+                    )}
+                  </li>
+                  <li style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
+                    <Cpu size={14} className="sidebar-icon-svg--matter" />
+                    <strong>Matter-enheter:</strong>
+                    {matterPaired ? (
+                      <span className="setup-success-text" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px', marginLeft: 'auto' }}>
+                        <Check size={14} /> Redo ({matterLights.filter(l => l.enabled).length} valda)
+                      </span>
+                    ) : (
+                      <span className="setup-error-text" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px', marginLeft: 'auto' }}>
+                        <AlertCircle size={14} /> Ej konfigurerad
+                      </span>
+                    )}
+                  </li>
+                  <li style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
+                    <Cast size={14} className="sidebar-icon-svg--cast" />
+                    <strong>Google Cast:</strong>
+                    <span style={{ fontSize: '12px', marginLeft: 'auto', fontWeight: 600, color: 'var(--text-2)' }}>
+                      {castList.filter(c => c.tested).length} enheter redo
+                    </span>
+                  </li>
+                  <li style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
+                    <Wifi size={14} className="sidebar-icon-svg--wifi" />
+                    <strong>Gäst-WiFi:</strong>
+                    <span style={{ fontSize: '12px', marginLeft: 'auto', fontWeight: 600, color: 'var(--text-2)' }}>
+                      "{wifi.name}"
+                    </span>
+                  </li>
+                  <li style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
+                    <Home size={14} className="sidebar-icon-svg--rooms" />
+                    <strong>Rum:</strong>
+                    <span style={{ fontSize: '12px', marginLeft: 'auto', fontWeight: 600, color: 'var(--text-2)' }}>
+                      {rooms.length} st skapade
+                    </span>
+                  </li>
+                </ul>
+              </div>
+
+              <button
+                type="button"
+                className="setup-btn setup-btn--primary setup-btn--large"
+                style={{ width: '100%', marginTop: 20 }}
+                onClick={saveSetup}
+                disabled={loading}
+              >
+                {loading ? <span className="spinner" /> : (initialConfig ? 'Spara & Starta om portalen' : 'Spara & Starta gästportalen')}
+              </button>
+
+              <div className="step-actions" style={{ marginTop: 20 }}>
+                {!initialConfig ? (
+                  <button className="setup-btn setup-btn--text" onClick={prevStep}>Bakåt</button>
+                ) : (
+                  <button className="setup-btn setup-btn--text" onClick={() => setStep(100)}>Avbryt</button>
+                )}
+              </div>
+            </div>
+          )}
         </div>
-      )}
-
-      {/* STEG 9: Bekräftelse & Slutför */}
-      {step === 9 && (
-        <div className="setup-card fade-in">
-          <div className="setup-icon">🚀</div>
-          <h2>7. Klar för start!</h2>
-          <p>
-            Konfigurationen är klar att sparas på din hemaserver. 
-            Detta kommer att starta upp alla lokala anslutningar och gästportalen kommer att gå live direkt.
-          </p>
-
-          <div className="setup-summary-box">
-            <h3>Konfigurationssammanfattning</h3>
-            <ul>
-              <li>Philips Hue: {hue.paired ? `✓ Redo (${hueLights.filter(l => l.enabled).length} lampor valda)` : '❌ Ej konfigurerad'}</li>
-              <li>IKEA Smart Home: {ikea.paired ? `✓ Redo (${ikeaLights.filter(l => l.enabled).length} lampor valda)` : '❌ Ej konfigurerad'}</li>
-              <li>Govee Lights: {govee.paired ? `✓ Redo (${goveeLights.filter(l => l.enabled).length} lampor valda)` : '❌ Ej konfigurerad'}</li>
-              <li>Matter-enheter: {matterPaired ? `✓ Redo (${matterLights.filter(l => l.enabled).length} enheter valda)` : '❌ Ej konfigurerad'}</li>
-              <li>Google Cast: {castList.filter(c => c.tested).length} enheter redo</li>
-              <li>Gäst-WiFi: "{wifi.name}"</li>
-            </ul>
-          </div>
-
-          <button
-            type="button"
-            className="setup-btn setup-btn--primary setup-btn--large"
-            style={{ width: '100%', marginTop: 20 }}
-            onClick={saveSetup}
-            disabled={loading}
-          >
-            {loading ? <span className="spinner" /> : 'Spara & Starta gästportalen'}
-          </button>
-
-          <div className="step-actions" style={{ marginTop: 20 }}>
-            <button className="setup-btn setup-btn--text" onClick={prevStep}>Bakåt</button>
-          </div>
-        </div>
-      )}
+      </div>
     </div>
   )
 }

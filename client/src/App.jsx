@@ -111,25 +111,6 @@ export default function App() {
     }
   }, [config])
 
-  const handleImportConfig = useCallback(async (importedConfig) => {
-    try {
-      const res = await fetch('/api/setup/import', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(importedConfig)
-      })
-
-      if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.error || 'Kunde inte importera backupen')
-      }
-
-      socket.emit('setup_complete')
-    } catch (err) {
-      console.error('Kunde inte importera konfiguration:', err)
-      throw err
-    }
-  }, [])
 
   const loadPortal = useCallback(() => {
     Promise.all([
@@ -315,7 +296,6 @@ export default function App() {
           <Header 
             connected={connected} 
             config={config}
-            onImportConfig={handleImportConfig}
             onOpenOrganizer={() => setShowOrganizer(true)} 
             onOpenSetupWizard={() => setShowSetupWizard(true)}
             blurEnabled={blurEnabled}
