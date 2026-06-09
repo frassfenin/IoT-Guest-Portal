@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Sparkles, Wifi, FileText, Info, Lightbulb, LightbulbOff, Copy, Check, Loader2 } from 'lucide-react'
 import { io } from 'socket.io-client'
 import QRCode from 'qrcode'
@@ -9,6 +9,13 @@ import MediaCard from './components/MediaCard.jsx'
 import InfoPage from './components/InfoPage.jsx'
 import SetupWizard from './components/setup/SetupWizard.jsx'
 import RoomOrganizer from './components/RoomOrganizer.jsx'
+import useClickOutside from './hooks/useClickOutside.js'
+import { copyToClipboard } from './utils/clipboard.js'
+import { POPOVER_TYPES, LOCALE_STORAGE_KEY } from './constants.js'
+import sv from './components/languages/sv.js'
+import en from './components/languages/en.js'
+
+const locales = { sv, en }
 
 // ──────────────────────────────────────────
 //  Socket.io-klient
@@ -17,9 +24,9 @@ import RoomOrganizer from './components/RoomOrganizer.jsx'
 const socket = io({ path: '/socket.io', transports: ['websocket', 'polling'] })
 
 // Gruppera lampor per rum
-function groupByRoom(lights) {
+function groupByRoom(lights, defaultRoomName = 'Other') {
   return lights.reduce((acc, light) => {
-    const room = light.room || 'Övrigt'
+    const room = light.room || defaultRoomName
     if (!acc[room]) acc[room] = []
     acc[room].push(light)
     return acc
@@ -27,6 +34,19 @@ function groupByRoom(lights) {
 }
 
 export default function App() {
+  const [locale, setLocale] = useState(() => {
+    const saved = localStorage.getItem(LOCALE_STORAGE_KEY)
+    return saved === 'en' ? 'en' : 'sv'
+  })
+
+  const t = useCallback((key, replaces = {}) => {
+    let str = locales[locale]?.[key] || locales['sv']?.[key] || key
+    Object.entries(replaces).forEach(([k, v]) => {
+      str = str.replace(`{${k}}`, v)
+    })
+    return str
+  }, [locale])
+
   const [config, setConfig]   = useState(null)
   const [states, setStates]   = useState({}) // entity_id → state-objekt
   const [connected, setConnected] = useState(false)
@@ -53,17 +73,9 @@ export default function App() {
   }, [])
 
 
-  // Stäng popovers vid klick utanför
-  useEffect(() => {
-    if (!activePopover) return
-    const handleClickOutside = (event) => {
-      if (!event.target.closest('.floating-dock-container')) {
-        setActivePopover(null)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [activePopover])
+  const dockRef = useRef(null)
+
+  useClickOutside(dockRef, () => setActivePopover(null))
 
   // Generera QR-kod
   useEffect(() => {
@@ -90,20 +102,9 @@ export default function App() {
   // WiFi-kopiering till urklipp
   const handleWifiCopy = useCallback(async () => {
     if (!config?.info?.wifi_password) return
-    try {
-      await navigator.clipboard.writeText(config.info.wifi_password)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    } catch {
-      const el = document.createElement('textarea')
-      el.value = config.info.wifi_password
-      document.body.appendChild(el)
-      el.select()
-      document.execCommand('copy')
-      document.body.removeChild(el)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    }
+    await copyToClipboard(config.info.wifi_password)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
   }, [config])
 
 
@@ -125,19 +126,23 @@ export default function App() {
         })
       })
 
-      if (!res.ok) throw new Error('Kunde inte spara rumskonfigurationen')
+      if (!res.ok) throw new Error(t('save_failed_msg'))
 
       setShowOrganizer(false)
       socket.emit('setup_complete')
       setConfig(updatedConfig)
     } catch (err) {
       console.error('Kunde inte spara rumskonfiguration:', err)
-      alert('Kunde inte spara ändringarna. Kontrollera anslutningen till servern.')
+      alert(t('save_failed_connection'))
     }
-  }, [config])
+  }, [config, t])
 
 
   const loadPortal = useCallback(() => {
+    // Sync locale from localStorage
+    const saved = localStorage.getItem('setup_wizard_locale')
+    setLocale(saved === 'en' ? 'en' : 'sv')
+
     Promise.all([
       fetch('/api/config').then((r) => r.json()),
       fetch('/api/states').then((r) => r.json()),
@@ -151,9 +156,9 @@ export default function App() {
       })
       .catch((err) => {
         console.error('Kunde inte hämta konfiguration:', err)
-        setError('Kunde inte ansluta till servern. Kontrollera nätverksanslutningen.')
+        setError(t('connect_server_failed'))
       })
-  }, [])
+  }, [t])
 
   // ── Hämta konfiguration och setup-status ──────────────────
   useEffect(() => {
@@ -167,9 +172,9 @@ export default function App() {
       })
       .catch((err) => {
         console.error('Kunde inte läsa setup status:', err)
-        setError('Kunde inte ansluta till servern. Kontrollera att backend körs.')
+        setError(t('check_backend_failed'))
       })
-  }, [loadPortal])
+  }, [loadPortal, t])
 
   // ── Realtidsuppdateringar via Socket.io ─────────────────
   useEffect(() => {
@@ -259,6 +264,8 @@ export default function App() {
 
   const handleSetupComplete = useCallback(() => {
     setSetupNeeded(false)
+    const saved = localStorage.getItem(LOCALE_STORAGE_KEY)
+    setLocale(saved === 'en' ? 'en' : 'sv')
     socket.emit('setup_complete')
   }, [])
 
@@ -306,7 +313,7 @@ export default function App() {
     )
   }
 
-  const roomGroups = config ? groupByRoom(config.lights) : {}
+  const roomGroups = config ? groupByRoom(config.lights, t('other_room')) : {}
 
   return (
     <>
@@ -325,6 +332,8 @@ export default function App() {
             onOpenSetupWizard={() => setShowSetupWizard(true)}
             blurEnabled={blurEnabled}
             onToggleBlur={toggleBlur}
+            locale={locale}
+            t={t}
           />
         </div>
 
@@ -344,14 +353,14 @@ export default function App() {
               {/* Belysning per rum */}
               <div className="controls-group controls-group--lights">
                 <div className="section-header">
-                  <span className="section-header__title">Belysning</span>
+                  <span className="section-header__title">{t('lights_title')}</span>
                   <div className="section-header__line" />
                 </div>
                 <div className="rooms-grid">
                   {Object.entries(roomGroups)
                     .sort(([roomA], [roomB]) => {
-                      if (roomA === 'Övrigt') return 1
-                      if (roomB === 'Övrigt') return -1
+                      if (roomA === t('other_room')) return 1
+                      if (roomB === t('other_room')) return -1
                       const savedRooms = config.rooms || []
                       const idxA = savedRooms.indexOf(roomA)
                       const idxB = savedRooms.indexOf(roomB)
@@ -373,6 +382,7 @@ export default function App() {
                               config={light}
                               state={states[light.entity_id]}
                               onChange={controlLight}
+                              t={t}
                             />
                           ))}
                         </div>
@@ -385,7 +395,7 @@ export default function App() {
               {config.media_players.length > 0 && (
                 <div className="controls-group controls-group--media">
                   <div className="section-header">
-                    <span className="section-header__title">Media</span>
+                    <span className="section-header__title">{t('media_title')}</span>
                     <div className="section-header__line" />
                   </div>
                   {config.media_players.map((player) => (
@@ -394,6 +404,7 @@ export default function App() {
                       config={player}
                       state={states[player.entity_id]}
                       onControl={controlMedia}
+                      t={t}
                     />
                   ))}
                 </div>
@@ -404,20 +415,20 @@ export default function App() {
 
         {/* ── Flytande Bottenmeny (Dock-bar) ── */}
         {config && (
-          <div className="floating-dock-container">
+          <div className="floating-dock-container" ref={dockRef}>
             <div className="floating-dock">
               {/* Scener-knapp */}
               <button
                 type="button"
                 className={`floating-dock__btn ${activePopover === 'scenes' ? 'floating-dock__btn--active' : ''}`}
                 onClick={() => setActivePopover(activePopover === 'scenes' ? null : 'scenes')}
-                title="Belysningsscener"
+                title={t('scenes_title')}
               >
                 <Sparkles size={20} style={{ strokeWidth: 2.2 }} />
                 {activePopover === 'scenes' && (
                   <div className="dock-popover scenes-popover" onClick={(e) => e.stopPropagation()}>
                     <div className="section-header">
-                      <span className="section-header__title">Huvudströmbrytare</span>
+                      <span className="section-header__title">{t('master_switch_title')}</span>
                     </div>
                     <div className="scenes-popover__master-controls">
                       <button 
@@ -426,7 +437,7 @@ export default function App() {
                         onClick={() => toggleAllLights('on')}
                       >
                         <Lightbulb size={15} style={{ strokeWidth: 2.5 }} />
-                        Tänd alla
+                        {t('turn_all_on_btn')}
                       </button>
                       <button 
                         type="button" 
@@ -434,14 +445,14 @@ export default function App() {
                         onClick={() => toggleAllLights('off')}
                       >
                         <LightbulbOff size={15} style={{ strokeWidth: 2.5 }} />
-                        Släck alla
+                        {t('turn_all_off_btn')}
                       </button>
                     </div>
 
                     <div className="scenes-popover__divider" />
 
                     <div className="section-header" style={{ marginTop: '4px' }}>
-                      <span className="section-header__title">Välj belysningsscen</span>
+                      <span className="section-header__title">{t('select_scene_title')}</span>
                     </div>
                     <SceneGrid
                       scenes={config.scenes}
@@ -456,13 +467,13 @@ export default function App() {
                 type="button"
                 className={`floating-dock__btn ${activePopover === 'wifi' ? 'floating-dock__btn--active' : ''}`}
                 onClick={() => setActivePopover(activePopover === 'wifi' ? null : 'wifi')}
-                title="WiFi information"
+                title={t('wifi_info_title')}
               >
                 <Wifi size={20} style={{ strokeWidth: 2.2 }} />
                 {activePopover === 'wifi' && (
                   <div className="dock-popover wifi-popover" onClick={(e) => e.stopPropagation()}>
                     <div className="section-header">
-                      <span className="section-header__title">Wi-Fi &amp; Gästportal</span>
+                      <span className="section-header__title">{t('wifi_guest_portal_title')}</span>
                     </div>
 
                     {/* Flikväljare för WiFi / Portal */}
@@ -473,7 +484,7 @@ export default function App() {
                         onClick={() => setQrMode('wifi')}
                       >
                         <Wifi size={13} style={{ marginRight: '6px' }} />
-                        1. Anslut WiFi
+                        {t('connect_wifi_tab')}
                       </button>
                       <button
                         type="button"
@@ -481,30 +492,30 @@ export default function App() {
                         onClick={() => setQrMode('portal')}
                       >
                         <Sparkles size={13} style={{ marginRight: '6px' }} />
-                        2. Öppna Portal
+                        {t('open_portal_tab')}
                       </button>
                     </div>
 
                     {qrMode === 'wifi' ? (
                       <>
                         <div className="wifi-field">
-                          <span className="wifi-field__label">Nätverk</span>
+                          <span className="wifi-field__label">{t('network_label')}</span>
                           <span className="wifi-field__value">{config.info.wifi_name}</span>
                         </div>
                         <div className="wifi-field">
-                          <span className="wifi-field__label">Lösenord</span>
+                          <span className="wifi-field__label">{t('password_label')}</span>
                           <span className="wifi-field__value">{config.info.wifi_password}</span>
                         </div>
                         <div className="wifi-card__copy-hint" onClick={handleWifiCopy}>
                           {copied ? (
                             <>
                               <Check size={14} style={{ strokeWidth: 2.5, color: '#ffffff', marginRight: '6px' }} />
-                              Kopierat till urklipp!
+                              {t('pwd_copied_status')}
                             </>
                           ) : (
                             <>
                               <Copy size={14} style={{ strokeWidth: 2.2, marginRight: '6px' }} />
-                              Kopiera lösenord
+                              {t('copy_password_btn')}
                             </>
                           )}
                         </div>
@@ -512,14 +523,14 @@ export default function App() {
                     ) : (
                       <>
                         <div className="wifi-field">
-                          <span className="wifi-field__label">Adress</span>
+                          <span className="wifi-field__label">{t('address_label')}</span>
                           <span className="wifi-field__value" style={{ fontSize: '0.85rem' }}>
                             {window.location.origin}
                           </span>
                         </div>
                         <div className="wifi-field">
-                          <span className="wifi-field__label">Status</span>
-                          <span className="wifi-field__value">Lokalt ansluten</span>
+                          <span className="wifi-field__label">{t('status_label')}</span>
+                          <span className="wifi-field__value">{t('status_local_connected')}</span>
                         </div>
                         <div 
                           className="wifi-card__copy-hint" 
@@ -532,12 +543,12 @@ export default function App() {
                           {copied ? (
                             <>
                               <Check size={14} style={{ strokeWidth: 2.5, color: '#ffffff', marginRight: '6px' }} />
-                              Länk kopierad!
+                              {t('link_copied_status')}
                             </>
                           ) : (
                             <>
                               <Copy size={14} style={{ strokeWidth: 2.2, marginRight: '6px' }} />
-                              Kopiera länk
+                              {t('copy_link_btn')}
                             </>
                           )}
                         </div>
@@ -555,8 +566,8 @@ export default function App() {
                       )}
                       <p className="wifi-popover__qr-tip">
                         {qrMode === 'wifi' 
-                          ? 'Skanna för att ansluta automatiskt' 
-                          : 'Skanna för att öppna gästportalen'}
+                          ? t('scan_connect_wifi') 
+                          : t('scan_open_portal')}
                       </p>
                     </div>
                   </div>
@@ -568,13 +579,13 @@ export default function App() {
                 type="button"
                 className={`floating-dock__btn ${activePopover === 'notes' ? 'floating-dock__btn--active' : ''}`}
                 onClick={() => setActivePopover(activePopover === 'notes' ? null : 'notes')}
-                title="Husmanual & anteckningar"
+                title={t('notes_dock_title')}
               >
                 <FileText size={20} style={{ strokeWidth: 2.2 }} />
                 {activePopover === 'notes' && (
                   <div className="dock-popover notes-popover" onClick={(e) => e.stopPropagation()}>
                     <div className="section-header">
-                      <span className="section-header__title">Husmanual</span>
+                      <span className="section-header__title">{t('notes_header_title')}</span>
                     </div>
                     <div style={{ maxHeight: '240px', overflowY: 'auto', paddingRight: '4px' }}>
                       {config.info.notes?.length > 0 ? (
@@ -588,7 +599,7 @@ export default function App() {
                           </div>
                         ))
                       ) : (
-                        <p className="text-xs text-dim" style={{ textAlign: 'center', padding: '10px 0' }}>Inga anteckningar inlagda än.</p>
+                        <p className="text-xs text-dim" style={{ textAlign: 'center', padding: '10px 0' }}>{t('no_notes_yet')}</p>
                       )}
                     </div>
                   </div>
@@ -600,35 +611,35 @@ export default function App() {
                 type="button"
                 className={`floating-dock__btn ${activePopover === 'status' ? 'floating-dock__btn--active' : ''}`}
                 onClick={() => setActivePopover(activePopover === 'status' ? null : 'status')}
-                title="Systemstatus"
+                title={t('status_dock_title')}
               >
                 <Info size={20} style={{ strokeWidth: 2.2 }} />
                 {activePopover === 'status' && (
                   <div className="dock-popover status-popover" onClick={(e) => e.stopPropagation()}>
                     <div className="section-header">
-                      <span className="section-header__title">Systemstatus</span>
+                      <span className="section-header__title">{t('status_dock_title')}</span>
                     </div>
                     <div className="status-list">
                       <div className="status-item">
-                        <span className="status-item__label">Anslutning</span>
+                        <span className="status-item__label">{t('status_conn_label')}</span>
                         <span className="status-item__value" style={{ color: connected ? 'var(--green)' : 'var(--red)' }}>
-                          {connected ? '● Ansluten' : '○ Frånkopplad'}
+                          {connected ? t('status_online') : t('status_offline')}
                         </span>
                       </div>
                       <div className="status-item">
-                        <span className="status-item__label">Lampor</span>
+                        <span className="status-item__label">{t('status_lights_label')}</span>
                         <span className="status-item__value">
-                          {config.lights?.length ?? 0} st enheter
+                          {t('status_devices_count', { count: config.lights?.length ?? 0 })}
                         </span>
                       </div>
                       <div className="status-item">
-                        <span className="status-item__label">Mediaspelare</span>
+                        <span className="status-item__label">{t('status_media_label')}</span>
                         <span className="status-item__value">
-                          {config.media_players?.length ?? 0} st aktiva
+                          {t('status_active_count', { count: config.media_players?.length ?? 0 })}
                         </span>
                       </div>
                       <div className="status-item">
-                        <span className="status-item__label">Gateway IP</span>
+                        <span className="status-item__label">{t('status_gateway_ip')}</span>
                         <span className="status-item__value" style={{ fontFamily: 'monospace' }}>
                           {config.ikea?.ip || config.hue?.ip || 'Lokalt API'}
                         </span>
@@ -647,6 +658,7 @@ export default function App() {
             config={config}
             onSave={handleSaveRooms}
             onClose={() => setShowOrganizer(false)}
+            t={t}
           />
         )}
 
@@ -657,6 +669,8 @@ export default function App() {
               initialConfig={config}
               onComplete={() => {
                 setShowSetupWizard(false)
+                const saved = localStorage.getItem(LOCALE_STORAGE_KEY)
+                setLocale(saved === 'en' ? 'en' : 'sv')
                 socket.emit('setup_complete')
               }}
               onCancel={() => setShowSetupWizard(false)}

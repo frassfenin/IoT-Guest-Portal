@@ -19,11 +19,21 @@ function getRoomIcon(roomName) {
   return Home;
 }
 
-export default function RoomOrganizer({ config, onSave, onClose }) {
+export default function RoomOrganizer({ config, onSave, onClose, t }) {
+  const translate = t || ((key, replaces = {}) => {
+    let str = key
+    Object.entries(replaces).forEach(([k, v]) => {
+      str = str.replace(`{${k}}`, v)
+    })
+    return str
+  })
+
+  const fallbackRoomName = 'Övrigt'
+
   // Initiera unika rum från befintliga lampor och bibehåll sparad ordning om den finns
   const [rooms, setRooms] = useState(() => {
-    const existing = config.lights.map((l) => l.room || 'Övrigt')
-    const unique = Array.from(new Set(existing)).filter((r) => r !== 'Övrigt')
+    const existing = config.lights.map((l) => l.room || fallbackRoomName)
+    const unique = Array.from(new Set(existing)).filter((r) => r !== fallbackRoomName)
     const savedRooms = config.rooms || []
     if (savedRooms.length === 0) return unique
 
@@ -35,8 +45,8 @@ export default function RoomOrganizer({ config, onSave, onClose }) {
   // Skapa en kopia av lamporna för lokal editering
   const [lights, setLights] = useState(() => config.lights)
   
-  // Valda rummet ID/namn (standard: 'Övrigt' / Osorterade lampor)
-  const [selectedRoom, setSelectedRoom] = useState('Övrigt')
+  // Valda rummet ID/namn (standard: fallbackRoomName / Osorterade lampor)
+  const [selectedRoom, setSelectedRoom] = useState(fallbackRoomName)
   
   // Textfält för att skapa rum
   const [newRoomName, setNewRoomName] = useState('')
@@ -69,8 +79,8 @@ export default function RoomOrganizer({ config, onSave, onClose }) {
     // Byt stor bokstav på första bokstaven för snyggare design
     const formattedName = trimmed.charAt(0).toUpperCase() + trimmed.slice(1)
 
-    if (rooms.includes(formattedName) || formattedName === 'Övrigt') {
-      alert('Rummet finns redan!')
+    if (rooms.includes(formattedName) || formattedName === fallbackRoomName) {
+      alert(translate('organizer_room_exists'))
       return
     }
 
@@ -86,13 +96,13 @@ export default function RoomOrganizer({ config, onSave, onClose }) {
 
   // ── Radera ett rum ──────────────────────────────────────────
   const handleDeleteRoom = (roomName) => {
-    if (!confirm(`Är du säker på att du vill ta bort rummet "${roomName}"? Alla lampor i detta rum blir osorterade.`)) {
+    if (!confirm(translate('organizer_room_delete_confirm', { name: roomName }))) {
       return
     }
 
-    // Flytta lampor i rummet till 'Övrigt'
+    // Flytta lampor i rummet till fallbackRoomName
     setLights((prev) =>
-      prev.map((l) => (l.room === roomName ? { ...l, room: 'Övrigt' } : l))
+      prev.map((l) => (l.room === roomName ? { ...l, room: fallbackRoomName } : l))
     )
 
     // Ta bort rummet från listan
@@ -100,7 +110,7 @@ export default function RoomOrganizer({ config, onSave, onClose }) {
     
     // Om det raderade rummet var markerat, gå tillbaka till osorterade
     if (selectedRoom === roomName) {
-      setSelectedRoom('Övrigt')
+      setSelectedRoom(fallbackRoomName)
       if (isMobile) {
         setMobileView('master')
       }
@@ -134,7 +144,7 @@ export default function RoomOrganizer({ config, onSave, onClose }) {
   // ── Ta bort lampa från aktivt rum (flytta till Osorterade) ────
   const handleRemoveLight = (entity_id) => {
     setLights((prev) =>
-      prev.map((l) => (l.entity_id === entity_id ? { ...l, room: 'Övrigt' } : l))
+      prev.map((l) => (l.entity_id === entity_id ? { ...l, room: fallbackRoomName } : l))
     )
   }
 
@@ -145,32 +155,32 @@ export default function RoomOrganizer({ config, onSave, onClose }) {
 
   // Räkna antal lampor per rum
   const getLightCount = (roomName) => {
-    return lights.filter((l) => (l.room || 'Övrigt') === roomName).length
+    return lights.filter((l) => (l.room || fallbackRoomName) === roomName).length
   }
 
   // Filtrera aktiva lampor i det valda rummet
-  const activeLights = lights.filter((l) => (l.room || 'Övrigt') === selectedRoom)
+  const activeLights = lights.filter((l) => (l.room || fallbackRoomName) === selectedRoom)
 
   // Filtrera tillgängliga lampor som kan läggas till
   const availableLights = lights.filter((l) => {
-    const currentRoom = l.room || 'Övrigt'
+    const currentRoom = l.room || fallbackRoomName
     if (currentRoom === selectedRoom) return false // kan inte lägga till om den redan är i rummet
 
     if (showAllLights) {
       return true // Visa alla lampor i andra rum
     } else {
-      return currentRoom === 'Övrigt' // Visa endast osorterade lampor
+      return currentRoom === fallbackRoomName // Visa endast osorterade lampor
     }
   })
 
   // Ikoner & text för det valda rummet
-  const ActiveRoomIcon = selectedRoom === 'Övrigt' ? FolderOpen : getRoomIcon(selectedRoom)
-  const activeRoomTitle = selectedRoom === 'Övrigt' ? 'Osorterade lampor' : selectedRoom
+  const ActiveRoomIcon = selectedRoom === fallbackRoomName ? FolderOpen : getRoomIcon(selectedRoom)
+  const activeRoomTitle = selectedRoom === fallbackRoomName ? translate('organizer_unassigned_lights') : selectedRoom
 
   // Rendering av enskild rums-knapp i listan
   const renderRoomItem = (roomName, isFallback = false) => {
     const Icon = isFallback ? FolderOpen : getRoomIcon(roomName)
-    const displayName = isFallback ? 'Osorterade lampor' : roomName
+    const displayName = isFallback ? translate('organizer_unassigned_lights') : roomName
     const isActive = selectedRoom === roomName
     const count = getLightCount(roomName)
 
@@ -209,7 +219,7 @@ export default function RoomOrganizer({ config, onSave, onClose }) {
                     alignItems: 'center',
                     justifyContent: 'center'
                   }}
-                  title="Flytta upp"
+                  title={translate('organizer_move_up')}
                 >
                   <ChevronUp size={12} style={{ strokeWidth: 2.5 }} />
                 </button>
@@ -227,7 +237,7 @@ export default function RoomOrganizer({ config, onSave, onClose }) {
                     alignItems: 'center',
                     justifyContent: 'center'
                   }}
-                  title="Flytta ner"
+                  title={translate('organizer_move_down')}
                 >
                   <ChevronDown size={12} style={{ strokeWidth: 2.5 }} />
                 </button>
@@ -239,7 +249,7 @@ export default function RoomOrganizer({ config, onSave, onClose }) {
                   e.stopPropagation()
                   handleDeleteRoom(roomName)
                 }}
-                title={`Ta bort rummet ${roomName}`}
+                title={translate('organizer_delete_room', { name: roomName })}
               >
                 <Trash2 size={13} style={{ strokeWidth: 2.2 }} />
               </button>
@@ -261,18 +271,20 @@ export default function RoomOrganizer({ config, onSave, onClose }) {
             <ActiveRoomIcon size={22} style={{ strokeWidth: 2.5, color: 'var(--purple-light)' }} />
             <h2>{activeRoomTitle}</h2>
           </div>
-          <span className="unassigned-sidebar__count">{activeLights.length} lampor</span>
+          <span className="unassigned-sidebar__count">
+            {translate('organizer_lights_count', { count: activeLights.length })}
+          </span>
         </div>
 
         {/* Sektion 1: Aktiva lampor i rummet */}
         <div className="detail-lights-section">
           <h3>
             <Lightbulb size={14} style={{ strokeWidth: 2.2 }} />
-            Lampor i rummet
+            {translate('organizer_lights_in_room')}
           </h3>
           {activeLights.length === 0 ? (
             <div className="organizer-room-card__empty" style={{ padding: 'var(--space-5)' }}>
-              Inga lampor tilldelade till detta rum. Lägg till lampor nedan!
+              {translate('organizer_no_lights_in_room')}
             </div>
           ) : (
             <div className="detail-lights-grid">
@@ -288,7 +300,7 @@ export default function RoomOrganizer({ config, onSave, onClose }) {
                     type="button"
                     className="detail-light-card__btn detail-light-card__btn--remove"
                     onClick={() => handleRemoveLight(light.entity_id)}
-                    title="Ta bort från rummet"
+                    title={translate('organizer_remove_from_room')}
                   >
                     <MinusCircle size={15} style={{ strokeWidth: 2.2 }} />
                   </button>
@@ -299,10 +311,10 @@ export default function RoomOrganizer({ config, onSave, onClose }) {
         </div>
 
         {/* Sektion 2: Lägg till lampor (visas ej för fallbacksrummet "Osorterade") */}
-        {selectedRoom !== 'Övrigt' && (
+        {selectedRoom !== fallbackRoomName && (
           <div className="detail-lights-section" style={{ borderTop: '1px solid var(--glass-border)', paddingTop: 'var(--space-4)' }}>
             <div className="detail-lights-section__title-bar">
-              <h3>Tillgängliga lampor</h3>
+              <h3>{translate('organizer_available_lights')}</h3>
               
               {/* Toggle för att visa lampor från andra rum */}
               <div className="show-all-toggle-container">
@@ -314,7 +326,7 @@ export default function RoomOrganizer({ config, onSave, onClose }) {
                   className="show-all-toggle-input"
                 />
                 <label htmlFor="show-all-checkbox" className="show-all-toggle-label">
-                  Visa lampor från andra rum
+                  {translate('organizer_show_all_lights')}
                 </label>
               </div>
             </div>
@@ -322,20 +334,20 @@ export default function RoomOrganizer({ config, onSave, onClose }) {
             {availableLights.length === 0 ? (
               <div className="organizer-room-card__empty" style={{ padding: 'var(--space-5)' }}>
                 {showAllLights 
-                  ? 'Det finns inga andra lampor i systemet.' 
-                  : 'Inga osorterade lampor tillgängliga. Markera växlaren ovan för att se lampor i andra rum.'}
+                  ? translate('organizer_no_other_lights') 
+                  : translate('organizer_no_unassigned_lights')}
               </div>
             ) : (
               <div className="detail-lights-grid">
                 {availableLights.map((light) => {
-                  const currentRoom = light.room || 'Övrigt'
+                  const currentRoom = light.room || fallbackRoomName
                   return (
                     <div key={light.entity_id} className="detail-light-card">
                       <div className="detail-light-card__info">
                         <Lightbulb size={16} className="detail-light-card__icon" style={{ strokeWidth: 2.2 }} />
                         <div className="detail-light-card__meta">
                           <span className="detail-light-card__name">{light.name}</span>
-                          {currentRoom !== 'Övrigt' && (
+                          {currentRoom !== fallbackRoomName && (
                             <span className="detail-light-card__room-badge">{currentRoom}</span>
                           )}
                         </div>
@@ -344,7 +356,7 @@ export default function RoomOrganizer({ config, onSave, onClose }) {
                         type="button"
                         className="detail-light-card__btn detail-light-card__btn--add"
                         onClick={() => handleAddLight(light.entity_id)}
-                        title={`Lägg till i ${selectedRoom}`}
+                        title={translate('organizer_add_to_room', { name: selectedRoom })}
                       >
                         <PlusCircle size={15} style={{ strokeWidth: 2.2 }} />
                       </button>
@@ -357,10 +369,10 @@ export default function RoomOrganizer({ config, onSave, onClose }) {
         )}
         
         {/* Hjälptext om man är i Osorterade lampor */}
-        {selectedRoom === 'Övrigt' && (
+        {selectedRoom === fallbackRoomName && (
           <div className="organizer-room-card__empty" style={{ borderStyle: 'solid', display: 'flex', flexDirection: 'column', gap: 6, padding: 'var(--space-5)' }}>
-            <span style={{ fontWeight: 'bold', color: 'var(--text-2)' }}>Detta är din inkorg för osorterade lampor.</span>
-            <span>För att placera lamporna i ett rum, klicka på önskat rum i listan till vänster och lägg till dem därifrån.</span>
+            <span style={{ fontWeight: 'bold', color: 'var(--text-2)' }}>{translate('organizer_unassigned_desc_title')}</span>
+            <span>{translate('organizer_unassigned_desc_text')}</span>
           </div>
         )}
       </div>
@@ -374,13 +386,13 @@ export default function RoomOrganizer({ config, onSave, onClose }) {
         {/* ── Header ── */}
         <div className="organizer-header">
           <div>
-            <h2 id="organizer-title" className="organizer-title">Organisera rum &amp; lampor</h2>
+            <h2 id="organizer-title" className="organizer-title">{translate('organizer_title')}</h2>
             <p className="organizer-subtitle">
-              Skapa rum och fördela dina lampor. Klicka på ett rum och lägg till eller ta bort lampor från listan.
+              {translate('organizer_subtitle')}
             </p>
           </div>
-          <button className="setup-btn setup-btn--secondary" onClick={onClose} aria-label="Stäng organisering">
-            <X size={16} style={{ strokeWidth: 2.2, marginRight: 4 }} /> Stäng
+          <button className="setup-btn setup-btn--secondary" onClick={onClose} aria-label={translate('organizer_back_to_rooms')}>
+            <X size={16} style={{ strokeWidth: 2.2, marginRight: 4 }} /> {translate('close_btn')}
           </button>
         </div>
 
@@ -395,7 +407,7 @@ export default function RoomOrganizer({ config, onSave, onClose }) {
                 <div className="form-group" style={{ flex: 1 }}>
                   <input
                     type="text"
-                    placeholder="Skapa rum... (t.ex. Kök)"
+                    placeholder={translate('organizer_placeholder_mobile')}
                     value={newRoomName}
                     onChange={(e) => setNewRoomName(e.target.value)}
                     className="w-full"
@@ -409,7 +421,7 @@ export default function RoomOrganizer({ config, onSave, onClose }) {
 
               {/* Rumslista */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-                {renderRoomItem('Övrigt', true)}
+                {renderRoomItem(fallbackRoomName, true)}
                 {rooms.map((r) => renderRoomItem(r, false))}
               </div>
             </div>
@@ -421,7 +433,7 @@ export default function RoomOrganizer({ config, onSave, onClose }) {
                 onClick={() => setMobileView('master')}
               >
                 <ArrowLeft size={12} />
-                Tillbaka till rum
+                {translate('organizer_back_to_rooms')}
               </button>
               {renderDetailPane()}
             </div>
@@ -438,7 +450,7 @@ export default function RoomOrganizer({ config, onSave, onClose }) {
                 <div className="form-group" style={{ flex: 1 }}>
                   <input
                     type="text"
-                    placeholder="Skapa nytt rum..."
+                    placeholder={translate('organizer_placeholder_desktop')}
                     value={newRoomName}
                     onChange={(e) => setNewRoomName(e.target.value)}
                     className="w-full"
@@ -452,7 +464,7 @@ export default function RoomOrganizer({ config, onSave, onClose }) {
 
               {/* Rumslista */}
               <div className="rooms-sidebar">
-                {renderRoomItem('Övrigt', true)}
+                {renderRoomItem(fallbackRoomName, true)}
                 {rooms.map((r) => renderRoomItem(r, false))}
               </div>
             </div>
@@ -465,10 +477,10 @@ export default function RoomOrganizer({ config, onSave, onClose }) {
         {/* ── Footer ── */}
         <div className="organizer-footer">
           <button className="setup-btn setup-btn--secondary setup-btn--large" onClick={onClose}>
-            Avbryt
+            {translate('cancel_btn')}
           </button>
           <button className="setup-btn setup-btn--primary setup-btn--large" onClick={handleSave} style={{ minWidth: 160 }}>
-            Spara ändringar
+            {translate('organizer_save_changes')}
           </button>
         </div>
 

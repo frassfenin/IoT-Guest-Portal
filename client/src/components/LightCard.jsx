@@ -1,17 +1,16 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Lightbulb, Plug, Sun, Thermometer, Snowflake } from 'lucide-react'
+import useDebounce from '../hooks/useDebounce.js'
 
-// Debounce: Väntar `delay`ms efter senaste anrop innan callback körs.
-// Används för sliders så att API inte spammas.
-function useDebounce(fn, delay = 300) {
-  const [timer, setTimer] = useState(null)
-  return useCallback((...args) => {
-    if (timer) clearTimeout(timer)
-    setTimer(setTimeout(() => fn(...args), delay))
-  }, [fn, delay, timer])
-}
+export default function LightCard({ config, state, onChange, t }) {
+  const translate = t || ((key, replaces = {}) => {
+    let str = key
+    Object.entries(replaces).forEach(([k, v]) => {
+      str = str.replace(`{${k}}`, v)
+    })
+    return str
+  })
 
-export default function LightCard({ config, state, onChange }) {
   const isOn         = state?.state === 'on'
   const brightness   = state?.attributes?.brightness ?? 128      // 0-255
   const colorTemp    = state?.attributes?.color_temp ?? 370       // mireds
@@ -88,14 +87,14 @@ export default function LightCard({ config, state, onChange }) {
             <div className="light-card__name">{config.name}</div>
             <div className="light-card__state">
               {isOn
-                ? `På · ${brightnessPercent}% ljusstyrka`
-                : 'Av'}
+                ? translate('light_status_on', { percent: brightnessPercent })
+                : translate('light_status_off')}
             </div>
           </div>
         </div>
 
         {/* Toggle-switch */}
-        <label className="toggle" htmlFor={toggleId} aria-label={`${config.name}: ${isOn ? 'stäng av' : 'sätt på'}`}>
+        <label className="toggle" htmlFor={toggleId} aria-label={`${config.name}: ${isOn ? translate('light_aria_turn_off') : translate('light_aria_turn_on')}`}>
           <input
             type="checkbox"
             id={toggleId}
@@ -113,7 +112,7 @@ export default function LightCard({ config, state, onChange }) {
         {/* Ljusstyrka */}
         {config.supports_brightness && (
           <div className="slider-row">
-            <span className="slider-label" aria-hidden="true" title="Ljusstyrka" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span className="slider-label" aria-hidden="true" title={translate('brightness')} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Sun size={14} style={{ strokeWidth: 2.2 }} />
             </span>
             <input
@@ -125,7 +124,7 @@ export default function LightCard({ config, state, onChange }) {
               step="1"
               value={localBrightness}
               onChange={handleBrightnessChange}
-              aria-label={`Ljusstyrka för ${config.name}`}
+              aria-label={translate('light_brightness_label', { name: config.name })}
               aria-valuetext={`${brightnessPercent}%`}
             />
             <span className="slider-value">{brightnessPercent}%</span>
@@ -135,7 +134,7 @@ export default function LightCard({ config, state, onChange }) {
         {/* Färgtemperatur */}
         {config.supports_color_temp && (
           <div className="slider-row">
-            <span className="slider-label" aria-hidden="true" title="Färgtemperatur" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span className="slider-label" aria-hidden="true" title={translate('light_color_temp_title')} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Thermometer size={14} style={{ strokeWidth: 2.2 }} />
             </span>
             <input
@@ -147,9 +146,9 @@ export default function LightCard({ config, state, onChange }) {
               step="1"
               value={localColorTemp}
               onChange={handleColorTempChange}
-              aria-label={`Färgtemperatur för ${config.name}`}
+              aria-label={translate('light_color_temp_label', { name: config.name })}
             />
-            <span className="slider-label" aria-hidden="true" title="Kallt" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span className="slider-label" aria-hidden="true" title={translate('light_color_temp_cold')} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Snowflake size={14} style={{ strokeWidth: 2.2 }} />
             </span>
           </div>

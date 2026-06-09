@@ -1,6 +1,14 @@
 import { useState } from 'react'
 
-export default function InfoPage({ info }) {
+export default function InfoPage({ info, t }) {
+  const translate = t || ((key, replaces = {}) => {
+    let str = key
+    Object.entries(replaces).forEach(([k, v]) => {
+      str = str.replace(`{${k}}`, v)
+    })
+    return str
+  })
+
   const [copied, setCopied] = useState(false)
 
   async function handleWifiClick() {
@@ -25,9 +33,9 @@ export default function InfoPage({ info }) {
     <div className="info-page">
 
       {/* ── Wi-Fi-kort ── */}
-      <section aria-label="Wi-Fi-information">
+      <section aria-label={translate('wifi_info_title')}>
         <div className="section-header">
-          <span className="section-header__title">Wi-Fi</span>
+          <span className="section-header__title">{translate('info_wifi_title')}</span>
           <div className="section-header__line" />
         </div>
 
@@ -37,31 +45,31 @@ export default function InfoPage({ info }) {
           role="button"
           tabIndex={0}
           id="wifi-card"
-          aria-label="Kopiera Wi-Fi-lösenord"
+          aria-label={translate('copy_password_btn')}
           onKeyDown={(e) => e.key === 'Enter' && handleWifiClick()}
         >
           <div className="wifi-card__header">
             <div className="wifi-card__icon" aria-hidden="true">📶</div>
             <div>
-              <div className="wifi-card__title">Wi-Fi-inloggning</div>
-              <div className="wifi-card__hint">Tryck för att kopiera lösenordet</div>
+              <div className="wifi-card__title">{translate('info_wifi_login')}</div>
+              <div className="wifi-card__hint">{translate('info_wifi_copy_hint')}</div>
             </div>
           </div>
 
           <div className="wifi-field">
-            <span className="wifi-field__label">Nätverk</span>
+            <span className="wifi-field__label">{translate('network_label')}</span>
             <span className="wifi-field__value">{info.wifi_name}</span>
           </div>
           <div className="wifi-field">
-            <span className="wifi-field__label">Lösenord</span>
+            <span className="wifi-field__label">{translate('password_label')}</span>
             <span className="wifi-field__value">{info.wifi_password}</span>
           </div>
 
           <div className="wifi-card__copy-hint" aria-live="polite">
             {copied ? (
-              <span className="wifi-card__copied">✅ Kopierat till urklipp!</span>
+              <span className="wifi-card__copied">✅ {translate('info_wifi_copied')}</span>
             ) : (
-              <span>📋 Tryck för att kopiera</span>
+              <span>📋 {translate('info_wifi_press_copy')}</span>
             )}
           </div>
         </div>
@@ -69,9 +77,9 @@ export default function InfoPage({ info }) {
 
       {/* ── Husmanual / Anteckningar ── */}
       {info.notes?.length > 0 && (
-        <section aria-label="Praktisk information">
+        <section aria-label={translate('notes_dock_title')}>
           <div className="section-header">
-            <span className="section-header__title">Nyttigt att veta</span>
+            <span className="section-header__title">{translate('info_useful_to_know')}</span>
             <div className="section-header__line" />
           </div>
 

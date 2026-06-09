@@ -1,14 +1,18 @@
-import { useState, useEffect } from 'react'
-import { FolderOpen, Plus, Trash2, ArrowLeft, Settings, Check, HelpCircle, Home, Lightbulb, Sliders, Palette, Cast, Cpu, Wifi, Save, Power, RefreshCw, Search, Zap, Server, CheckCircle2, AlertCircle, Pin, AlertTriangle, Loader2, Download, Upload } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { FolderOpen, Plus, Trash2, ArrowLeft, Settings, Check, HelpCircle, Home, Lightbulb, Sliders, Palette, Cast, Cpu, Wifi, Save, Power, RefreshCw, Search, Zap, Server, CheckCircle2, AlertCircle, Pin, AlertTriangle, Loader2, Download, Upload, Globe } from 'lucide-react'
+import sv from '../languages/sv.js'
+import en from '../languages/en.js'
 
-function LightConfigurator({ lights, onChange, rooms = [], onAddRoom }) {
+const locales = { sv, en }
+
+function LightConfigurator({ lights, onChange, rooms = [], onAddRoom, t }) {
   const [newRoomForLight, setNewRoomForLight] = useState({});
   const [showInlineNewRoom, setShowInlineNewRoom] = useState({});
 
   if (lights.length === 0) {
     return (
       <div className="setup-info-box" style={{ textAlign: 'center', borderStyle: 'solid' }}>
-        <p className="text-sm text-dim">Inga lampor hittades. Koppla bron först!</p>
+        <p className="text-sm text-dim">{t('hue_no_lights')}</p>
       </div>
     )
   }
@@ -33,8 +37,8 @@ function LightConfigurator({ lights, onChange, rooms = [], onAddRoom }) {
                 <div className="light-names">
                   <span className="light-discovered-name">{light.discoveredName}</span>
                   <span className="light-capabilities">
-                    {light.supports_brightness ? 'Ljusstyrka' : ''}
-                    {light.supports_color_temp ? ' • Färgtemp' : ''}
+                    {light.supports_brightness ? t('brightness') : ''}
+                    {light.supports_color_temp ? t('color_temp') : ''}
                   </span>
                 </div>
               </label>
@@ -43,16 +47,16 @@ function LightConfigurator({ lights, onChange, rooms = [], onAddRoom }) {
             {light.enabled && (
               <div className="light-row-edit fade-in">
                 <div className="form-group">
-                  <label>Visningsnamn</label>
+                  <label>{t('hue_light_name_label')}</label>
                   <input
                     type="text"
                     value={light.name}
                     onChange={(e) => onChange(index, 'name', e.target.value)}
-                    placeholder="Visningsnamn i portalen"
+                    placeholder={t('hue_light_name_placeholder')}
                   />
                 </div>
                 <div className="room-select-container">
-                  <label>Rum</label>
+                  <label>{t('hue_light_room_label')}</label>
                   {!isCreatingRoom ? (
                     <select
                       className="room-select-dropdown"
@@ -66,17 +70,17 @@ function LightConfigurator({ lights, onChange, rooms = [], onAddRoom }) {
                         }
                       }}
                     >
-                      <option value="" disabled>-- Välj rum --</option>
+                      <option value="" disabled>{t('hue_room_select_placeholder')}</option>
                       {rooms.map((room) => (
                         <option key={room} value={room}>{room}</option>
                       ))}
-                      <option value="__new__">+ Skapa nytt rum...</option>
+                      <option value="__new__">{t('hue_create_room_option')}</option>
                     </select>
                   ) : (
                     <div className="room-new-inline">
                       <input
                         type="text"
-                        placeholder="Nytt rum..."
+                        placeholder={t('hue_new_room_placeholder')}
                         value={newRoomForLight[index] || ''}
                         onChange={(e) => setNewRoomForLight({ ...newRoomForLight, [index]: e.target.value })}
                         autoFocus
@@ -95,7 +99,7 @@ function LightConfigurator({ lights, onChange, rooms = [], onAddRoom }) {
                           setNewRoomForLight({ ...newRoomForLight, [index]: '' });
                         }}
                       >
-                        Ok
+                        {t('hue_new_room_ok')}
                       </button>
                       <button
                         type="button"
@@ -105,7 +109,7 @@ function LightConfigurator({ lights, onChange, rooms = [], onAddRoom }) {
                           setNewRoomForLight({ ...newRoomForLight, [index]: '' });
                         }}
                       >
-                        Avbryt
+                        {t('hue_new_room_cancel')}
                       </button>
                     </div>
                   )}
@@ -120,6 +124,24 @@ function LightConfigurator({ lights, onChange, rooms = [], onAddRoom }) {
 }
 
 export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
+  const [locale, setLocale] = useState(() => {
+    const saved = localStorage.getItem('setup_wizard_locale')
+    return saved === 'en' ? 'en' : 'sv'
+  })
+
+  const t = (key, replaces = {}) => {
+    let str = locales[locale]?.[key] || locales['sv']?.[key] || key
+    Object.entries(replaces).forEach(([k, v]) => {
+      str = str.replace(`{${k}}`, v)
+    })
+    return str
+  }
+
+  const changeLocale = (newLocale) => {
+    setLocale(newLocale)
+    localStorage.setItem('setup_wizard_locale', newLocale)
+  }
+
   const [step, setStep] = useState(() => {
     if (initialConfig) {
       const isLargeScreen = typeof window !== 'undefined' && window.innerWidth >= 768
@@ -133,7 +155,11 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
     }
     const existing = (initialConfig?.lights ?? []).map((l) => l.room).filter(Boolean)
     const unique = Array.from(new Set(existing))
-    return unique.length > 0 ? unique : ['Vardagsrum', 'Kök', 'Sovrum', 'Hall']
+    if (unique.length > 0) return unique
+    const savedLocale = localStorage.getItem('setup_wizard_locale')
+    return savedLocale === 'en'
+      ? ['Living room', 'Kitchen', 'Bedroom', 'Hall']
+      : ['Vardagsrum', 'Kök', 'Sovrum', 'Hall']
   })
 
   const [isMobile, setIsMobile] = useState(() => {
@@ -177,11 +203,11 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
       try {
         const config = JSON.parse(event.target.result)
         if (!config || typeof config !== 'object' || !config.lights) {
-          alert('Ogiltig backup-fil! Den måste innehålla en giltig systemkonfiguration.')
+          alert(t('backup_invalid'))
           return
         }
 
-        if (!confirm('Är du säker på att du vill importera denna konfiguration? Nuvarande inställningar kommer att skrivas över.')) {
+        if (!confirm(t('backup_confirm'))) {
           return
         }
 
@@ -194,10 +220,10 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
 
         if (!res.ok) {
           const data = await res.json()
-          throw new Error(data.error || 'Kunde inte importera backupen')
+          throw new Error(data.error || t('save_failed_msg'))
         }
 
-        alert('Konfigurationen har importerats framgångsrikt!')
+        alert(t('backup_success'))
         if (onComplete) onComplete()
       } catch (err) {
         console.error('Import misslyckades:', err)
@@ -214,7 +240,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
       setLoading(true)
       setError(null)
       const res = await fetch('/api/config')
-      if (!res.ok) throw new Error('Kunde inte hämta konfiguration från servern.')
+      if (!res.ok) throw new Error(t('fetch_config_error'))
       const data = await res.json()
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2))
       const downloadAnchor = document.createElement('a')
@@ -225,7 +251,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
       downloadAnchor.remove()
     } catch (err) {
       console.error(err)
-      setError(err.message || 'Ett fel uppstod vid export.')
+      setError(err.message || t('save_failed_msg'))
     } finally {
       setLoading(false)
     }
@@ -238,12 +264,12 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
       setError(null)
       const res = await fetch('/api/setup/factory-reset', { method: 'POST' })
       if (!res.ok) {
-        throw new Error('Servern misslyckades med att fabriksåterställa.')
+        throw new Error(t('factory_reset_server_error'))
       }
       window.location.reload()
     } catch (err) {
       console.error(err)
-      setError(err.message || 'Ett fel uppstod vid fabriksåterställning.')
+      setError(err.message || t('factory_reset_error'))
       setResetting(false)
     }
   }
@@ -290,15 +316,28 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
     password: 'KännDigSomHemma'
   })
 
-  const [notes, setNotes] = useState([
-    { emoji: '☕', title: 'Kaffemaskinen', text: 'Finns i köket. Kapslar finns i skåpet bredvid.' },
-    { emoji: '🧻', title: 'Handdukar', text: 'Färska handdukar finns på hyllan i badrummet.' },
-    { emoji: '🔑', title: 'Ytterdörr', text: 'Låser sig automatiskt efter 10 sekunder.' }
-  ])
+  const [notes, setNotes] = useState(() => {
+    const savedLocale = localStorage.getItem('setup_wizard_locale')
+    return savedLocale === 'en'
+      ? [
+          { emoji: '☕', title: 'Coffee Machine', text: 'Located in the kitchen. Pods are in the cabinet next to it.' },
+          { emoji: '🧻', title: 'Towels', text: 'Fresh towels are on the shelf in the bathroom.' },
+          { emoji: '🔑', title: 'Front Door', text: 'Locks automatically after 10 seconds.' }
+        ]
+      : [
+          { emoji: '☕', title: 'Kaffemaskinen', text: 'Finns i köket. Kapslar finns i skåpet bredvid.' },
+          { emoji: '🧻', title: 'Handdukar', text: 'Färska handdukar finns på hyllan i badrummet.' },
+          { emoji: '🔑', title: 'Ytterdörr', text: 'Låser sig automatiskt efter 10 sekunder.' }
+        ]
+  })
+
+  const hasInitializedRef = useRef(false)
 
   // ── Prefill från befintlig konfiguration (Edit Mode) ──
   useEffect(() => {
+    if (hasInitializedRef.current) return
     if (!initialConfig) return
+    hasInitializedRef.current = true
 
     setServices({
       hue: !!(initialConfig.hue?.ip && initialConfig.hue?.apiKey),
@@ -409,10 +448,10 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
       if (data.found) {
         setHue((prev) => ({ ...prev, ip: data.ip }))
       } else {
-        setError('Kunde inte hitta någon Hue Bridge automatiskt på nätverket. Vänligen fyll i IP manuellt.')
+        setError(t('hue_ip_error'))
       }
     } catch {
-      setError('Sökningen misslyckades. Kontrollera nätverket.')
+      setError(t('hue_search_failed'))
     } finally {
       setLoading(false)
     }
@@ -420,7 +459,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
 
   // ── Hue Pairing ─────────────────────────────────────────
   const pairHue = async () => {
-    if (!hue.ip) return setError('Fyll i Hue Bridge IP-adress')
+    if (!hue.ip) return setError(t('hue_ip_empty'))
     setLoading(true)
     setError(null)
     try {
@@ -430,7 +469,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
         body: JSON.stringify({ ip: hue.ip })
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Pairing misslyckades')
+      if (!res.ok) throw new Error(data.error || t('hue_pair_failed'))
 
       setHue((prev) => ({
         ...prev,
@@ -442,8 +481,8 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
       fetchHueLights(hue.ip, data.apiKey)
     } catch (err) {
       setError(err.message === 'link button not pressed'
-        ? 'Tryck på den runda knappen på din Philips Hue Bridge först, tryck sedan på "Koppla" här inom 30 sekunder!'
-        : `Fel: ${err.message}`
+        ? t('hue_press_button')
+        : `${t('hue_pair_failed')}: ${err.message}`
       )
     } finally {
       setLoading(false)
@@ -460,7 +499,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
         body: JSON.stringify({ ip, apiKey: key })
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Kunde inte hämta lampor från Hue Bridge')
+      if (!res.ok) throw new Error(data.error || t('hue_fetch_error'))
       if (data.lights) {
         setHueLights(data.lights.map((l) => {
           const saved = initialConfig?.lights?.find((sl) => sl.bridge_id === l.id && sl.bridge === 'hue')
@@ -477,7 +516,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
       }
     } catch (err) {
       console.error('Kunde inte läsa lampor:', err)
-      setError(`Kunde inte läsa Hue-lampor: ${err.message}`)
+      setError(t('hue_read_error', { message: err.message }))
     } finally {
       setLoading(false)
     }
@@ -529,7 +568,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
       // Hämta nyligen parade enheters lampor
       fetchMatterLights()
     } catch (err) {
-      setError(`Lokal parning misslyckades: ${err.message}`)
+      setError(t('matter_pair_failed', { message: err.message }))
     } finally {
       setLoading(false)
     }
@@ -541,7 +580,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
     try {
       const res = await fetch('/api/setup/matter/lights', { method: 'POST' })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Kunde inte hämta Matter-lampor')
+      if (!res.ok) throw new Error(data.error || t('matter_fetch_error'))
       if (data.lights) {
         setMatterLights((prev) => {
           return data.lights.map((l) => {
@@ -566,7 +605,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
       }
     } catch (err) {
       console.error('Kunde inte läsa Matter-lampor:', err)
-      setError(`Kunde inte läsa Matter-enheter: ${err.message}`)
+      setError(t('matter_read_error', { message: err.message }))
     } finally {
       setLoading(false)
     }
@@ -574,20 +613,20 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
 
   // ── IKEA Hub / Gateway pairing ─────────────────────────
   const pairIkea = async () => {
-    if (!ikea.ip) return setError('Fyll i IP-adress för IKEA')
+    if (!ikea.ip) return setError(t('ikea_ip_error'))
     
     setLoading(true)
     setError(null)
     try {
       if (ikea.type === 'dirigera') {
-        if (!ikea.code) return setError('Fyll i den 9-siffriga koden på baksidan')
+        if (!ikea.code) return setError(t('ikea_code_error'))
         const res = await fetch('/api/setup/ikea/pair', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ip: ikea.ip, code: ikea.code })
         })
         const data = await res.json()
-        if (!res.ok) throw new Error(data.error || 'Dirigera parning misslyckades')
+        if (!res.ok) throw new Error(data.error || t('ikea_pair_failed'))
 
         setIkea((prev) => ({
           ...prev,
@@ -597,14 +636,14 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
         fetchIkeaLights('dirigera', ikea.ip, data.token)
       } else {
         // Trådfri Gateway (äldre)
-        if (!ikea.securityCode) return setError('Fyll i säkerhetskoden (Security Code) under din Gateway')
+        if (!ikea.securityCode) return setError(t('ikea_sec_code_error'))
         const res = await fetch('/api/setup/ikea_tradfri/pair', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ip: ikea.ip, securityCode: ikea.securityCode })
         })
         const data = await res.json()
-        if (!res.ok) throw new Error(data.error || 'Trådfri parning misslyckades')
+        if (!res.ok) throw new Error(data.error || t('ikea_pair_failed'))
 
         setIkea((prev) => ({
           ...prev,
@@ -615,7 +654,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
         fetchIkeaLights('ikea_tradfri', ikea.ip, null, data.identity, data.psk)
       }
     } catch (err) {
-      setError(`Koppling till IKEA misslyckades: ${err.message}`)
+      setError(t('ikea_pair_failed_msg', { message: err.message }))
     } finally {
       setLoading(false)
     }
@@ -631,7 +670,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
         body: JSON.stringify({ bridge: type, ip, token, identity, psk })
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Kunde inte hämta enheter från IKEA')
+      if (!res.ok) throw new Error(data.error || t('ikea_fetch_error'))
       if (data.lights) {
         setIkeaLights(data.lights.map((l) => {
           const saved = initialConfig?.lights?.find((sl) => sl.bridge_id === l.id && sl.bridge === 'ikea')
@@ -649,7 +688,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
       }
     } catch (err) {
       console.error('Kunde inte läsa IKEA lampor:', err)
-      setError(`Kunde inte läsa IKEA-enheter: ${err.message}`)
+      setError(t('ikea_read_error', { message: err.message }))
     } finally {
       setLoading(false)
     }
@@ -657,7 +696,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
 
   // ── Govee API test ──────────────────────────────────────
   const testGovee = async () => {
-    if (!govee.apiKey) return setError('Fyll i din Govee API-nyckel')
+    if (!govee.apiKey) return setError(t('govee_api_key_empty'))
     setLoading(true)
     setError(null)
     try {
@@ -667,7 +706,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
         body: JSON.stringify({ apiKey: govee.apiKey })
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Felaktig API-nyckel')
+      if (!res.ok) throw new Error(data.error || t('govee_invalid_key'))
 
       setGovee((prev) => ({
         ...prev,
@@ -691,7 +730,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
         body: JSON.stringify({ apiKey: key })
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Kunde inte hämta enheter från Govee')
+      if (!res.ok) throw new Error(data.error || t('govee_fetch_error'))
       if (data.lights) {
         setGoveeLights(data.lights.map((l) => {
           const saved = initialConfig?.lights?.find((sl) => sl.bridge_id === l.id && sl.bridge === 'govee')
@@ -710,7 +749,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
       }
     } catch (err) {
       console.error('Kunde inte läsa Govee lampor:', err)
-      setError(`Kunde inte läsa Govee-enheter: ${err.message}`)
+      setError(t('govee_read_error', { message: err.message }))
     } finally {
       setLoading(false)
     }
@@ -841,7 +880,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
   }
 
   const addNote = () => {
-    setNotes((prev) => [...prev, { emoji: '📌', title: 'Ny rubrik', text: 'Skriv text här...' }])
+    setNotes((prev) => [...prev, { emoji: '📌', title: t('new_note_title'), text: t('new_note_desc') }])
     markDirty()
   }
 
@@ -1005,7 +1044,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
 
       if (!res.ok) {
         const errData = await res.json()
-        throw new Error(errData.error || 'Kunde inte spara konfigurationen')
+        throw new Error(errData.error || t('save_failed_msg'))
       }
 
       setHasUnsavedChanges(false)
@@ -1013,7 +1052,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
         onComplete()
       }
     } catch (err) {
-      setError(`Kunde inte slutföra installationen: ${err.message}`)
+      setError(t('save_failed_error', { message: err.message }))
     } finally {
       setLoading(false)
     }
@@ -1021,7 +1060,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
 
   const handleClose = () => {
     if (hasUnsavedChanges) {
-      if (!confirm('Du har osparade ändringar. Vill du stänga ändå?')) return
+      if (!confirm(t('unsaved_changes_confirm'))) return
     }
     if (onCancel) onCancel()
   }
@@ -1032,6 +1071,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
       return [12, 11, 2, 3, 4, 6, 10, 8]
     }
     const list = [1] // Välkommen
+    list.push(13) // Välj integrationer (Kort-grid)
     list.push(11) // Skapa rum
     if (services.hue) list.push(2)
     if (services.ikea) list.push(3)
@@ -1068,33 +1108,32 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
   const progressPct = (activeIndex / totalActive) * 100
 
   const editItems = [
-    { id: 12, name: 'Generella inställningar', iconComponent: Settings, colorClass: 'general', desc: 'Allmänna systeminställningar' },
-    { id: 11, name: 'Hantera rum', iconComponent: Home, colorClass: 'rooms', desc: 'Skapa och ta bort rum' },
-    { id: 2, name: 'Philips Hue', iconComponent: Lightbulb, colorClass: 'hue', desc: 'Lokal belysning' },
-    { id: 3, name: 'IKEA Smart Home', iconComponent: Sliders, colorClass: 'ikea', desc: 'Dirigera Hub / Trådfri' },
-    { id: 4, name: 'Govee Lights', iconComponent: Palette, colorClass: 'govee', desc: 'Cloud API belysning' },
-    { id: 6, name: 'Google Cast', iconComponent: Cast, colorClass: 'cast', desc: 'Cast-enheter' },
-    { id: 10, name: 'Matter-enheter', iconComponent: Cpu, colorClass: 'matter', desc: 'Lokal direktstyrning' },
-    { id: 8, name: 'WiFi & info', iconComponent: Wifi, colorClass: 'wifi', desc: 'Gäst-WiFi & Husmanual' },
-
+    { id: 12, name: t('step_name_general'), iconComponent: Settings, colorClass: 'general', desc: t('general_settings_desc') },
+    { id: 11, name: t('step_name_rooms'), iconComponent: Home, colorClass: 'rooms', desc: t('room_builder_desc') },
+    { id: 2, name: t('step_name_hue'), iconComponent: Lightbulb, colorClass: 'hue', desc: t('hue_desc') },
+    { id: 3, name: t('step_name_ikea'), iconComponent: Sliders, colorClass: 'ikea', desc: t('ikea_desc') },
+    { id: 4, name: t('step_name_govee'), iconComponent: Palette, colorClass: 'govee', desc: t('govee_desc') },
+    { id: 6, name: t('step_name_cast'), iconComponent: Cast, colorClass: 'cast', desc: t('cast_desc') },
+    { id: 10, name: t('step_name_matter'), iconComponent: Cpu, colorClass: 'matter', desc: t('matter_desc') },
+    { id: 8, name: t('step_name_wifi'), iconComponent: Wifi, colorClass: 'wifi', desc: t('wifi_desc') },
   ]
 
   const getStepName = (stepId) => {
     switch (stepId) {
-      case 1: return 'Välkommen'
-      case 12: return 'Generella inställningar'
-      case 11: return 'Skapa rum'
-      case 2: return 'Philips Hue'
-      case 3: return 'IKEA Smart Home'
-      case 4: return 'Govee Lights'
-      case 6: return 'Google Cast'
-      case 10: return 'Matter-enheter'
-      case 8: return 'WiFi & info'
-      case 9: return 'Spara & starta'
-      default: return `Steg ${stepId}`
+      case 1: return t('step_name_welcome')
+      case 12: return t('step_name_general')
+      case 11: return t('step_name_rooms')
+      case 13: return t('step_name_integrations')
+      case 2: return t('step_name_hue')
+      case 3: return t('step_name_ikea')
+      case 4: return t('step_name_govee')
+      case 6: return t('step_name_cast')
+      case 10: return t('step_name_matter')
+      case 8: return t('step_name_wifi')
+      case 9: return t('step_name_save')
+      default: return `${t('step_prefix')} ${stepId}`
     }
   }
-
   const renderEditStepActions = () => (
     <div className="step-actions" style={{ marginTop: 24 }}>
       {hasUnsavedChanges ? (
@@ -1106,7 +1145,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
             style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
           >
             {loading ? <Loader2 size={14} className="setup-btn-spin" /> : <Save size={14} />}
-            Spara
+            {t('save_btn')}
           </button>
           <button
             className="setup-btn setup-btn--primary"
@@ -1115,7 +1154,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
             style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
           >
             {loading ? <Loader2 size={14} className="setup-btn-spin" /> : <Save size={14} />}
-            Spara och stäng
+            {t('save_and_close_btn')}
           </button>
         </div>
       ) : (
@@ -1124,7 +1163,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
           onClick={handleClose}
           style={{ width: '100%' }}
         >
-          Stäng
+          {t('close_btn')}
         </button>
       )}
     </div>
@@ -1136,9 +1175,9 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
         <div className="setup-icon-wrapper setup-icon-wrapper--save">
           <Settings size={36} className="setup-icon-svg" />
         </div>
-        <h2 style={{ textAlign: 'center' }}>Inställningspanel</h2>
+        <h2 style={{ textAlign: 'center' }}>{t('dashboard_title')}</h2>
         <p className="description" style={{ textAlign: 'center' }}>
-          Välj den kategori eller integration du vill konfigurera nedan. Dina ändringar sparas på systemet när du går till "Spara & stäng".
+          {t('dashboard_desc')}
         </p>
 
         <div className="settings-dashboard-grid">
@@ -1167,34 +1206,34 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
   }
 
   const showSplitLayout = !isMobile && (initialConfig || step > 1) && step !== 100;
-  const isWideContainer = !isMobile && (showSplitLayout || step === 100 || step === 10);
+  const isWideContainer = !isMobile && (showSplitLayout || step === 100 || step === 10 || step === 1);
   const containerClass = `setup-container ${isWideContainer ? 'setup-container--wide' : ''}`;
 
   return (
     <div className={containerClass}>
       <div className="setup-header">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h1 className="setup-title">{initialConfig ? 'Systeminställningar' : 'Systemkonfiguration'}</h1>
+          <h1 className="setup-title">{initialConfig ? t('wizard_title_edit') : t('wizard_title_new')}</h1>
           {onCancel && (
             <button
               type="button"
               className="setup-btn setup-btn--cancel"
               onClick={handleClose}
             >
-              ✕ Stäng
+              ✕ {t('close_btn')}
             </button>
           )}
         </div>
         {!initialConfig ? (
           <>
-            <p className="setup-subtitle">Steg {activeIndex} av {totalActive}</p>
+            <p className="setup-subtitle">{t('step_prefix')} {activeIndex} {t('step_connector')} {totalActive}</p>
             <div className="setup-progress-bar">
               <div className="setup-progress-fill" style={{ width: `${progressPct}%` }} />
             </div>
           </>
         ) : (
           <p className="setup-subtitle" style={{ textAlign: 'left', marginTop: '4px' }}>
-            Hantera dina smarta enheter, rum och nätverksinställningar
+            {t('wizard_subtitle_edit')}
           </p>
         )}
       </div>
@@ -1260,7 +1299,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
           {/* Show mobile back button in edit mode sub-step */}
           {initialConfig && step !== 100 && isMobile && (
             <button className="mobile-back-btn" onClick={() => setStep(100)} style={{ marginBottom: '16px' }}>
-              ← Tillbaka till översikt
+              {t('mobile_back_to_dashboard')}
             </button>
           )}
 
@@ -1272,19 +1311,19 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
               <div className="setup-icon-wrapper setup-icon-wrapper--general">
                 <Settings size={32} className="setup-icon-svg" />
               </div>
-              <h2>Generella inställningar</h2>
+              <h2>{t('general_settings_title')}</h2>
               <p className="description" style={{ marginBottom: 24 }}>
-                Hantera systemets säkerhetskopior eller utför en fabriksåterställning av gästportalen.
+                {t('general_settings_desc')}
               </p>
 
               {/* Backup & Återställning */}
               <div className="backup-zone-card" style={{ marginBottom: '24px' }}>
                 <h3 className="backup-zone-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--blue)', fontSize: 'var(--text-md)', fontWeight: 700, marginBottom: '8px' }}>
                   <FolderOpen size={18} style={{ color: '#3b82f6' }} />
-                  Backup & Återställning
+                  {t('backup_title')}
                 </h3>
                 <p className="backup-zone-desc" style={{ fontSize: 'var(--text-xs)', color: 'var(--text-2)', marginBottom: '16px', lineHeight: 1.4 }}>
-                  Exportera din nuvarande konfiguration till en backupfil, eller återställ systemet genom att importera en tidigare sparad backup.
+                  {t('backup_desc')}
                 </p>
                 <div style={{ display: 'flex', gap: '12px' }}>
                   <button
@@ -1295,14 +1334,14 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                     disabled={loading}
                   >
                     <Download size={14} />
-                    Exportera backup
+                    {t('export_backup_btn')}
                   </button>
                   <label
                     className="setup-btn setup-btn--secondary"
                     style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', gap: 6, flex: 1, margin: 0 }}
                   >
                     <Upload size={14} />
-                    Importera backup
+                    {t('import_backup_btn')}
                     <input
                       type="file"
                       accept=".json"
@@ -1318,10 +1357,10 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
               <div className="danger-zone-card" style={{ marginTop: '32px', borderLeft: '4px solid #dc2626' }}>
                 <h3 className="danger-zone-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#dc2626', fontSize: 'var(--text-md)', fontWeight: 700, marginBottom: '8px' }}>
                   <AlertTriangle size={18} />
-                  Farliga inställningar (Danger Zone)
+                  {t('danger_zone_title')}
                 </h3>
                 <p className="danger-zone-desc" style={{ fontSize: 'var(--text-xs)', color: 'var(--text-2)', marginBottom: '16px', lineHeight: 1.4 }}>
-                  Genom att fabriksåterställa appen raderar du all sparad konfiguration (inklusive integrationer, rum, lampor, mediaspelare, WiFi-inställningar och scener). Detta går inte att ångra.
+                  {t('danger_zone_desc')}
                 </p>
 
                 {!showResetConfirmation ? (
@@ -1335,17 +1374,17 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                     style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                   >
                     <Trash2 size={16} />
-                    Fabriksåterställ allt...
+                    {t('factory_reset_btn')}
                   </button>
                 ) : (
                   <div className="danger-confirm-box fade-in" style={{ background: 'rgba(220, 38, 38, 0.03)', border: '1px solid rgba(220, 38, 38, 0.15)', borderRadius: 'var(--radius-xs)', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     <p style={{ fontSize: 'var(--text-xs)', fontWeight: 600, color: '#dc2626', margin: 0 }}>
-                      Skriv <strong style={{ textDecoration: 'underline' }}>BEKRÄFTA</strong> i fältet nedan för att verkställa borttagningen:
+                      {t('factory_reset_confirm_text')}
                     </p>
                     <div className="input-group">
                       <input
                         type="text"
-                        placeholder="Skriv BEKRÄFTA..."
+                        placeholder={t('confirm_input_placeholder')}
                         value={resetConfirmText}
                         onChange={(e) => setResetConfirmText(e.target.value)}
                         disabled={resetting}
@@ -1360,7 +1399,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                         disabled={resetting}
                         style={{ flex: 1 }}
                       >
-                        Avbryt
+                        {t('cancel_btn')}
                       </button>
                       <button
                         type="button"
@@ -1372,12 +1411,12 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                         {resetting ? (
                           <>
                             <Loader2 size={14} className="setup-btn-spin" />
-                            Återställer...
+                            {t('factory_resetting_status')}
                           </>
                         ) : (
                           <>
                             <Trash2 size={14} />
-                            Radera allt!
+                            {t('factory_reset_action_btn')}
                           </>
                         )}
                       </button>
@@ -1391,8 +1430,8 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                   renderEditStepActions()
                 ) : (
                   <>
-                    <button className="setup-btn setup-btn--text" onClick={prevStep}>Bakåt</button>
-                    <button className="setup-btn setup-btn--primary" onClick={nextStep}>Nästa</button>
+                    <button className="setup-btn setup-btn--text" onClick={prevStep}>{t('back_btn')}</button>
+                    <button className="setup-btn setup-btn--primary" onClick={nextStep}>{t('next_btn')}</button>
                   </>
                 )}
               </div>
@@ -1401,108 +1440,56 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
 
           {/* STEG 1: Välkommen */}
           {step === 1 && (
-            <div className="setup-card fade-in">
-              <div className="setup-icon-wrapper setup-icon-wrapper--rooms">
-                <Home size={32} className="setup-icon-svg" />
+            <div className="setup-card fade-in welcome-splash" style={{ maxWidth: '100%' }}>
+              <div className="welcome-header-wrap">
+                <div className="welcome-logo">
+                  <Home size={26} />
+                </div>
+                <h1 className="welcome-brand-title">Frassins Guest Portal</h1>
               </div>
-              <h2>Välkommen till Gästportalen!</h2>
-              <p>
-                Denna guide hjälper dig att ansluta dina smarta lampor och mediaspelare. 
-                Vi söker upp, parkopplar och läser in alla dina enheter automatiskt.
+              <h2>{t('welcome_title')}</h2>
+              
+              <div className="lang-selector-grid">
+                <button 
+                  type="button" 
+                  className={`lang-pill-card ${locale === 'en' ? 'lang-pill-card--active' : ''}`}
+                  onClick={() => changeLocale('en')}
+                >
+                  <div className="lang-pill-card__icon">
+                    <Globe size={20} />
+                  </div>
+                  <span className="lang-pill-card__name">English</span>
+                </button>
+                <button 
+                  type="button" 
+                  className={`lang-pill-card ${locale === 'sv' ? 'lang-pill-card--active' : ''}`}
+                  onClick={() => changeLocale('sv')}
+                >
+                  <div className="lang-pill-card__icon">
+                    <Globe size={20} />
+                  </div>
+                  <span className="lang-pill-card__name">Svenska</span>
+                </button>
+              </div>
+
+              <p className="description">
+                {t('welcome_desc')}
               </p>
 
-              <div className="services-selector" style={{ margin: '12px 0 20px' }}>
-                <p className="text-xs text-dim font-semibold" style={{ textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>
-                  Välj enheter att konfigurera:
-                </p>
-                <div className="services-grid">
-                  <label className={`service-select-card ${services.hue ? 'active' : ''}`}>
-                    <input
-                      type="checkbox"
-                      checked={services.hue}
-                      onChange={(e) => setServices({ ...services, hue: e.target.checked })}
-                      style={{ marginRight: 8 }}
-                    />
-                    <span className="service-icon"><Lightbulb className="sidebar-icon-svg sidebar-icon-svg--hue" size={24} /></span>
-                    <div className="service-info">
-                      <span className="service-name">Philips Hue</span>
-                      <span className="service-desc">Lokal realtidsbelysning (SSE)</span>
-                    </div>
-                  </label>
-
-                  <label className={`service-select-card ${services.ikea ? 'active' : ''}`}>
-                    <input
-                      type="checkbox"
-                      checked={services.ikea}
-                      onChange={(e) => setServices({ ...services, ikea: e.target.checked })}
-                      style={{ marginRight: 8 }}
-                    />
-                    <span className="service-icon"><Sliders className="sidebar-icon-svg sidebar-icon-svg--ikea" size={24} /></span>
-                    <div className="service-info">
-                      <span className="service-name">IKEA Smart Home</span>
-                      <span className="service-desc">Dirigera Hub / Trådfri Gateway</span>
-                    </div>
-                  </label>
-
-                  <label className={`service-select-card ${services.govee ? 'active' : ''}`}>
-                    <input
-                      type="checkbox"
-                      checked={services.govee}
-                      onChange={(e) => setServices({ ...services, govee: e.target.checked })}
-                      style={{ marginRight: 8 }}
-                    />
-                    <span className="service-icon"><Palette className="sidebar-icon-svg sidebar-icon-svg--govee" size={24} /></span>
-                    <div className="service-info">
-                      <span className="service-name">Govee Lights</span>
-                      <span className="service-desc">Integration via Cloud API</span>
-                    </div>
-                  </label>
-
-                  <label className={`service-select-card ${services.cast ? 'active' : ''}`}>
-                    <input
-                      type="checkbox"
-                      checked={services.cast}
-                      onChange={(e) => setServices({ ...services, cast: e.target.checked })}
-                      style={{ marginRight: 8 }}
-                    />
-                    <span className="service-icon"><Cast className="sidebar-icon-svg sidebar-icon-svg--cast" size={24} /></span>
-                    <div className="service-info">
-                      <span className="service-name">Google Cast</span>
-                      <span className="service-desc">Streamer, Chromecast, Högtalare</span>
-                    </div>
-                  </label>
-
-                  <label className={`service-select-card ${services.matter ? 'active' : ''}`}>
-                    <input
-                      type="checkbox"
-                      checked={services.matter}
-                      onChange={(e) => setServices({ ...services, matter: e.target.checked })}
-                      style={{ marginRight: 8 }}
-                    />
-                    <span className="service-icon"><Cpu className="sidebar-icon-svg sidebar-icon-svg--matter" size={24} /></span>
-                    <div className="service-info">
-                      <span className="service-name">Matter-enheter</span>
-                      <span className="service-desc">Lokal direktstyrning över LAN (PIN-kod)</span>
-                    </div>
-                  </label>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', gap: '12px', marginTop: '20px' }}>
+              <div style={{ display: 'flex', gap: '12px', marginTop: '20px', justifyContent: 'center', flexWrap: 'wrap' }}>
                 <button 
                   className="setup-btn setup-btn--primary setup-btn--large" 
                   onClick={nextStep}
-                  disabled={!Object.values(services).some(v => v)}
-                  style={{ flex: 1 }}
+                  style={{ flex: 1, maxWidth: '240px', minWidth: '180px' }}
                 >
-                  Starta guiden
+                  {t('start_config_btn')}
                 </button>
                 <label 
                   className="setup-btn setup-btn--secondary setup-btn--large" 
-                  style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', gap: 6, flex: 1, margin: 0 }}
+                  style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', gap: 6, flex: 1, maxWidth: '240px', minWidth: '180px', margin: 0 }}
                 >
                   <FolderOpen size={16} />
-                  Importera backup
+                  {t('import_backup_btn')}
                   <input
                     type="file"
                     accept=".json"
@@ -1514,16 +1501,138 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
             </div>
           )}
 
+          {/* STEG 13: Välj integrationer (nytt grid) */}
+          {step === 13 && (
+            <div className="setup-card fade-in setup-container--wide-integrations" style={{ maxWidth: '100%' }}>
+              <div className="setup-icon-wrapper setup-icon-wrapper--general">
+                <Settings size={32} className="setup-icon-svg" />
+              </div>
+              <h2>{t('select_integrations_title')}</h2>
+              <p className="description">
+                {t('select_integrations_desc')}
+              </p>
+
+              <div className="integration-grid">
+                {/* Hue */}
+                <div 
+                  className={`integration-card ${services.hue ? 'integration-card--active' : ''}`}
+                  onClick={() => setServices(prev => ({ ...prev, hue: !prev.hue }))}
+                >
+                  <div className="integration-card__left">
+                    <div className="integration-card__icon-wrap">
+                      <Lightbulb className="sidebar-icon-svg sidebar-icon-svg--hue" size={20} />
+                    </div>
+                    <span className="integration-card__name">{t('hue_name')}</span>
+                  </div>
+                  <input
+                    type="checkbox"
+                    className="integration-card__checkbox"
+                    checked={services.hue}
+                    readOnly
+                  />
+                </div>
+
+                {/* IKEA */}
+                <div 
+                  className={`integration-card ${services.ikea ? 'integration-card--active' : ''}`}
+                  onClick={() => setServices(prev => ({ ...prev, ikea: !prev.ikea }))}
+                >
+                  <div className="integration-card__left">
+                    <div className="integration-card__icon-wrap">
+                      <Sliders className="sidebar-icon-svg sidebar-icon-svg--ikea" size={20} />
+                    </div>
+                    <span className="integration-card__name">{t('ikea_name')}</span>
+                  </div>
+                  <input
+                    type="checkbox"
+                    className="integration-card__checkbox"
+                    checked={services.ikea}
+                    readOnly
+                  />
+                </div>
+
+                {/* Govee */}
+                <div 
+                  className={`integration-card ${services.govee ? 'integration-card--active' : ''}`}
+                  onClick={() => setServices(prev => ({ ...prev, govee: !prev.govee }))}
+                >
+                  <div className="integration-card__left">
+                    <div className="integration-card__icon-wrap">
+                      <Palette className="sidebar-icon-svg sidebar-icon-svg--govee" size={20} />
+                    </div>
+                    <span className="integration-card__name">{t('govee_name')}</span>
+                  </div>
+                  <input
+                    type="checkbox"
+                    className="integration-card__checkbox"
+                    checked={services.govee}
+                    readOnly
+                  />
+                </div>
+
+                {/* Google Cast */}
+                <div 
+                  className={`integration-card ${services.cast ? 'integration-card--active' : ''}`}
+                  onClick={() => setServices(prev => ({ ...prev, cast: !prev.cast }))}
+                >
+                  <div className="integration-card__left">
+                    <div className="integration-card__icon-wrap">
+                      <Cast className="sidebar-icon-svg sidebar-icon-svg--cast" size={20} />
+                    </div>
+                    <span className="integration-card__name">{t('cast_name')}</span>
+                  </div>
+                  <input
+                    type="checkbox"
+                    className="integration-card__checkbox"
+                    checked={services.cast}
+                    readOnly
+                  />
+                </div>
+
+                {/* Matter */}
+                <div 
+                  className={`integration-card ${services.matter ? 'integration-card--active' : ''}`}
+                  onClick={() => setServices(prev => ({ ...prev, matter: !prev.matter }))}
+                >
+                  <div className="integration-card__left">
+                    <div className="integration-card__icon-wrap">
+                      <Cpu className="sidebar-icon-svg sidebar-icon-svg--matter" size={20} />
+                    </div>
+                    <span className="integration-card__name">{t('matter_name')}</span>
+                  </div>
+                  <input
+                    type="checkbox"
+                    className="integration-card__checkbox"
+                    checked={services.matter}
+                    readOnly
+                  />
+                </div>
+              </div>
+
+              <div className="step-actions" style={{ marginTop: 24 }}>
+                <button className="setup-btn setup-btn--text" onClick={prevStep}>
+                  {t('back_btn')}
+                </button>
+                <button 
+                  className="setup-btn setup-btn--primary" 
+                  onClick={nextStep}
+                  disabled={!Object.values(services).some(v => v)}
+                >
+                  {t('next_btn')}
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* STEG 11: Skapa rum */}
           {step === 11 && (
             <div className="setup-card fade-in">
               <div className="setup-icon-wrapper setup-icon-wrapper--rooms">
                 <Home size={32} className="setup-icon-svg" />
               </div>
-              <h2>Skapa rum</h2>
+              <h2>{t('room_builder_title')}</h2>
               <p className="description">
-                Skapa rummen i ditt hem där du har smart belysning. 
-                Det gör det enkelt för dina gäster att hitta rätt lampa.
+                {t('room_builder_desc')}
               </p>
 
               <form
@@ -1542,11 +1651,11 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                 <input
                   name="roomInput"
                   type="text"
-                  placeholder="t.ex. Vardagsrum, Kök, Sovrum..."
+                  placeholder={t('room_builder_placeholder')}
                   disabled={loading}
                 />
                 <button type="submit" className="setup-btn setup-btn--primary" disabled={loading}>
-                  Lägg till
+                  {t('room_builder_add_btn')}
                 </button>
               </form>
 
@@ -1558,7 +1667,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                       type="button"
                       className="room-builder-pill__delete"
                       onClick={() => setRooms(rooms.filter(r => r !== room))}
-                      title={`Ta bort ${room}`}
+                      title={`${t('room_builder_delete_title')} ${room}`}
                     >
                       ✕
                     </button>
@@ -1569,8 +1678,8 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
               <div className="step-actions">
                 {!initialConfig ? (
                   <>
-                    <button className="setup-btn setup-btn--text" onClick={prevStep}>Bakåt</button>
-                    <button className="setup-btn setup-btn--primary" onClick={nextStep}>Nästa</button>
+                    <button className="setup-btn setup-btn--text" onClick={prevStep}>{t('back_btn')}</button>
+                    <button className="setup-btn setup-btn--primary" onClick={nextStep}>{t('next_btn')}</button>
                   </>
                 ) : (
                   renderEditStepActions()
@@ -1585,17 +1694,17 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
               <div className="setup-icon-wrapper setup-icon-wrapper--hue">
                 <Lightbulb size={32} className="setup-icon-svg" />
               </div>
-              <h2>1. Philips Hue Bridge</h2>
+              <h2>{t('hue_bridge_title')}</h2>
               <p className="description">
-                Vi kommunicerar lokalt och i realtid med din Hue Bridge. Tryck på den runda länkningsknappen på din Hue Bridge innan du kopplar.
+                {t('hue_bridge_desc')}
               </p>
 
               <div className="form-group">
-                <label>IP-adress för Bridge</label>
+                <label>{t('hue_ip_label')}</label>
                 <div className="input-group">
                   <input
                     type="text"
-                    placeholder="t.ex. 192.168.1.50"
+                    placeholder="e.g. 192.168.1.50"
                     value={hue.ip}
                     onChange={(e) => {
                       setHue({ ...hue, ip: e.target.value })
@@ -1609,7 +1718,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                     onClick={discoverHue}
                     disabled={loading || hue.paired}
                   >
-                    Sök automatiskt
+                    {t('hue_auto_search')}
                   </button>
                 </div>
               </div>
@@ -1617,7 +1726,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
               {hue.paired ? (
                 <div className="setup-success-badge">
                   <CheckCircle2 size={16} style={{ flexShrink: 0, color: '#10b981' }} />
-                  <span>Kopplad! Hittade {hueLights.length} lampor på din Philips Hue Bridge.</span>
+                  <span>{t('hue_paired_badge', { count: hueLights.length })}</span>
                 </div>
               ) : (
                 <button
@@ -1626,7 +1735,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                   onClick={pairHue}
                   disabled={loading || !hue.ip}
                 >
-                  {loading ? <span className="spinner" /> : 'Tryck på Hue-knappen & Koppla'}
+                  {loading ? <span className="spinner" /> : t('hue_pair_action_btn')}
                 </button>
               )}
 
@@ -1634,7 +1743,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
               {hue.paired && (
                 <div className="mapping-section">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                    <h3 style={{ margin: 0 }}>Välj lampor för portalen</h3>
+                    <h3 style={{ margin: 0 }}>{t('hue_mapping_title')}</h3>
                     <button
                       type="button"
                       className="setup-btn setup-btn--secondary"
@@ -1643,21 +1752,21 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                       style={{ padding: '6px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px', margin: 0 }}
                     >
                       <RefreshCw size={12} className={loading ? 'setup-btn-spin' : ''} />
-                      <span>Sök igen</span>
+                      <span>{t('hue_search_again')}</span>
                     </button>
                   </div>
                   <p className="text-xs text-dim" style={{ marginBottom: 12 }}>
-                    Kryssa i de Hue-lampor dina gäster ska kunna styra, döp dem och placera dem i rum:
+                    {t('hue_mapping_desc')}
                   </p>
-                  <LightConfigurator lights={hueLights} onChange={updateHueLight} rooms={rooms} onAddRoom={handleAddRoomName} />
+                  <LightConfigurator lights={hueLights} onChange={updateHueLight} rooms={rooms} onAddRoom={handleAddRoomName} t={t} />
                 </div>
               )}
 
               <div className="step-actions">
                 {!initialConfig ? (
                   <>
-                    <button className="setup-btn setup-btn--text" onClick={prevStep}>Bakåt</button>
-                    <button className="setup-btn setup-btn--primary" onClick={nextStep}>Nästa</button>
+                    <button className="setup-btn setup-btn--text" onClick={prevStep}>{t('back_btn')}</button>
+                    <button className="setup-btn setup-btn--primary" onClick={nextStep}>{t('next_btn')}</button>
                   </>
                 ) : (
                   renderEditStepActions()
@@ -1672,9 +1781,9 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
               <div className="setup-icon-wrapper setup-icon-wrapper--ikea">
                 <Sliders size={32} className="setup-icon-svg" />
               </div>
-              <h2>2. IKEA Smart Home</h2>
+              <h2>{t('ikea_title')}</h2>
               <p className="description">
-                Välj om du har den nyare **Dirigera Hub** (med app-anslutning) eller den äldre **Trådfri Gateway** (CoAP-baserad).
+                {t('ikea_desc')}
               </p>
 
               <div className="bridge-selector">
@@ -1683,22 +1792,22 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                   className={`selector-btn ${ikea.type === 'dirigera' ? 'active' : ''}`}
                   onClick={() => setIkea({ ...ikea, type: 'dirigera', paired: false })}
                 >
-                  <Zap size={16} /> Dirigera Hub (Nyare)
+                  <Zap size={16} /> {t('ikea_dirigera_tab')}
                 </button>
                 <button
                   type="button"
                   className={`selector-btn ${ikea.type === 'tradfri' ? 'active' : ''}`}
                   onClick={() => setIkea({ ...ikea, type: 'tradfri', paired: false })}
                 >
-                  <Server size={16} /> Trådfri Gateway (Äldre)
+                  <Server size={16} /> {t('ikea_tradfri_tab')}
                 </button>
               </div>
 
               <div className="form-group">
-                <label>IP-adress för {ikea.type === 'dirigera' ? 'Hub' : 'Gateway'}</label>
+                <label>{t('ikea_ip_label')}</label>
                 <input
                   type="text"
-                  placeholder="t.ex. 192.168.1.60"
+                  placeholder="e.g. 192.168.1.60"
                   value={ikea.ip}
                   onChange={(e) => {
                     setIkea({ ...ikea, ip: e.target.value })
@@ -1710,10 +1819,10 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
 
               {ikea.type === 'dirigera' ? (
                 <div className="form-group">
-                  <label>9-siffrig PIN-kod</label>
+                  <label>{t('ikea_dirigera_pin_label')}</label>
                   <input
                     type="text"
-                    placeholder="t.ex. 123 456 789"
+                    placeholder="e.g. 123 456 789"
                     value={ikea.code}
                     onChange={(e) => {
                       setIkea({ ...ikea, code: e.target.value })
@@ -1721,14 +1830,14 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                     }}
                     disabled={ikea.paired}
                   />
-                  <span className="text-xs text-dim">Finns tryckt på klistermärket på undersidan av hubben.</span>
+                  <span className="text-xs text-dim">{t('ikea_dirigera_pin_desc')}</span>
                 </div>
               ) : (
                 <div className="form-group">
-                  <label>Säkerhetskod (Security Code)</label>
+                  <label>{t('ikea_tradfri_code_label')}</label>
                   <input
                     type="password"
-                    placeholder="Säkerhetskod från undersidan"
+                    placeholder={t('ikea_tradfri_code_label')}
                     value={ikea.securityCode}
                     onChange={(e) => {
                       setIkea({ ...ikea, securityCode: e.target.value })
@@ -1736,14 +1845,14 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                     }}
                     disabled={ikea.paired}
                   />
-                  <span className="text-xs text-dim">Koden står bredvid streckkoden på baksidan av din gateway.</span>
+                  <span className="text-xs text-dim">{t('ikea_tradfri_code_desc')}</span>
                 </div>
               )}
 
               {ikea.paired ? (
                 <div className="setup-success-badge">
                   <CheckCircle2 size={16} style={{ flexShrink: 0, color: '#10b981' }} />
-                  <span>Ansluten till IKEA! Hittade {ikeaLights.length} lampor.</span>
+                  <span>{t('ikea_paired_badge', { count: ikeaLights.length })}</span>
                 </div>
               ) : (
                 <button
@@ -1752,14 +1861,14 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                   onClick={pairIkea}
                   disabled={loading || !ikea.ip}
                 >
-                  {loading ? <span className="spinner" /> : 'Koppla IKEA'}
+                  {t('ikea_pair_action_btn')}
                 </button>
               )}
 
               {ikea.paired && (
                 <div className="mapping-section">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                    <h3 style={{ margin: 0 }}>Välj IKEA-lampor för portalen</h3>
+                    <h3 style={{ margin: 0 }}>{t('ikea_mapping_title')}</h3>
                     <button
                       type="button"
                       className="setup-btn setup-btn--secondary"
@@ -1768,21 +1877,21 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                       style={{ padding: '6px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px', margin: 0 }}
                     >
                       <RefreshCw size={12} className={loading ? 'setup-btn-spin' : ''} />
-                      <span>Sök igen</span>
+                      <span>{t('hue_search_again')}</span>
                     </button>
                   </div>
                   <p className="text-xs text-dim" style={{ marginBottom: 12 }}>
-                    Kryssa i de IKEA-lampor dina gäster ska kunna styra, döp dem och placera dem i rum:
+                    {t('ikea_mapping_desc')}
                   </p>
-                  <LightConfigurator lights={ikeaLights} onChange={updateIkeaLight} rooms={rooms} onAddRoom={handleAddRoomName} />
+                  <LightConfigurator lights={ikeaLights} onChange={updateIkeaLight} rooms={rooms} onAddRoom={handleAddRoomName} t={t} />
                 </div>
               )}
 
               <div className="step-actions">
                 {!initialConfig ? (
                   <>
-                    <button className="setup-btn setup-btn--text" onClick={prevStep}>Bakåt</button>
-                    <button className="setup-btn setup-btn--primary" onClick={nextStep}>Nästa</button>
+                    <button className="setup-btn setup-btn--text" onClick={prevStep}>{t('back_btn')}</button>
+                    <button className="setup-btn setup-btn--primary" onClick={nextStep}>{t('next_btn')}</button>
                   </>
                 ) : (
                   renderEditStepActions()
@@ -1797,17 +1906,16 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
               <div className="setup-icon-wrapper setup-icon-wrapper--govee">
                 <Palette size={32} className="setup-icon-svg" />
               </div>
-              <h2>3. Govee Lights</h2>
+              <h2>{t('govee_title')}</h2>
               <p className="description">
-                Ange din personliga API-nyckel för att styra dina Govee-slingor eller lampor. 
-                Du kan hämta en API-nyckel gratis via Govee Home-mobilappen.
+                {t('govee_desc')}
               </p>
 
               <div className="form-group">
-                <label>Govee API-nyckel (API Key)</label>
+                <label>{t('govee_api_key_label')}</label>
                 <input
                   type="password"
-                  placeholder="Fyll i Govee API-nyckel"
+                  placeholder={t('govee_api_key_label')}
                   value={govee.apiKey}
                   onChange={(e) => setGovee({ ...govee, apiKey: e.target.value })}
                   disabled={govee.paired}
@@ -1817,7 +1925,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
               {govee.paired ? (
                 <div className="setup-success-badge">
                   <CheckCircle2 size={16} style={{ flexShrink: 0, color: '#10b981' }} />
-                  <span>Ansluten till Govee! Hittade {goveeLights.length} enheter.</span>
+                  <span>{t('govee_paired_badge', { count: goveeLights.length })}</span>
                 </div>
               ) : (
                 <button
@@ -1826,14 +1934,14 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                   onClick={testGovee}
                   disabled={loading || !govee.apiKey}
                 >
-                  {loading ? <span className="spinner" /> : 'Testa API-nyckel'}
+                  {t('govee_test_action_btn')}
                 </button>
               )}
 
               {govee.paired && (
                 <div className="mapping-section">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                    <h3 style={{ margin: 0 }}>Välj Govee-lampor för portalen</h3>
+                    <h3 style={{ margin: 0 }}>{t('govee_mapping_title')}</h3>
                     <button
                       type="button"
                       className="setup-btn setup-btn--secondary"
@@ -1842,21 +1950,21 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                       style={{ padding: '6px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px', margin: 0 }}
                     >
                       <RefreshCw size={12} className={loading ? 'setup-btn-spin' : ''} />
-                      <span>Sök igen</span>
+                      <span>{t('hue_search_again')}</span>
                     </button>
                   </div>
                   <p className="text-xs text-dim" style={{ marginBottom: 12 }}>
-                    Kryssa i de Govee-lampor dina gäster ska kunna styra, döp dem och placera dem i rum:
+                    {t('govee_mapping_desc')}
                   </p>
-                  <LightConfigurator lights={goveeLights} onChange={updateGoveeLight} rooms={rooms} onAddRoom={handleAddRoomName} />
+                  <LightConfigurator lights={goveeLights} onChange={updateGoveeLight} rooms={rooms} onAddRoom={handleAddRoomName} t={t} />
                 </div>
               )}
 
               <div className="step-actions">
                 {!initialConfig ? (
                   <>
-                    <button className="setup-btn setup-btn--text" onClick={prevStep}>Bakåt</button>
-                    <button className="setup-btn setup-btn--primary" onClick={nextStep}>Nästa</button>
+                    <button className="setup-btn setup-btn--text" onClick={prevStep}>{t('back_btn')}</button>
+                    <button className="setup-btn setup-btn--primary" onClick={nextStep}>{t('next_btn')}</button>
                   </>
                 ) : (
                   renderEditStepActions()
@@ -1872,7 +1980,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                 <Cast size={32} className="setup-icon-svg" />
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: '8px' }}>
-                <h2 style={{ margin: 0 }}>5. Google Cast (Google Streamer/TV)</h2>
+                <h2 style={{ margin: 0 }}>{t('cast_title')}</h2>
                 {castList.some(c => c.ip) && (
                   <button
                     type="button"
@@ -1882,32 +1990,32 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                     style={{ padding: '6px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px', margin: 0 }}
                   >
                     <RefreshCw size={12} className={loading ? 'setup-btn-spin' : ''} />
-                    <span>Testa alla</span>
+                    <span>{t('cast_test_all_btn')}</span>
                   </button>
                 )}
               </div>
               <p className="description">
-                Lägg till de Google Cast-enheter som gäster ska kunna starta, pausa och styra volym på lokalt.
+                {t('cast_desc')}
               </p>
 
               <div className="cast-devices-list">
                 {castList.map((cast, index) => (
                   <div key={index} className="cast-device-card">
                     <div className="form-group">
-                      <label>Namn på enheten</label>
+                      <label>{t('cast_device_name_label')}</label>
                       <input
                         type="text"
-                        placeholder="t.ex. Google Streamer"
+                        placeholder={t('cast_device_name_placeholder')}
                         value={cast.name}
                         onChange={(e) => handleCastChange(index, 'name', e.target.value)}
                       />
                     </div>
                     <div className="form-group">
-                      <label>IP-adress</label>
+                      <label>{t('cast_ip_label')}</label>
                       <div className="input-group">
                         <input
                           type="text"
-                          placeholder="t.ex. 192.168.1.80"
+                          placeholder={t('cast_ip_placeholder')}
                           value={cast.ip}
                           onChange={(e) => handleCastChange(index, 'ip', e.target.value)}
                         />
@@ -1917,14 +2025,14 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                           onClick={() => testCastDevice(index)}
                           disabled={cast.loading || !cast.ip}
                         >
-                          {cast.loading ? <span className="spinner" /> : 'Testa'}
+                          {cast.loading ? <span className="spinner" /> : t('cast_test_btn')}
                         </button>
                       </div>
                     </div>
 
                     {cast.tested && (
                       <div className="setup-success-text" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <CheckCircle2 size={12} /> Lyckad TLS-anslutning!
+                        <CheckCircle2 size={12} /> {t('cast_test_success')}
                       </div>
                     )}
                     {cast.error && (
@@ -1939,7 +2047,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                         className="remove-cast-btn"
                         onClick={() => removeCastDevice(index)}
                       >
-                        Ta bort enhet
+                        {t('cast_remove_btn')}
                       </button>
                     )}
                   </div>
@@ -1952,14 +2060,14 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                 style={{ width: '100%', marginTop: 8 }}
                 onClick={addCastDevice}
               >
-                + Lägg till ytterligare Cast-enhet
+                {t('cast_add_btn')}
               </button>
 
               <div className="step-actions" style={{ marginTop: 24 }}>
                 {!initialConfig ? (
                   <>
-                    <button className="setup-btn setup-btn--text" onClick={prevStep}>Bakåt</button>
-                    <button className="setup-btn setup-btn--primary" onClick={nextStep}>Nästa</button>
+                    <button className="setup-btn setup-btn--text" onClick={prevStep}>{t('back_btn')}</button>
+                    <button className="setup-btn setup-btn--primary" onClick={nextStep}>{t('next_btn')}</button>
                   </>
                 ) : (
                   renderEditStepActions()
@@ -1974,10 +2082,9 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
               <div className="setup-icon-wrapper setup-icon-wrapper--matter">
                 <Cpu size={32} className="setup-icon-svg" />
               </div>
-              <h2>Matter-enheter (Lokal direktstyrning)</h2>
+              <h2>{t('matter_title')}</h2>
               <p className="description">
-                Matter gör att du kan ansluta lampor och eluttag helt lokalt över ditt nätverk utan behov av moln eller externa hubbar. 
-                Sätt enheten i parningsläge (fabriksåterställ den vid behov), sök eller ange parningskod nedan för att ansluta den.
+                {t('matter_desc')}
               </p>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -1991,12 +2098,12 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                   {matterScan.loading ? (
                     <>
                       <span className="spinner" />
-                      <span>Söker oparade enheter (4s)...</span>
+                      <span>{t('matter_searching_status')}</span>
                     </>
                   ) : (
                     <>
                       <Search size={14} />
-                      <span>Sök oparade enheter på LAN</span>
+                      <span>{t('matter_search_btn')}</span>
                     </>
                   )}
                 </button>
@@ -2020,7 +2127,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                             setError(null);
                           }}
                         >
-                          {selectedDevice?.id === dev.id ? 'Vald' : 'Välj'}
+                          {selectedDevice?.id === dev.id ? t('selected_btn') : t('select_btn')}
                         </button>
                       </div>
                     ))}
@@ -2031,17 +2138,17 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                   <div className="setup-alert" style={{ background: 'rgba(99,102,241,0.12)', borderColor: 'var(--accent)', padding: 10, display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <Pin size={14} style={{ flexShrink: 0, color: 'var(--accent)' }} />
                     <span style={{ fontSize: '11px' }}>
-                      <strong>Vald enhet:</strong> {selectedDevice.name} ({selectedDevice.discriminator})
+                      <strong>{t('matter_selected_device')}</strong> {selectedDevice.name} ({selectedDevice.discriminator})
                     </span>
                   </div>
                 )}
 
                 <div className="form-group" style={{ margin: 0 }}>
-                  <label>Parningskod / PIN-kod (11 eller 21 siffror)</label>
+                  <label>{t('matter_pin_label')}</label>
                   <div className="input-group">
                     <input
                       type="text"
-                      placeholder="t.ex. 34905741252"
+                      placeholder={t('matter_pin_placeholder')}
                       value={matterCode}
                       onChange={(e) => {
                         setMatterCode(e.target.value.replace(/[^0-9]/g, ''));
@@ -2055,7 +2162,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                       onClick={pairMatterDevice}
                       disabled={loading || !matterCode}
                     >
-                      Koppla
+                      {t('matter_pair_btn')}
                     </button>
                   </div>
                 </div>
@@ -2064,19 +2171,19 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
               {/* Konfigurera hittade lampor */}
               {(matterPaired || matterLights.length > 0) && (
                 <div className="mapping-section" style={{ marginTop: 24 }}>
-                  <h3>Konfigurera dina Matter-lampor & uttag</h3>
+                  <h3>{t('matter_mapping_title')}</h3>
                   <p className="text-xs text-dim" style={{ marginBottom: 12 }}>
-                    Aktivera enheterna du vill visa i gästportalen, ge dem vänliga visningsnamn och placera dem i rätt rum:
+                    {t('matter_mapping_desc')}
                   </p>
-                  <LightConfigurator lights={matterLights} onChange={updateMatterLight} rooms={rooms} onAddRoom={handleAddRoomName} />
+                  <LightConfigurator lights={matterLights} onChange={updateMatterLight} rooms={rooms} onAddRoom={handleAddRoomName} t={t} />
                 </div>
               )}
 
               <div className="step-actions" style={{ marginTop: 24 }}>
                 {!initialConfig ? (
                   <>
-                    <button className="setup-btn setup-btn--text" onClick={prevStep}>Bakåt</button>
-                    <button className="setup-btn setup-btn--primary" onClick={nextStep}>Nästa</button>
+                    <button className="setup-btn setup-btn--text" onClick={prevStep}>{t('back_btn')}</button>
+                    <button className="setup-btn setup-btn--primary" onClick={nextStep}>{t('next_btn')}</button>
                   </>
                 ) : (
                   renderEditStepActions()
@@ -2091,33 +2198,33 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
               <div className="setup-icon-wrapper setup-icon-wrapper--wifi">
                 <Wifi size={32} className="setup-icon-svg" />
               </div>
-              <h2>6. Gäst-WiFi & Husinformation</h2>
+              <h2>{t('wifi_title')}</h2>
               <p className="description">
-                Gästerna kommer att se denna information i Info-fliken. Det gör det enkelt för dem att ansluta utan krångel.
+                {t('wifi_desc')}
               </p>
 
               <div className="form-group">
-                <label>Gäst-WiFi (SSID)</label>
+                <label>{t('wifi_name_label')}</label>
                 <input
                   type="text"
-                  placeholder="Skriv WiFi-namn"
+                  placeholder={t('wifi_name_placeholder')}
                   value={wifi.name}
                   onChange={(e) => { setWifi({ ...wifi, name: e.target.value }); markDirty() }}
                 />
               </div>
 
               <div className="form-group">
-                <label>WiFi-lösenord</label>
+                <label>{t('wifi_password_label')}</label>
                 <input
                   type="text"
-                  placeholder="Skriv WiFi-lösenord"
+                  placeholder={t('wifi_password_placeholder')}
                   value={wifi.password}
                   onChange={(e) => { setWifi({ ...wifi, password: e.target.value }); markDirty() }}
                 />
               </div>
 
               <div className="notes-editor-section">
-                <h3>Husanteckningar & Regler</h3>
+                <h3>{t('notes_section_title')}</h3>
                 {notes.map((note, index) => (
                   <div key={index} className="note-edit-row">
                     <input
@@ -2125,7 +2232,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                       className="note-emoji-input"
                       value={note.emoji}
                       onChange={(e) => handleNoteChange(index, 'emoji', e.target.value)}
-                      placeholder="⚙️"
+                      placeholder={t('notes_emoji_placeholder')}
                     />
                     <div className="note-text-inputs">
                       <input
@@ -2133,13 +2240,13 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                         className="note-title-input"
                         value={note.title}
                         onChange={(e) => handleNoteChange(index, 'title', e.target.value)}
-                        placeholder="Titel"
+                        placeholder={t('notes_title_placeholder')}
                       />
                       <textarea
                         className="note-body-input"
                         value={note.text}
                         onChange={(e) => handleNoteChange(index, 'text', e.target.value)}
-                        placeholder="Beskrivning..."
+                        placeholder={t('notes_desc_placeholder')}
                       />
                     </div>
                     <button
@@ -2158,15 +2265,15 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                   style={{ width: '100%', marginTop: 8 }}
                   onClick={addNote}
                 >
-                  + Lägg till anteckning
+                  {t('notes_add_btn')}
                 </button>
               </div>
 
               <div className="step-actions" style={{ marginTop: 24 }}>
                 {!initialConfig ? (
                   <>
-                    <button className="setup-btn setup-btn--text" onClick={prevStep}>Bakåt</button>
-                    <button className="setup-btn setup-btn--primary" onClick={nextStep}>Nästa</button>
+                    <button className="setup-btn setup-btn--text" onClick={prevStep}>{t('back_btn')}</button>
+                    <button className="setup-btn setup-btn--primary" onClick={nextStep}>{t('next_btn')}</button>
                   </>
                 ) : (
                   renderEditStepActions()
@@ -2181,87 +2288,85 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
               <div className="setup-icon-wrapper setup-icon-wrapper--save">
                 <Save size={32} className="setup-icon-svg" />
               </div>
-              <h2>{initialConfig ? 'Spara dina ändringar' : '7. Klar för start!'}</h2>
+              <h2>{initialConfig ? t('save_title_edit') : t('save_title_new')}</h2>
               <p>
-                {initialConfig 
-                  ? 'Klicka nedan för att spara dina ändringar på servern och ladda om portalen.'
-                  : 'Konfigurationen är klar att sparas på din hemaserver. Detta kommer att starta upp alla lokala anslutningar och gästportalen kommer att gå live direkt.'}
+                {initialConfig ? t('save_desc_edit') : t('save_desc_new')}
               </p>
 
               <div className="setup-summary-box">
-                <h3>Konfigurationssammanfattning</h3>
+                <h3>{t('save_summary_title')}</h3>
                 <ul style={{ listStyleType: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   <li style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
                     <Lightbulb size={14} className="sidebar-icon-svg--hue" />
-                    <strong>Philips Hue:</strong>
+                    <strong>{t('save_summary_hue')}</strong>
                     {hue.paired ? (
                       <span className="setup-success-text" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px', marginLeft: 'auto' }}>
-                        <Check size={14} /> Redo ({hueLights.filter(l => l.enabled).length} valda)
+                        <Check size={14} /> {t('save_summary_ready')} ({hueLights.filter(l => l.enabled).length} {t('save_summary_selected')})
                       </span>
                     ) : (
                       <span className="setup-error-text" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px', marginLeft: 'auto' }}>
-                        <AlertCircle size={14} /> Ej konfigurerad
+                        <AlertCircle size={14} /> {t('save_summary_not_configured')}
                       </span>
                     )}
                   </li>
                   <li style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
                     <Sliders size={14} className="sidebar-icon-svg--ikea" />
-                    <strong>IKEA Smart Home:</strong>
+                    <strong>{t('save_summary_ikea')}</strong>
                     {ikea.paired ? (
                       <span className="setup-success-text" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px', marginLeft: 'auto' }}>
-                        <Check size={14} /> Redo ({ikeaLights.filter(l => l.enabled).length} valda)
+                        <Check size={14} /> {t('save_summary_ready')} ({ikeaLights.filter(l => l.enabled).length} {t('save_summary_selected')})
                       </span>
                     ) : (
                       <span className="setup-error-text" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px', marginLeft: 'auto' }}>
-                        <AlertCircle size={14} /> Ej konfigurerad
+                        <AlertCircle size={14} /> {t('save_summary_not_configured')}
                       </span>
                     )}
                   </li>
                   <li style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
                     <Palette size={14} className="sidebar-icon-svg--govee" />
-                    <strong>Govee Lights:</strong>
+                    <strong>{t('save_summary_govee')}</strong>
                     {govee.paired ? (
                       <span className="setup-success-text" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px', marginLeft: 'auto' }}>
-                        <Check size={14} /> Redo ({goveeLights.filter(l => l.enabled).length} valda)
+                        <Check size={14} /> {t('save_summary_ready')} ({goveeLights.filter(l => l.enabled).length} {t('save_summary_selected')})
                       </span>
                     ) : (
                       <span className="setup-error-text" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px', marginLeft: 'auto' }}>
-                        <AlertCircle size={14} /> Ej konfigurerad
+                        <AlertCircle size={14} /> {t('save_summary_not_configured')}
                       </span>
                     )}
                   </li>
                   <li style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
                     <Cpu size={14} className="sidebar-icon-svg--matter" />
-                    <strong>Matter-enheter:</strong>
+                    <strong>{t('save_summary_matter')}</strong>
                     {matterPaired ? (
                       <span className="setup-success-text" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px', marginLeft: 'auto' }}>
-                        <Check size={14} /> Redo ({matterLights.filter(l => l.enabled).length} valda)
+                        <Check size={14} /> {t('save_summary_ready')} ({matterLights.filter(l => l.enabled).length} {t('save_summary_selected')})
                       </span>
                     ) : (
                       <span className="setup-error-text" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px', marginLeft: 'auto' }}>
-                        <AlertCircle size={14} /> Ej konfigurerad
+                        <AlertCircle size={14} /> {t('save_summary_not_configured')}
                       </span>
                     )}
                   </li>
                   <li style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
                     <Cast size={14} className="sidebar-icon-svg--cast" />
-                    <strong>Google Cast:</strong>
+                    <strong>{t('save_summary_cast')}</strong>
                     <span style={{ fontSize: '12px', marginLeft: 'auto', fontWeight: 600, color: 'var(--text-2)' }}>
-                      {castList.filter(c => c.tested).length} enheter redo
+                      {castList.filter(c => c.tested).length} {t('save_summary_devices_ready')}
                     </span>
                   </li>
                   <li style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
                     <Wifi size={14} className="sidebar-icon-svg--wifi" />
-                    <strong>Gäst-WiFi:</strong>
+                    <strong>{t('save_summary_wifi')}</strong>
                     <span style={{ fontSize: '12px', marginLeft: 'auto', fontWeight: 600, color: 'var(--text-2)' }}>
                       "{wifi.name}"
                     </span>
                   </li>
                   <li style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
                     <Home size={14} className="sidebar-icon-svg--rooms" />
-                    <strong>Rum:</strong>
+                    <strong>{t('save_summary_rooms')}</strong>
                     <span style={{ fontSize: '12px', marginLeft: 'auto', fontWeight: 600, color: 'var(--text-2)' }}>
-                      {rooms.length} st skapade
+                      {rooms.length} {t('save_summary_created')}
                     </span>
                   </li>
                 </ul>
@@ -2274,14 +2379,14 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                 onClick={saveSetup}
                 disabled={loading}
               >
-                {loading ? <span className="spinner" /> : (initialConfig ? 'Spara & Starta om portalen' : 'Spara & Starta gästportalen')}
+                {loading ? <span className="spinner" /> : (initialConfig ? t('save_action_btn_edit') : t('save_action_btn_new'))}
               </button>
 
               <div className="step-actions" style={{ marginTop: 20 }}>
                 {!initialConfig ? (
-                  <button className="setup-btn setup-btn--text" onClick={prevStep}>Bakåt</button>
+                  <button className="setup-btn setup-btn--text" onClick={prevStep}>{t('back_btn')}</button>
                 ) : (
-                  <button className="setup-btn setup-btn--text" onClick={() => setStep(100)}>Avbryt</button>
+                  <button className="setup-btn setup-btn--text" onClick={() => setStep(100)}>{t('cancel_btn')}</button>
                 )}
               </div>
             </div>
