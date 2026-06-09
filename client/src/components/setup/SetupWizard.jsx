@@ -1315,9 +1315,34 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
               <p className="description" style={{ marginBottom: 24 }}>
                 {t('general_settings_desc')}
               </p>
-
-              {/* Backup & Återställning */}
-              <div className="backup-zone-card" style={{ marginBottom: '24px' }}>
+                {/* Språkvyxlare */}
+                <div className="lang-switcher-container" style={{ marginBottom: '24px' }}>
+                  <div className="lang-selector-grid" style={{ display: 'flex', gap: '8px' }}>
+                    <button 
+                      type="button" 
+                      className={`lang-pill-card ${locale === 'en' ? 'lang-pill-card--active' : ''}`}
+                      onClick={() => changeLocale('en')}
+                    >
+                      <div className="lang-pill-card__icon">
+                        <Globe size={20} />
+                      </div>
+                      <span className="lang-pill-card__name">{t('lang_en')}</span>
+                    </button>
+                    <button 
+                      type="button" 
+                      className={`lang-pill-card ${locale === 'sv' ? 'lang-pill-card--active' : ''}`}
+                      onClick={() => changeLocale('sv')}
+                    >
+                      <div className="lang-pill-card__icon">
+                        <Globe size={20} />
+                      </div>
+                      <span className="lang-pill-card__name">{t('lang_sv')}</span>
+                    </button>
+                  </div>
+                </div>
+                
+                {/* Backup & Återställning */}
+               <div className="backup-zone-card" style={{ marginBottom: '24px' }}>
                 <h3 className="backup-zone-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--blue)', fontSize: 'var(--text-md)', fontWeight: 700, marginBottom: '8px' }}>
                   <FolderOpen size={18} style={{ color: '#3b82f6' }} />
                   {t('backup_title')}
