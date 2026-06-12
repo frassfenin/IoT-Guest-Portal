@@ -239,7 +239,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
     try {
       setLoading(true)
       setError(null)
-      const res = await fetch('/api/config')
+      const res = await fetch('/api/setup/config')
       if (!res.ok) throw new Error(t('fetch_config_error'))
       const data = await res.json()
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2))

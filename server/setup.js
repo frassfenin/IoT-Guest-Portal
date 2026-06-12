@@ -26,9 +26,34 @@ const agent  = new Agent({ connect: { rejectUnauthorized: false } })
 //  GET /api/setup/status
 //  Berättar om appen behöver konfigureras eller redan är klar.
 // ──────────────────────────────────────────────────────────────
+// Middleware to require admin passphrase if setup is completed
+function requireAdmin(req, res, next) {
+  const config = readRuntimeConfig()
+  // If setup is not completed, we don't need a passcode yet
+  if (!config.setupComplete) {
+    return next()
+  }
+  const authHeader = req.headers['x-admin-password'] || req.query.admin_password
+  const expected = process.env.ADMIN_PASSWORD || '1234'
+  if (authHeader === expected) {
+    return next()
+  }
+  res.status(401).json({ error: 'Ogiltigt administratörslösenord' })
+}
+
 router.get('/status', (_req, res) => {
   const cfg = readRuntimeConfig()
   res.json({ setupNeeded: !cfg.setupComplete })
+})
+
+// Protect all subsequent setup endpoints with admin validation
+router.use(requireAdmin)
+
+// GET /api/setup/config
+// Protected endpoint to retrieve full config with secrets for SetupWizard
+router.get('/config', (_req, res) => {
+  const cfg = readRuntimeConfig()
+  res.json(cfg)
 })
 
 // ──────────────────────────────────────────────────────────────

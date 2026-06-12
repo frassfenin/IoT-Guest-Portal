@@ -219,6 +219,7 @@ export default {
   greeting_evening: "God kväll",
   connected: "Ansluten",
   disconnected: "Frånkopplad",
+  enter_admin_password: "Ange administratörslösenord:",
   setup_guide_btn: "Inställningsguide",
   organize_rooms_btn: "Organisera rum & lampor",
   blur_bg_btn: "Suddig bakgrund: {status}",

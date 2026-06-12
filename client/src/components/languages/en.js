@@ -218,6 +218,7 @@ export default {
   greeting_evening: "Good evening",
   connected: "Connected",
   disconnected: "Disconnected",
+  enter_admin_password: "Enter admin password:",
   setup_guide_btn: "Setup guide",
   organize_rooms_btn: "Organize rooms & lights",
   blur_bg_btn: "Blur background: {status}",

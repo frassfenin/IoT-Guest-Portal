@@ -244,10 +244,28 @@ function findMedia(entity_id, config) {
 // ──────────────────────────────────────────────────────────────
 app.get('/api/config', (_req, res) => {
   const config = getConfig()
+  // Skapa en kopia för att undvika att ändra den cachade konfigurationen i minnet
+  const secureConfig = JSON.parse(JSON.stringify(config))
+
+  // Ta bort känsliga API-nycklar och tokens
+  if (secureConfig.hue) delete secureConfig.hue.apiKey
+  if (secureConfig.govee) delete secureConfig.govee.apiKey
+  if (secureConfig.ikea) {
+    delete secureConfig.ikea.token
+    delete secureConfig.ikea.psk
+    delete secureConfig.ikea.identity
+  }
+  if (secureConfig.matter) {
+    secureConfig.matter = secureConfig.matter.map(m => {
+      const { code, ...rest } = m
+      return rest
+    })
+  }
+
   // Lägg till Cast-enheter från runtimeConfig om setup är klar
   const rt = readRuntimeConfig()
-  if (rt.setupComplete && rt.cast?.length > 0 && config.media_players?.length === 0) {
-    config.media_players = rt.cast.map((c) => ({
+  if (rt.setupComplete && rt.cast?.length > 0 && secureConfig.media_players?.length === 0) {
+    secureConfig.media_players = rt.cast.map((c) => ({
       entity_id: `cast_${c.ip.replace(/\./g, '_')}`,
       bridge: 'cast',
       bridge_id: c.ip,
@@ -255,7 +273,7 @@ app.get('/api/config', (_req, res) => {
       icon: '📡',
     }))
   }
-  res.json(config)
+  res.json(secureConfig)
 })
 
 // ──────────────────────────────────────────────────────────────

@@ -33,6 +33,25 @@ function groupByRoom(lights, defaultRoomName = 'Other') {
   }, {})
 }
 
+// Global fetch interceptor to inject X-Admin-Password header for setup APIs
+const originalFetch = window.fetch;
+window.fetch = async function (url, options = {}) {
+  const pwd = sessionStorage.getItem('admin_password');
+  if (pwd && url.toString().includes('/api/setup')) {
+    options.headers = options.headers || {};
+    if (options.headers instanceof Headers) {
+      options.headers.set('X-Admin-Password', pwd);
+    } else {
+      options.headers['X-Admin-Password'] = pwd;
+    }
+  }
+  const response = await originalFetch(url, options);
+  if (response.status === 401 && url.toString().includes('/api/setup')) {
+    sessionStorage.removeItem('admin_password');
+  }
+  return response;
+};
+
 export default function App() {
   const [locale, setLocale] = useState(() => {
     const saved = localStorage.getItem(LOCALE_STORAGE_KEY)
@@ -54,6 +73,27 @@ export default function App() {
   const [setupNeeded, setSetupNeeded] = useState(null)
   const [showOrganizer, setShowOrganizer] = useState(false)
   const [showSetupWizard, setShowSetupWizard] = useState(false)
+  const [fullConfig, setFullConfig] = useState(null)
+
+  const checkAdminAccess = useCallback((callback) => {
+    // Om setup inte är klar behövs inget lösenord
+    if (setupNeeded) {
+      callback()
+      return
+    }
+
+    const savedPwd = sessionStorage.getItem('admin_password')
+    if (savedPwd) {
+      callback()
+      return
+    }
+
+    const pwd = prompt(t('enter_admin_password') || 'Ange administratörslösenord:')
+    if (pwd === null) return // Avbruten
+
+    sessionStorage.setItem('admin_password', pwd)
+    callback()
+  }, [setupNeeded, t])
   const [activePopover, setActivePopover] = useState(null) // null | 'wifi' | 'notes' | 'status'
   const [qrMode, setQrMode] = useState('wifi') // 'wifi' | 'portal'
   const [qrDataUrl, setQrDataUrl] = useState('')
@@ -328,8 +368,22 @@ export default function App() {
           <Header 
             connected={connected} 
             config={config}
-            onOpenOrganizer={() => setShowOrganizer(true)} 
-            onOpenSetupWizard={() => setShowSetupWizard(true)}
+            onOpenOrganizer={() => checkAdminAccess(() => setShowOrganizer(true))} 
+            onOpenSetupWizard={() => checkAdminAccess(async () => {
+              try {
+                const res = await fetch('/api/setup/config')
+                if (res.ok) {
+                  const data = await res.json()
+                  setFullConfig(data)
+                  setShowSetupWizard(true)
+                } else {
+                  alert(t('fetch_config_error') || 'Kunde inte hämta administratörskonfiguration.')
+                }
+              } catch (err) {
+                console.error(err)
+                alert(err?.message || 'Kunde inte hämta administratörskonfiguration.')
+              }
+            })}
             blurEnabled={blurEnabled}
             onToggleBlur={toggleBlur}
             locale={locale}
@@ -665,17 +719,21 @@ export default function App() {
         )}
 
         {/* ── Setup Wizard Modal (Edit Mode) ── */}
-        {showSetupWizard && config && (
+        {showSetupWizard && fullConfig && (
           <div className="setup-wizard-overlay">
             <SetupWizard
-              initialConfig={config}
+              initialConfig={fullConfig}
               onComplete={() => {
                 setShowSetupWizard(false)
+                setFullConfig(null)
                 const saved = localStorage.getItem(LOCALE_STORAGE_KEY)
                 setLocale(saved === 'en' ? 'en' : 'sv')
                 socket.emit('setup_complete')
               }}
-              onCancel={() => setShowSetupWizard(false)}
+              onCancel={() => {
+                setShowSetupWizard(false)
+                setFullConfig(null)
+              }}
             />
           </div>
         )}
