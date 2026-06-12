@@ -554,7 +554,7 @@ router.post('/matter/pair', async (req, res) => {
   if (!code) return res.status(400).json({ error: 'code krävs' })
 
   const { ManualPairingCodeCodec } = await import('@matter/types')
-  const { OnOffCluster, LevelControlCluster } = await import('@project-chip/matter.js/cluster')
+  const { OnOffCluster, LevelControlCluster, ColorControlCluster } = await import('@project-chip/matter.js/cluster')
   const { MatterBridge } = await import('./bridges/matter.js')
 
   let server = null
@@ -690,13 +690,15 @@ router.post('/matter/pair', async (req, res) => {
       // Kolla vilka kluster som stöds för att avgöra om det är en lampa eller uttag
       const hasOnOff = node.getClusterClientForDevice(d.number, OnOffCluster) !== undefined
       const hasLevel = node.getClusterClientForDevice(d.number, LevelControlCluster) !== undefined
+      const colorClient = node.getClusterClientForDevice(d.number, ColorControlCluster)
+      const hasColorTemp = colorClient && colorClient.attributes.colorTemperatureMireds !== undefined
       return {
         id: `matter_${nodeId}_${d.number}`,
         nodeId: nodeId.toString(),
         endpointId: d.number,
         name: `Matter Enhet ${d.number}`,
         supports_brightness: hasLevel,
-        supports_color_temp: false,
+        supports_color_temp: !!hasColorTemp,
         isOutlet: !hasLevel && hasOnOff // Om den bara stöder på/av men inte ljusstyrka, anta att det är ett eluttag
       }
     })
@@ -730,7 +732,7 @@ router.post('/matter/pair', async (req, res) => {
 // ──────────────────────────────────────────────────────────────
 router.post('/matter/lights', async (_req, res) => {
   const { MatterBridge } = await import('./bridges/matter.js')
-  const { OnOffCluster, LevelControlCluster } = await import('@project-chip/matter.js/cluster')
+  const { OnOffCluster, LevelControlCluster, ColorControlCluster } = await import('@project-chip/matter.js/cluster')
 
   let server = null
   let controller = null
@@ -781,13 +783,15 @@ router.post('/matter/lights', async (_req, res) => {
             const endpoints = devices.map(d => {
               const hasOnOff = node.getClusterClientForDevice(d.number, OnOffCluster) !== undefined
               const hasLevel = node.getClusterClientForDevice(d.number, LevelControlCluster) !== undefined
+              const colorClient = node.getClusterClientForDevice(d.number, ColorControlCluster)
+              const hasColorTemp = colorClient && colorClient.attributes.colorTemperatureMireds !== undefined
               return {
                 id: `matter_${nodeStr}_${d.number}`,
                 nodeId: nodeStr,
                 endpointId: d.number,
                 name: `Matter Enhet ${d.number}`,
                 supports_brightness: hasLevel,
-                supports_color_temp: false,
+                supports_color_temp: !!hasColorTemp,
                 isOutlet: !hasLevel && hasOnOff
               }
             })
