@@ -239,7 +239,7 @@ export default {
   status_off: "OFF",
   alert_pwd_demo: "Changing password is not available in local demo mode.",
   alert_login_gateway: "Log in and out is handled via your local network gateway.",
-  header_title: "Home Portal",
+  header_title: "Hemmaportal",
 
   // Dashboard Main View
   other_room: "Other",
@@ -355,7 +355,8 @@ export default {
   admin_settings_btn: "Admin Settings",
   admin_password_confirm_label: "Confirm new password",
   admin_password_confirm_placeholder: "Type the password again",
-  passwords_dont_match: "Passwords do not match!"
+  passwords_dont_match: "Passwords do not match!",
+  organizer_choose_icon: "Select room icon"
 };
 
 

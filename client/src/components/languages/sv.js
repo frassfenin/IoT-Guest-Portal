@@ -357,7 +357,8 @@ export default {
   admin_settings_btn: "Inställningar (admin)",
   admin_password_confirm_label: "Bekräfta nytt lösenord",
   admin_password_confirm_placeholder: "Skriv lösenordet igen",
-  passwords_dont_match: "Lösenorden matchar inte!"
+  passwords_dont_match: "Lösenorden matchar inte!",
+  organizer_choose_icon: "Välj rumsikon"
 };
 
 

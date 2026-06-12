@@ -1,21 +1,55 @@
 import { useState, useEffect } from 'react'
 import { 
-  Home, Bed, Tv, Sofa, ChefHat, Bath, Key, Flower2, Gamepad2, 
+  Home, Bed, Tv, Sofa, Utensils, Bath, DoorOpen, Flower2, Gamepad, Laptop, Archive,
   Lightbulb, Trash2, X, Plus, FolderOpen, ArrowLeft, PlusCircle, MinusCircle,
   ChevronUp, ChevronDown
 } from 'lucide-react'
 
+const ICON_MAP = {
+  Sofa,
+  Gamepad,
+  Utensils,
+  Bed,
+  DoorOpen,
+  Bath,
+  Flower2,
+  Tv,
+  Laptop,
+  Archive,
+  Home
+}
+
+const AVAILABLE_ICONS = [
+  { name: 'Sofa', icon: Sofa },
+  { name: 'Gamepad', icon: Gamepad },
+  { name: 'Utensils', icon: Utensils },
+  { name: 'Bed', icon: Bed },
+  { name: 'DoorOpen', icon: DoorOpen },
+  { name: 'Bath', icon: Bath },
+  { name: 'Flower2', icon: Flower2 },
+  { name: 'Tv', icon: Tv },
+  { name: 'Laptop', icon: Laptop },
+  { name: 'Archive', icon: Archive },
+  { name: 'Home', icon: Home }
+]
+
 // Matcher för rumsnamn till Lucide-ikoner (Dashboard Outline-estetik)
-function getRoomIcon(roomName) {
+function getRoomIcon(roomName, customIconKey) {
+  if (customIconKey) {
+    const IconComp = ICON_MAP[customIconKey]
+    if (IconComp) return IconComp
+  }
   const name = roomName.toLowerCase();
-  if (name.includes('kök') || name.includes('mat')) return ChefHat;
-  if (name.includes('vardagsrum') || name.includes('soffa')) return Sofa;
-  if (name.includes('sovrum') || name.includes('säng')) return Bed;
-  if (name.includes('spel') || name.includes('hobby') || name.includes('leka')) return Gamepad2;
-  if (name.includes('bad') || name.includes('toa') || name.includes('dusch') || name.includes('tvätt')) return Bath;
-  if (name.includes('hall') || name.includes('entré') || name.includes('ytter')) return Key;
-  if (name.includes('ute') || name.includes('balkong') || name.includes('trädgård') || name.includes('altan')) return Flower2;
+  if (name.includes('kök') || name.includes('mat') || name.includes('kitchen')) return Utensils;
+  if (name.includes('vardagsrum') || name.includes('soffa') || name.includes('living')) return Sofa;
+  if (name.includes('sovrum') || name.includes('säng') || name.includes('bed') || name.includes('john')) return Bed;
+  if (name.includes('spel') || name.includes('hobby') || name.includes('leka') || name.includes('game')) return Gamepad;
+  if (name.includes('bad') || name.includes('toa') || name.includes('dusch') || name.includes('tvätt') || name.includes('bath')) return Bath;
+  if (name.includes('hall') || name.includes('entré') || name.includes('ytter') || name.includes('dörr') || name.includes('door')) return DoorOpen;
+  if (name.includes('ute') || name.includes('balkong') || name.includes('trädgård') || name.includes('altan') || name.includes('garden') || name.includes('flower')) return Flower2;
   if (name.includes('tv') || name.includes('media') || name.includes('bio')) return Tv;
+  if (name.includes('kontor') || name.includes('work') || name.includes('laptop')) return Laptop;
+  if (name.includes('övrigt') || name.includes('other') || name.includes('misc')) return Archive;
   return Home;
 }
 
@@ -34,11 +68,26 @@ export default function RoomOrganizer({ config, onSave, onClose, t }) {
   const [rooms, setRooms] = useState(() => {
     const existing = config.lights.map((l) => l.room || fallbackRoomName)
     const unique = Array.from(new Set(existing)).filter((r) => r !== fallbackRoomName)
-    const savedRooms = config.rooms || []
-    if (savedRooms.length === 0) return unique
+    
+    // Normalize config.rooms to objects
+    const savedRoomsRaw = config.rooms || []
+    const savedRooms = savedRoomsRaw.map((r) => {
+      if (typeof r === 'string') {
+        return { name: r, icon: '' }
+      }
+      return { name: r.name || '', icon: r.icon || '' }
+    })
 
-    const ordered = savedRooms.filter((r) => unique.includes(r))
-    const remaining = unique.filter((r) => !savedRooms.includes(r))
+    const uniqueNames = new Set(unique)
+    // Filter saved rooms to those that still have active lights (are in unique)
+    const ordered = savedRooms.filter((r) => uniqueNames.has(r.name))
+    const orderedNames = new Set(ordered.map((r) => r.name))
+    
+    // Create remaining room objects for unique rooms that weren't in savedRooms
+    const remaining = unique
+      .filter((r) => !orderedNames.has(r))
+      .map((r) => ({ name: r, icon: '' }))
+
     return [...ordered, ...remaining]
   })
 
@@ -79,12 +128,12 @@ export default function RoomOrganizer({ config, onSave, onClose, t }) {
     // Byt stor bokstav på första bokstaven för snyggare design
     const formattedName = trimmed.charAt(0).toUpperCase() + trimmed.slice(1)
 
-    if (rooms.includes(formattedName) || formattedName === fallbackRoomName) {
+    if (rooms.some(r => r.name === formattedName) || formattedName === fallbackRoomName) {
       alert(translate('organizer_room_exists'))
       return
     }
 
-    setRooms((prev) => [...prev, formattedName])
+    setRooms((prev) => [...prev, { name: formattedName, icon: '' }])
     setNewRoomName('')
     
     // Välj det nyskapade rummet direkt
@@ -106,7 +155,7 @@ export default function RoomOrganizer({ config, onSave, onClose, t }) {
     )
 
     // Ta bort rummet från listan
-    setRooms((prev) => prev.filter((r) => r !== roomName))
+    setRooms((prev) => prev.filter((r) => r.name !== roomName))
     
     // Om det raderade rummet var markerat, gå tillbaka till osorterade
     if (selectedRoom === roomName) {
@@ -119,7 +168,7 @@ export default function RoomOrganizer({ config, onSave, onClose, t }) {
 
   // ── Flytta rum upp/ner i listan ─────────────────────────────
   const handleMoveRoom = (roomName, direction) => {
-    const index = rooms.indexOf(roomName)
+    const index = rooms.findIndex((r) => r.name === roomName)
     if (index === -1) return
     const newRooms = [...rooms]
     if (direction === 'up' && index > 0) {
@@ -148,6 +197,16 @@ export default function RoomOrganizer({ config, onSave, onClose, t }) {
     )
   }
 
+  // ── Ändra ikon på rummet ─────────────────────────────────────
+  const handleUpdateRoomIcon = (roomName, iconKey) => {
+    setRooms(prev => prev.map(r => {
+      if (r.name === roomName) {
+        return { ...r, icon: iconKey }
+      }
+      return r
+    }))
+  }
+
   // ── Spara alla ändringar ─────────────────────────────────────
   const handleSave = () => {
     onSave(lights, rooms)
@@ -174,15 +233,18 @@ export default function RoomOrganizer({ config, onSave, onClose, t }) {
   })
 
   // Ikoner & text för det valda rummet
-  const ActiveRoomIcon = selectedRoom === fallbackRoomName ? FolderOpen : getRoomIcon(selectedRoom)
+  const activeRoomObj = rooms.find(r => r.name === selectedRoom)
+  const ActiveRoomIcon = selectedRoom === fallbackRoomName ? FolderOpen : getRoomIcon(selectedRoom, activeRoomObj?.icon)
   const activeRoomTitle = selectedRoom === fallbackRoomName ? translate('organizer_unassigned_lights') : selectedRoom
 
   // Rendering av enskild rums-knapp i listan
   const renderRoomItem = (roomName, isFallback = false) => {
-    const Icon = isFallback ? FolderOpen : getRoomIcon(roomName)
+    const matchedRoom = rooms.find(r => r.name === roomName)
+    const Icon = isFallback ? FolderOpen : getRoomIcon(roomName, matchedRoom?.icon)
     const displayName = isFallback ? translate('organizer_unassigned_lights') : roomName
     const isActive = selectedRoom === roomName
     const count = getLightCount(roomName)
+    const roomIndex = rooms.findIndex((r) => r.name === roomName)
 
     return (
       <button
@@ -211,10 +273,10 @@ export default function RoomOrganizer({ config, onSave, onClose, t }) {
                     e.stopPropagation()
                     handleMoveRoom(roomName, 'up')
                   }}
-                  disabled={rooms.indexOf(roomName) === 0}
+                  disabled={roomIndex === 0}
                   style={{ 
-                    opacity: rooms.indexOf(roomName) === 0 ? 0.25 : 0.7, 
-                    cursor: rooms.indexOf(roomName) === 0 ? 'not-allowed' : 'pointer',
+                    opacity: roomIndex === 0 ? 0.25 : 0.7, 
+                    cursor: roomIndex === 0 ? 'not-allowed' : 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center'
@@ -229,10 +291,10 @@ export default function RoomOrganizer({ config, onSave, onClose, t }) {
                     e.stopPropagation()
                     handleMoveRoom(roomName, 'down')
                   }}
-                  disabled={rooms.indexOf(roomName) === rooms.length - 1}
+                  disabled={roomIndex === rooms.length - 1}
                   style={{ 
-                    opacity: rooms.indexOf(roomName) === rooms.length - 1 ? 0.25 : 0.7, 
-                    cursor: rooms.indexOf(roomName) === rooms.length - 1 ? 'not-allowed' : 'pointer',
+                    opacity: roomIndex === rooms.length - 1 ? 0.25 : 0.7, 
+                    cursor: roomIndex === rooms.length - 1 ? 'not-allowed' : 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center'
@@ -275,6 +337,75 @@ export default function RoomOrganizer({ config, onSave, onClose, t }) {
             {translate('organizer_lights_count', { count: activeLights.length })}
           </span>
         </div>
+
+        {/* Sektion: Välj ikon för rummet (visas ej för fallbacksrummet "Osorterade") */}
+        {selectedRoom !== fallbackRoomName && (
+          <div className="room-icon-picker-section" style={{
+            padding: '12px var(--space-4)',
+            borderBottom: '1px solid var(--glass-border)',
+            background: 'rgba(255, 255, 255, 0.015)'
+          }}>
+            <h3 style={{
+              fontSize: '0.75rem',
+              fontWeight: '600',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              color: 'var(--text-dim)',
+              marginBottom: '10px'
+            }}>
+              {translate('organizer_choose_icon')}
+            </h3>
+            <div style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '10px',
+              alignItems: 'center'
+            }}>
+              {AVAILABLE_ICONS.map(({ name: iconKey, icon: IconComp }) => {
+                const currentIconComp = getRoomIcon(selectedRoom, activeRoomObj?.icon);
+                const isSelected = activeRoomObj?.icon === iconKey || (!activeRoomObj?.icon && currentIconComp === IconComp);
+                
+                return (
+                  <button
+                    key={iconKey}
+                    type="button"
+                    className={`icon-picker-btn ${isSelected ? 'icon-picker-btn--selected' : ''}`}
+                    onClick={() => handleUpdateRoomIcon(selectedRoom, iconKey)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: '50%',
+                      background: isSelected ? 'var(--purple-light)' : 'rgba(255, 255, 255, 0.05)',
+                      border: isSelected ? '1px solid var(--purple)' : '1px solid rgba(255, 255, 255, 0.1)',
+                      color: isSelected ? '#ffffff' : 'var(--text-main)',
+                      boxShadow: isSelected ? '0 0 12px rgba(168, 85, 247, 0.4)' : 'none',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                    }}
+                    title={iconKey}
+                    onMouseEnter={(e) => {
+                      if (!isSelected) {
+                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.25)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isSelected) {
+                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                      }
+                    }}
+                  >
+                    <IconComp size={18} style={{ strokeWidth: 2.2 }} />
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Sektion 1: Aktiva lampor i rummet */}
         <div className="detail-lights-section">
@@ -422,7 +553,7 @@ export default function RoomOrganizer({ config, onSave, onClose, t }) {
               {/* Rumslista */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
                 {renderRoomItem(fallbackRoomName, true)}
-                {rooms.map((r) => renderRoomItem(r, false))}
+                {rooms.map((r) => renderRoomItem(r.name, false))}
               </div>
             </div>
           ) : (
@@ -465,7 +596,7 @@ export default function RoomOrganizer({ config, onSave, onClose, t }) {
               {/* Rumslista */}
               <div className="rooms-sidebar">
                 {renderRoomItem(fallbackRoomName, true)}
-                {rooms.map((r) => renderRoomItem(r, false))}
+                {rooms.map((r) => renderRoomItem(r.name, false))}
               </div>
             </div>
 
