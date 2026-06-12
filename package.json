@@ -11,7 +11,10 @@
     "install:all": "npm install && npm install --prefix client",
     "discover": "node scripts/discover.js",
     "build": "npm run build --prefix client",
-    "start": "node server/index.js"
+    "start": "node server/index.js",
+    "graphify": ".venv/bin/python3 -m graphify . --exclude '*.md' --exclude '*.png' --exclude 'graphify/*' --exclude 'graphify_temp/*' --exclude 'client/dist/*' --exclude 'client/index.html' --exclude 'docker-compose.yml' && .venv/bin/python3 -m graphify export wiki",
+    "graphify:update": ".venv/bin/python3 -m graphify update . && .venv/bin/python3 -m graphify export wiki",
+    "graphify:full": ".venv/bin/python3 -m graphify . && .venv/bin/python3 -m graphify export wiki"
   },
   "dependencies": {
     "@project-chip/matter-node.js": "^0.12.6",

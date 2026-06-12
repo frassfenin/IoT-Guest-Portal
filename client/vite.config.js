@@ -19,6 +19,14 @@ export default defineConfig({
         changeOrigin: true,
         ws: true, // WebSocket-proxy
       },
+      '/code-graph': {
+        target: 'http://127.0.0.1:3001',
+        changeOrigin: true,
+      },
+      '/graphify-out': {
+        target: 'http://127.0.0.1:3001',
+        changeOrigin: true,
+      },
     },
   },
 })

@@ -3952,6 +3952,13 @@ input[type="range"] {
   box-shadow: 0 0 20px rgba(139, 92, 246, 0.15);
 }
 
+.setup-icon-wrapper--graph {
+  background: rgba(99, 102, 241, 0.1);
+  color: #818cf8;
+  border-color: rgba(99, 102, 241, 0.2);
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.15);
+}
+
 /* Sidebar list icons */
 .sidebar-icon-svg {
   stroke-width: 2.2;
@@ -3968,6 +3975,7 @@ input[type="range"] {
 .sidebar-icon-svg--matter { color: #fb7185; }
 .sidebar-icon-svg--wifi { color: #34d399; }
 .sidebar-icon-svg--save { color: #a78bfa; }
+.sidebar-icon-svg--graph { color: #818cf8; }
 
 /* Dashboard Cards Icons */
 .settings-dash-card__icon--general { background: rgba(148, 163, 184, 0.08) !important; color: #94a3b8 !important; border-color: rgba(148, 163, 184, 0.18) !important; }
@@ -3979,6 +3987,7 @@ input[type="range"] {
 .settings-dash-card__icon--matter { background: rgba(244, 63, 94, 0.08) !important; color: #fb7185 !important; border-color: rgba(244, 63, 94, 0.18) !important; }
 .settings-dash-card__icon--wifi { background: rgba(16, 185, 129, 0.08) !important; color: #34d399 !important; border-color: rgba(16, 185, 129, 0.18) !important; }
 .settings-dash-card__icon--save { background: rgba(139, 92, 246, 0.08) !important; color: #a78bfa !important; border-color: rgba(139, 92, 246, 0.18) !important; }
+.settings-dash-card__icon--graph { background: rgba(99, 102, 241, 0.08) !important; color: #818cf8 !important; border-color: rgba(99, 102, 241, 0.18) !important; }
 
 .setup-btn--cancel {
   background: transparent;

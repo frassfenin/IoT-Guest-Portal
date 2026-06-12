@@ -29,3 +29,10 @@ runtime-config.json
 
 # ── Matter Lagring ───────────────────────────
 server/data/
+
+# ── Graphify ─────────────────────────────────
+graphify-out/
+graphify_temp/
+.venv/
+graphify/
+

@@ -606,48 +606,50 @@ export default function App() {
                 )}
               </button>
 
-              {/* Systemstatus / Notifikationer */}
-              <button
-                type="button"
-                className={`floating-dock__btn ${activePopover === 'status' ? 'floating-dock__btn--active' : ''}`}
-                onClick={() => setActivePopover(activePopover === 'status' ? null : 'status')}
-                title={t('status_dock_title')}
-              >
-                <Info size={20} style={{ strokeWidth: 2.2 }} />
-                {activePopover === 'status' && (
-                  <div className="dock-popover status-popover" onClick={(e) => e.stopPropagation()}>
-                    <div className="section-header">
-                      <span className="section-header__title">{t('status_dock_title')}</span>
+                {/* Systemstatus / Notifikationer */}
+                <button
+                  type="button"
+                  className={`floating-dock__btn ${activePopover === 'status' ? 'floating-dock__btn--active' : ''}`}
+                  onClick={() => setActivePopover(activePopover === 'status' ? null : 'status')}
+                  title={t('status_dock_title')}
+                >
+                  <Info size={20} style={{ strokeWidth: 2.2 }} />
+                  {activePopover === 'status' && (
+                    <div className="dock-popover status-popover" onClick={(e) => e.stopPropagation()}>
+                      <div className="section-header">
+                        <span className="section-header__title">{t('status_dock_title')}</span>
+                      </div>
+                      <div className="status-list">
+                        <div className="status-item">
+                          <span className="status-item__label">{t('status_conn_label')}</span>
+                          <span className="status-item__value" style={{ color: connected ? 'var(--green)' : 'var(--red)' }}>
+                            {connected ? t('status_online') : t('status_offline')}
+                          </span>
+                        </div>
+                        <div className="status-item">
+                          <span className="status-item__label">{t('status_lights_label')}</span>
+                          <span className="status-item__value">
+                            {t('status_devices_count', { count: config.lights?.length ?? 0 })}
+                          </span>
+                        </div>
+                        <div className="status-item">
+                          <span className="status-item__label">{t('status_media_label')}</span>
+                          <span className="status-item__value">
+                            {t('status_active_count', { count: config.media_players?.length ?? 0 })}
+                          </span>
+                        </div>
+                        <div className="status-item">
+                          <span className="status-item__label">{t('status_gateway_ip')}</span>
+                          <span className="status-item__value" style={{ fontFamily: 'monospace' }}>
+                            {config.ikea?.ip || config.hue?.ip || 'Lokalt API'}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="status-list">
-                      <div className="status-item">
-                        <span className="status-item__label">{t('status_conn_label')}</span>
-                        <span className="status-item__value" style={{ color: connected ? 'var(--green)' : 'var(--red)' }}>
-                          {connected ? t('status_online') : t('status_offline')}
-                        </span>
-                      </div>
-                      <div className="status-item">
-                        <span className="status-item__label">{t('status_lights_label')}</span>
-                        <span className="status-item__value">
-                          {t('status_devices_count', { count: config.lights?.length ?? 0 })}
-                        </span>
-                      </div>
-                      <div className="status-item">
-                        <span className="status-item__label">{t('status_media_label')}</span>
-                        <span className="status-item__value">
-                          {t('status_active_count', { count: config.media_players?.length ?? 0 })}
-                        </span>
-                      </div>
-                      <div className="status-item">
-                        <span className="status-item__label">{t('status_gateway_ip')}</span>
-                        <span className="status-item__value" style={{ fontFamily: 'monospace' }}>
-                          {config.ikea?.ip || config.hue?.ip || 'Lokalt API'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </button>
+                  )}
+                </button>
+                
+
             </div>
           </div>
         )}

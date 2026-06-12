@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Settings, Sliders, LayoutGrid, Eye, KeyRound, LogOut } from 'lucide-react'
+import { Settings, Sliders, LayoutGrid, Eye, KeyRound, LogOut, Network } from 'lucide-react'
 
 // Returnerar en hälsning baserad på tidpunkt
 function getGreeting(t) {
@@ -161,6 +161,17 @@ export default function Header({ connected, config, onOpenOrganizer, onOpenSetup
                 <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" />
               </svg>
               {translate('github_proj_btn')}
+            </a>
+            <a 
+              href="/code-graph"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="settings-dropdown__item" 
+              role="menuitem"
+              onClick={() => setDropdownOpen(false)}
+            >
+              <Network size={16} className="settings-dropdown__icon" style={{ strokeWidth: 2.2 }} />
+              {translate('code_graph_btn')}
             </a>
           </div>
         )}

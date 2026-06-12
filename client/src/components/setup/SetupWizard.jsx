@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { FolderOpen, Plus, Trash2, ArrowLeft, Settings, Check, HelpCircle, Home, Lightbulb, Sliders, Palette, Cast, Cpu, Wifi, Save, Power, RefreshCw, Search, Zap, Server, CheckCircle2, AlertCircle, Pin, AlertTriangle, Loader2, Download, Upload, Globe } from 'lucide-react'
+import { FolderOpen, Plus, Trash2, ArrowLeft, Settings, Check, HelpCircle, Home, Lightbulb, Sliders, Palette, Cast, Cpu, Wifi, Save, Power, RefreshCw, Search, Zap, Server, CheckCircle2, AlertCircle, Pin, AlertTriangle, Loader2, Download, Upload, Globe, Network } from 'lucide-react'
 import sv from '../languages/sv.js'
 import en from '../languages/en.js'
 
@@ -1068,7 +1068,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
   // ── Navigering ──────────────────────────────────────────────
   const getActiveStepsList = () => {
     if (initialConfig) {
-      return [12, 11, 2, 3, 4, 6, 10, 8]
+      return [12, 11, 2, 3, 4, 6, 10, 8, 14]
     }
     const list = [1] // Välkommen
     list.push(13) // Välj integrationer (Kort-grid)
@@ -1079,6 +1079,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
     if (services.cast) list.push(6)
     if (services.matter) list.push(10) // Matter Setup
     list.push(8) // WiFi & info
+    list.push(14) // Code Graph
     list.push(9) // Spara & starta
     return list
   }
@@ -1116,6 +1117,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
     { id: 6, name: t('step_name_cast'), iconComponent: Cast, colorClass: 'cast', desc: t('cast_desc') },
     { id: 10, name: t('step_name_matter'), iconComponent: Cpu, colorClass: 'matter', desc: t('matter_desc') },
     { id: 8, name: t('step_name_wifi'), iconComponent: Wifi, colorClass: 'wifi', desc: t('wifi_desc') },
+    { id: 14, name: t('graph_view_title'), iconComponent: Network, colorClass: 'graph', desc: t('graph_view_desc') },
   ]
 
   const getStepName = (stepId) => {
@@ -1130,6 +1132,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
       case 6: return t('step_name_cast')
       case 10: return t('step_name_matter')
       case 8: return t('step_name_wifi')
+      case 14: return t('graph_view_title')
       case 9: return t('step_name_save')
       default: return `${t('step_prefix')} ${stepId}`
     }
@@ -2292,6 +2295,99 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                 >
                   {t('notes_add_btn')}
                 </button>
+              </div>
+
+              <div className="step-actions" style={{ marginTop: 24 }}>
+                {!initialConfig ? (
+                  <>
+                    <button className="setup-btn setup-btn--text" onClick={prevStep}>{t('back_btn')}</button>
+                    <button className="setup-btn setup-btn--primary" onClick={nextStep}>{t('next_btn')}</button>
+                  </>
+                ) : (
+                  renderEditStepActions()
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* STEG 14: Codebase Graph */}
+          {step === 14 && (
+            <div className="setup-card fade-in">
+              <div className="setup-icon-wrapper setup-icon-wrapper--graph">
+                <Network size={32} className="setup-icon-svg" />
+              </div>
+              <h2>{t('graph_view_title')}</h2>
+              <p className="description" style={{ marginBottom: 24 }}>
+                {t('graph_view_desc')}
+              </p>
+
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                padding: '24px',
+                borderRadius: '12px',
+                background: 'rgba(255, 255, 255, 0.03)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                marginBottom: 24,
+                textAlign: 'center'
+              }}>
+                <Network size={48} style={{ color: '#818cf8', opacity: 0.8, marginBottom: 16 }} />
+                <a
+                  href="/code-graph"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="setup-btn setup-btn--primary"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    textDecoration: 'none',
+                    fontWeight: 600,
+                    padding: '12px 24px',
+                    borderRadius: '100px'
+                  }}
+                >
+                  <Network size={18} style={{ strokeWidth: 2.2 }} />
+                  {t('open_graph_btn')}
+                </a>
+              </div>
+
+              <div style={{
+                padding: '20px',
+                borderRadius: '12px',
+                background: 'rgba(59, 130, 246, 0.03)',
+                border: '1px solid rgba(59, 130, 246, 0.12)',
+                textAlign: 'left',
+                fontSize: '13px',
+                lineHeight: '1.6',
+                marginBottom: 24
+              }}>
+                <h3 style={{
+                  fontSize: '14px',
+                  fontWeight: 700,
+                  color: '#60a5fa',
+                  marginTop: 0,
+                  marginBottom: '10px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}>
+                  <HelpCircle size={16} />
+                  {t('graph_instruction_title')}
+                </h3>
+                <p style={{ margin: '0 0 12px 0', color: 'var(--text-2)' }}>
+                  {t('graph_instruction_desc')}
+                </p>
+                <ol style={{ margin: '0 0 16px 0', paddingLeft: '20px', color: 'var(--text-2)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <li>{t('graph_instruction_step1')}</li>
+                  <li>{t('graph_instruction_step2')}</li>
+                  <li>{t('graph_instruction_step3')}</li>
+                </ol>
+                <p style={{ margin: 0, fontSize: '11px', color: 'var(--text-3)', fontStyle: 'italic' }}>
+                  {t('graph_instruction_skip')}
+                </p>
               </div>
 
               <div className="step-actions" style={{ marginTop: 24 }}>
