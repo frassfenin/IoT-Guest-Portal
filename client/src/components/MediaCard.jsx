@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { Tv, Speaker, Music, Cast, Play, Pause, Volume1, Volume2 } from 'lucide-react'
+import useDebounce from '../hooks/useDebounce.js'
 
 function getMediaIcon(iconStr) {
   if (!iconStr) return <Cast size={20} style={{ strokeWidth: 2.2, color: 'var(--blue)' }} />
@@ -16,15 +17,15 @@ function getMediaIcon(iconStr) {
   return <Music size={20} style={{ strokeWidth: 2.2, color: 'var(--blue)' }} />
 }
 
-function useDebounce(fn, delay = 250) {
-  const [timer, setTimer] = useState(null)
-  return useCallback((...args) => {
-    if (timer) clearTimeout(timer)
-    setTimer(setTimeout(() => fn(...args), delay))
-  }, [fn, delay, timer])
-}
+export default function MediaCard({ config, state, onControl, t }) {
+  const translate = t || ((key, replaces = {}) => {
+    let str = key
+    Object.entries(replaces).forEach(([k, v]) => {
+      str = str.replace(`{${k}}`, v)
+    })
+    return str
+  })
 
-export default function MediaCard({ config, state, onControl }) {
   const isPlaying    = state?.state === 'playing'
   const isPaused     = state?.state === 'paused'
   const isIdle       = !isPlaying && !isPaused
@@ -73,14 +74,14 @@ export default function MediaCard({ config, state, onControl }) {
           <div className="media-card__device">{config.name}</div>
           <div className={`media-card__now-playing ${isPlaying ? 'media-card__now-playing--active' : ''}`}>
             {isUnavailable
-              ? 'Inte tillgänglig'
+              ? translate('media_status_unavailable')
               : isPlaying && mediaTitle
                 ? `${mediaArtist ? `${mediaArtist} – ` : ''}${mediaTitle}`
                 : isPlaying
-                  ? 'Spelar...'
+                  ? translate('media_status_playing')
                   : isPaused
-                    ? 'Pausad'
-                    : 'Stannad'}
+                    ? translate('media_status_paused')
+                    : translate('media_status_stopped')}
           </div>
         </div>
       </div>
@@ -93,7 +94,7 @@ export default function MediaCard({ config, state, onControl }) {
             id={`playpause-${config.entity_id.replace(/\./g, '-')}`}
             className="media-btn media-btn--play"
             onClick={handlePlayPause}
-            aria-label={isPlaying ? `Pausa ${config.name}` : `Spela ${config.name}`}
+            aria-label={isPlaying ? translate('media_aria_pause', { name: config.name }) : translate('media_aria_play', { name: config.name })}
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
             {isPlaying ? (
@@ -118,7 +119,7 @@ export default function MediaCard({ config, state, onControl }) {
               step="0.02"
               value={localVolume}
               onChange={handleVolumeChange}
-              aria-label={`Volym för ${config.name}`}
+              aria-label={translate('media_aria_volume', { name: config.name })}
               aria-valuetext={volPct}
             />
             <span className="media-card__vol-icon" aria-hidden="true" style={{ display: 'flex', alignItems: 'center' }}>

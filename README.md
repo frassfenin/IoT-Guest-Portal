@@ -74,6 +74,13 @@ npm run start
 ```
 Portalen körs då på http://localhost:3001.
 
+### 4. Generera Kodbasgraf (Visualisering)
+För att generera en interaktiv grafisk visualisering av projektets kodarkitektur och anslutningar:
+```bash
+npm run graphify
+```
+Detta skapar mappen `graphify-out/` med filen `graph.html`. När Express-servern körs kan grafen ses i en webbläsare via portalens inställningsmeny eller direkt på http://localhost:3001/code-graph.
+
 ---
 
 ## Projektstruktur
@@ -86,3 +93,6 @@ Portalen körs då på http://localhost:3001.
   - `client/src/components/setup/`: Den interaktiva installationsguiden.
   - `client/src/components/RoomOrganizer.jsx`: Kanban-sorteraren för rum.
   - `client/src/index.css`: Glassmorphism-designsystemet.
+- `graphify/`: Python-modulen för Graphify (verktyg för kodbas-visualisering).
+- `graphify-out/`: Genererade filer för visualisering (ignorerad av Git).
+- `.agents/`: AI-agentens lokala regler och workflows för Graphify-integreringen.

@@ -281,7 +281,14 @@ router.post('/govee/lights', async (req, res) => {
     let rLegacy = await fetch('https://developer-api.govee.com/v1/devices', {
       headers: { 'Govee-API-Key': key },
     })
-    const bodyLegacy = await rLegacy.json()
+    let bodyLegacy = {}
+    const contentType = rLegacy.headers.get('content-type') || ''
+    if (contentType.includes('application/json')) {
+      bodyLegacy = await rLegacy.json()
+    } else {
+      const text = await rLegacy.text()
+      bodyLegacy = { message: text }
+    }
     if (!rLegacy.ok) {
       throw new Error(bodyLegacy.message || `Govee API-fel (OpenAPI status: ${r.status}, Legacy status: ${rLegacy.status})`)
     }

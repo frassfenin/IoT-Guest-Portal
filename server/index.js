@@ -30,7 +30,98 @@ dotenv.config()
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT      = join(__dirname, '..')
-const PORT      = process.env.PORT || 3001
+
+/**
+ * Attempts to find an available and usable port number dynamically.
+ * Checks preferred ports from environment variables (PORT) or falls back to 8080.
+ * @returns {Promise<number>} A promise that resolves with the available port number.
+ */
+async function determinePort() {
+  const preferredPort = process.env.PORT || '8080';
+  console.log(`Attempting to find available server port starting with: ${preferredPort}`);
+
+  if (!preferredPort) {
+    throw new Error('Failed to determine default port.');
+  }
+
+  // Recursive function to check and listen on ports
+  const checkAndListen = async (portStr) => {
+    try {
+      const tempServer = createServer();
+      await new Promise((resolve, reject) => {
+        tempServer.listen(Number(portStr), () => {
+          tempServer.close(() => resolve(Number(portStr)));
+        });
+        tempServer.on('error', (err) => {
+          if (err.code === 'EADDRINUSE') {
+            reject(new Error(`Port ${portStr} is already in use.`));
+          } else {
+            reject(err);
+          }
+        });
+      });
+      return Number(portStr);
+    } catch (e) {
+      if (e.message.includes('already in use')) {
+        // Try the next port up by one
+        return checkAndListen((parseInt(portStr) + 1).toString());
+      } else {
+        throw e; // Re-throw other errors
+      }
+    }
+  };
+
+  // Start the port determination process
+  return checkAndListen(preferredPort);
+}
+
+/** 
+ * Attempts to determine a reliable port. 
+ * If the configured PORT (from env vars or default) is already in use, 
+ * this function attempts to find the next available random high-numbered port.
+ */
+function getAvailablePort(preferredPort) {
+  if (!preferredPort) return null;
+
+  const checkAndListen = async (port) => {
+    try {
+      const tempServer = createServer();
+      await new Promise((resolve, reject) => {
+        tempServer.listen(Number(port), () => {
+          tempServer.close(() => resolve(Number(port)));
+        });
+        tempServer.on('error', (err) => {
+          if (err.code === 'EADDRINUSE') {
+            reject(new Error(`Port ${port} is already in use.`));
+          } else {
+            reject(err);
+          }
+        });
+      });
+      return Number(port);
+    } catch (e) {
+      if (e.message.includes('already in use')) {
+        // Try the next port up by one
+        return checkAndListen((parseInt(port) + 1).toString());
+      } else {
+        throw e; // Re-throw other errors
+      }
+    }
+  };
+
+  // Since we are running in a development environment, we'll try the preferred port first.
+  if (Number(preferredPort)) {
+     return checkAndListen(preferredPort);
+  } else {
+    // If no preferred port is set by env vars, default to 8080 for consistency with old logic
+    console.warn("Warning: PORT environment variable not found or invalid. Falling back to checking port 8080.");
+    return checkAndListen('8080');
+  }
+}
+
+// We will resolve the final PORT value later when we initialize the server.
+// For now, keep it as a string placeholder until runtime initialization.
+// const PORT = process.env.PORT || 8080 // Original line removed
 
 // ── Reset-kontroll på startup ────────────────────────────────
 if (process.argv.includes('--reset') || process.env.RESET === 'true') {
@@ -280,6 +371,30 @@ app.post('/api/media/:entity_id', async (req, res) => {
   }
 })
 
+// ── Serve Graphify codebase graph ────────────────────────────
+const graphifyOutPath = join(ROOT, 'graphify-out')
+app.use('/graphify-out', express.static(graphifyOutPath))
+
+app.get('/code-graph', (req, res) => {
+  const graphHtml = join(graphifyOutPath, 'graph.html')
+  if (existsSync(graphHtml)) {
+    res.sendFile(graphHtml)
+  } else {
+    res.status(404).send(`
+      <div style="font-family: sans-serif; padding: 40px; text-align: center; background: #0f0f1a; color: #e0e0e0; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; box-sizing: border-box; margin: 0;">
+        <h1 style="color: #ff4a4a; font-size: 32px; margin-bottom: 16px;">Grafen hittades inte / Graph Not Found</h1>
+        <p style="font-size: 16px; margin-bottom: 24px; max-width: 600px; line-height: 1.6;">
+          Kodbasens graf har inte genererats än.<br>
+          The codebase graph has not been generated yet.
+        </p>
+        <p style="color: #aaa; font-size: 14px; margin-bottom: 8px;">Kör följande kommando i projektets rot / Run this in the project root:</p>
+        <code style="background: #1a1a2e; padding: 12px 24px; border-radius: 6px; border: 1px solid #3a3a5e; font-size: 16px; margin-bottom: 24px; color: #4E79A7; display: inline-block; font-family: monospace;">npm run graphify</code>
+        <p style="color: #777; font-size: 12px;">Ladda sedan om denna sida / Then reload this page.</p>
+      </div>
+    `)
+  }
+})
+
 // ── Serve static files from client/dist in production ────────
 const clientDistPath = join(ROOT, 'client/dist')
 if (existsSync(clientDistPath)) {
@@ -329,15 +444,26 @@ function startRealtime(bridges, config) {
 }
 
 // ──────────────────────────────────────────────────────────────
-//  Starta servern
+//  Starta servern (Async)
 // ──────────────────────────────────────────────────────────────
-httpServer.listen(PORT, () => {
-  const rt = readRuntimeConfig()
-  if (rt.setupComplete) {
-    getBridges()  // Initiera bridges direkt vid start
-    console.log(`\n🏠 Gästportal körs på http://localhost:${PORT} (setup klar)`)
-  } else {
-    console.log(`\n⚙️  Gästportal körs på http://localhost:${PORT}`)
-    console.log(`   Setup krävs – öppna http://localhost:5173 för att konfigurera\n`)
+async function startServer() {
+  try {
+    const port = await determinePort(); // Use the async determination function
+
+    httpServer.listen(port, () => {
+      const rt = readRuntimeConfig()
+      if (rt.setupComplete) {
+        getBridges()  // Initiera bridges direkt vid start
+        console.log(`\n🏠 Gästportal körs på http://localhost:${port} (setup klar)`)
+      } else {
+        console.log(`\n⚙️  Gästportal körs på http://localhost:${port}`)
+        console.log(`   Setup krävs – öppna http://localhost:5173 för att konfigurera\n`)
+      }
+    });
+  } catch (error) {
+    console.error('❌ [FATAL] Kunde inte starta servern:', error.message);
+    process.exit(1); // Exit process if we can't determine a port or bind to it
   }
-})
+}
+
+startServer();
