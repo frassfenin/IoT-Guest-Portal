@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Sparkles, Wifi, FileText, Info, Lightbulb, LightbulbOff, Copy, Check, Loader2, KeyRound, X } from 'lucide-react'
+import { Sparkles, Wifi, FileText, Info, Lightbulb, LightbulbOff, Copy, Check, Loader2, KeyRound, X, Gamepad, Sofa, Utensils, Bed, DoorOpen, Archive, Home, Bath, Flower2, Tv, Laptop } from 'lucide-react'
 import { io } from 'socket.io-client'
 import QRCode from 'qrcode'
 import Header from './components/Header.jsx'
@@ -31,6 +31,73 @@ function groupByRoom(lights, defaultRoomName = 'Other') {
     acc[room].push(light)
     return acc
   }, {})
+}
+
+const ICON_MAP = {
+  Sofa,
+  Gamepad,
+  Utensils,
+  Bed,
+  DoorOpen,
+  Bath,
+  Flower2,
+  Tv,
+  Laptop,
+  Archive,
+  Home
+}
+
+// Map room names to Lucide icons (supporting custom room objects or name-based heuristics)
+function getRoomIcon(roomName, config) {
+  const name = (roomName || '').toLowerCase().trim();
+  const iconStyle = { marginRight: '8px', flexShrink: 0, opacity: 0.85 };
+  
+  // 1. Look for custom icon configured in config.rooms
+  if (config && Array.isArray(config.rooms)) {
+    const matchedRoom = config.rooms.find(r => {
+      if (typeof r === 'string') return r.toLowerCase().trim() === name;
+      return r && typeof r === 'object' && r.name && r.name.toLowerCase().trim() === name;
+    });
+    if (matchedRoom && typeof matchedRoom === 'object' && matchedRoom.icon) {
+      const IconComp = ICON_MAP[matchedRoom.icon];
+      if (IconComp) {
+        return <IconComp size={18} style={iconStyle} />;
+      }
+    }
+  }
+
+  // 2. Fallback to name-based heuristics
+  if (name.includes('spel') || name.includes('game')) {
+    return <Gamepad size={18} style={iconStyle} />;
+  }
+  if (name.includes('vardag') || name.includes('living') || name.includes('soffa')) {
+    return <Sofa size={18} style={iconStyle} />;
+  }
+  if (name.includes('kök') || name.includes('kitchen') || name.includes('mat')) {
+    return <Utensils size={18} style={iconStyle} />;
+  }
+  if (name.includes('sov') || name.includes('bed') || name.includes('john')) {
+    return <Bed size={18} style={iconStyle} />;
+  }
+  if (name.includes('aula') || name.includes('hall') || name.includes('entré')) {
+    return <DoorOpen size={18} style={iconStyle} />;
+  }
+  if (name.includes('bad') || name.includes('bath') || name.includes('toa')) {
+    return <Bath size={18} style={iconStyle} />;
+  }
+  if (name.includes('ute') || name.includes('garden') || name.includes('balkong') || name.includes('blomma')) {
+    return <Flower2 size={18} style={iconStyle} />;
+  }
+  if (name.includes('tv') || name.includes('media')) {
+    return <Tv size={18} style={iconStyle} />;
+  }
+  if (name.includes('kontor') || name.includes('work') || name.includes('laptop')) {
+    return <Laptop size={18} style={iconStyle} />;
+  }
+  if (name.includes('övrigt') || name.includes('other') || name.includes('misc')) {
+    return <Archive size={18} style={iconStyle} />;
+  }
+  return <Home size={18} style={iconStyle} />;
 }
 
 // Global fetch interceptor to inject X-Admin-Password header for setup APIs
@@ -461,8 +528,14 @@ export default function App() {
                       if (roomA === t('other_room')) return 1
                       if (roomB === t('other_room')) return -1
                       const savedRooms = config.rooms || []
-                      const idxA = savedRooms.indexOf(roomA)
-                      const idxB = savedRooms.indexOf(roomB)
+                      const idxA = savedRooms.findIndex(r => {
+                        if (typeof r === 'string') return r === roomA;
+                        return r && r.name === roomA;
+                      })
+                      const idxB = savedRooms.findIndex(r => {
+                        if (typeof r === 'string') return r === roomB;
+                        return r && r.name === roomB;
+                      })
                       if (idxA === -1 && idxB === -1) return roomA.localeCompare(roomB)
                       if (idxA === -1) return 1
                       if (idxB === -1) return -1
@@ -470,9 +543,17 @@ export default function App() {
                     })
                     .map(([room, lights]) => (
                       <div key={room} className="room-section" style={{ marginBottom: 'var(--space-4)' }}>
-                        <p className="text-xs text-dim font-semibold"
-                           style={{ textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8, color: 'var(--text-2)' }}>
-                          {room}
+                        <p className="text-xs font-semibold"
+                           style={{ 
+                             textTransform: 'uppercase', 
+                             letterSpacing: '0.06em', 
+                             marginBottom: 12, 
+                             display: 'flex', 
+                             alignItems: 'center',
+                             gap: '6px'
+                           }}>
+                          {getRoomIcon(room, config)}
+                          <span>{room}</span>
                         </p>
                         <div className="room-lights-grid">
                           {lights.map((light) => (
@@ -489,25 +570,6 @@ export default function App() {
                     ))}
                 </div>
               </div>
-
-              {/* Media */}
-              {config.media_players.length > 0 && (
-                <div className="controls-group controls-group--media">
-                  <div className="section-header">
-                    <span className="section-header__title">{t('media_title')}</span>
-                    <div className="section-header__line" />
-                  </div>
-                  {config.media_players.map((player) => (
-                    <MediaCard
-                      key={player.entity_id}
-                      config={player}
-                      state={states[player.entity_id]}
-                      onControl={controlMedia}
-                      t={t}
-                    />
-                  ))}
-                </div>
-              )}
             </section>
           </div>
         )}
@@ -515,8 +577,23 @@ export default function App() {
         {/* ── Flytande Bottenmeny (Dock-bar) ── */}
         {config && (
           <div className="floating-dock-container" ref={dockRef}>
-            <div className="floating-dock">
-              {/* Scener-knapp */}
+            <div className={`floating-dock ${config.media_players.length > 0 ? 'floating-dock--has-media' : ''}`}>
+              {/* Media widget on the left side of the dock */}
+              {config.media_players.length > 0 && (
+                <div className="floating-dock__media" style={{ display: 'flex', alignItems: 'center', minWidth: 0, paddingRight: '20px', borderRight: '1px solid rgba(0, 0, 0, 0.08)' }}>
+                  <MediaCard
+                    config={config.media_players[0]}
+                    state={states[config.media_players[0].entity_id]}
+                    onControl={controlMedia}
+                    t={t}
+                    layout="inline"
+                  />
+                </div>
+              )}
+
+              {/* Action Buttons Capsule */}
+              <div className="floating-dock__actions" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 6px', borderRadius: '100px', background: 'rgba(0, 0, 0, 0.035)', border: '1px solid rgba(0, 0, 0, 0.02)' }}>
+                {/* Scener-knapp */}
               <button
                 type="button"
                 className={`floating-dock__btn ${activePopover === 'scenes' ? 'floating-dock__btn--active' : ''}`}
@@ -747,8 +824,7 @@ export default function App() {
                     </div>
                   )}
                 </button>
-                
-
+              </div>
             </div>
           </div>
         )}
