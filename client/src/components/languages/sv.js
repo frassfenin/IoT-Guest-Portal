@@ -294,6 +294,9 @@ export default {
   light_color_temp_label: "Färgtemperatur för {name}",
   light_color_temp_title: "Färgtemperatur",
   light_color_temp_cold: "Kallt",
+  light_color_temp_warm: "Varmt",
+  light_color_title: "Färg",
+  light_color_label: "Färg för {name}",
 
   // MediaCard
   media_status_unavailable: "Inte tillgänglig",

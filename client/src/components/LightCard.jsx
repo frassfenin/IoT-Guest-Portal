@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Lightbulb, Plug, Sun, Thermometer, Snowflake } from 'lucide-react'
+import { Lightbulb, Plug, Sun, Thermometer, Snowflake, Palette } from 'lucide-react'
 import useDebounce from '../hooks/useDebounce.js'
 
 export default function LightCard({ config, state, onChange, t }) {
@@ -23,10 +23,13 @@ export default function LightCard({ config, state, onChange, t }) {
   // ── Lokalt UI-state för sliders (responsivt utan debounce-fördröjning) ──
   const [localBrightness, setLocalBrightness] = useState(brightness)
   const [localColorTemp, setLocalColorTemp]   = useState(colorTemp)
+  const color = state?.attributes?.color ?? '#ffffff'
+  const [localColor, setLocalColor] = useState(color)
 
   // Synka lokalt state när externa states uppdateras (t.ex. via WebSocket)
   useEffect(() => { setLocalBrightness(brightness)  }, [brightness])
   useEffect(() => { setLocalColorTemp(colorTemp) },  [colorTemp])
+  useEffect(() => { setLocalColor(color) }, [color])
 
   // Debounced API-anrop
   const debouncedChangeBrightness = useDebounce(
@@ -34,6 +37,9 @@ export default function LightCard({ config, state, onChange, t }) {
   )
   const debouncedChangeColorTemp = useDebounce(
     (val) => onChange(config.entity_id, { color_temp: val }), 250
+  )
+  const debouncedChangeColor = useDebounce(
+    (val) => onChange(config.entity_id, { color: val }), 250
   )
 
   function handleToggle() {
@@ -50,6 +56,12 @@ export default function LightCard({ config, state, onChange, t }) {
     const val = Number(e.target.value)
     setLocalColorTemp(val)
     debouncedChangeColorTemp(val)
+  }
+
+  function handleColorChange(e) {
+    const val = e.target.value
+    setLocalColor(val)
+    debouncedChangeColor(val)
   }
 
   const toggleId = `toggle-${config.entity_id.replace(/\./g, '-')}`
@@ -134,8 +146,8 @@ export default function LightCard({ config, state, onChange, t }) {
         {/* Färgtemperatur */}
         {config.supports_color_temp && (
           <div className="slider-row">
-            <span className="slider-label" aria-hidden="true" title={translate('light_color_temp_title')} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Thermometer size={14} style={{ strokeWidth: 2.2 }} />
+            <span className="slider-label" aria-hidden="true" title={translate('light_color_temp_cold')} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Snowflake size={14} style={{ strokeWidth: 2.2 }} />
             </span>
             <input
               type="range"
@@ -148,9 +160,39 @@ export default function LightCard({ config, state, onChange, t }) {
               onChange={handleColorTempChange}
               aria-label={translate('light_color_temp_label', { name: config.name })}
             />
-            <span className="slider-label" aria-hidden="true" title={translate('light_color_temp_cold')} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Snowflake size={14} style={{ strokeWidth: 2.2 }} />
+            <span className="slider-label" aria-hidden="true" title={translate('light_color_temp_warm')} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Thermometer size={14} style={{ strokeWidth: 2.2 }} />
             </span>
+          </div>
+        )}
+
+        {/* Färg (Color Picker) */}
+        {state?.attributes?.color !== undefined && state?.attributes?.color !== null && (
+          <div className="slider-row" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: 'var(--space-2)' }}>
+            <span className="slider-label" aria-hidden="true" title={translate('light_color_title')} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Palette size={14} style={{ strokeWidth: 2.2 }} />
+            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
+              <input
+                type="color"
+                className="color-picker-input"
+                value={localColor}
+                onChange={handleColorChange}
+                aria-label={translate('light_color_label', { name: config.name })}
+                style={{
+                  border: 'none',
+                  width: '38px',
+                  height: '24px',
+                  padding: 0,
+                  background: 'none',
+                  cursor: 'pointer',
+                  borderRadius: '4px'
+                }}
+              />
+              <span style={{ fontSize: '11px', color: 'var(--text-3)', fontFamily: 'monospace', textTransform: 'uppercase' }}>
+                {localColor}
+              </span>
+            </div>
           </div>
         )}
       </div>

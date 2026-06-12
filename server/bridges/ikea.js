@@ -21,6 +21,27 @@ const miredsToKelvin = (m) => Math.round(1_000_000 / m)
 const ikeaToStd = (l) => Math.round((l / 100) * 255)
 const stdToIkea = (b) => Math.round((b / 255) * 100)
 
+function hsvToHex(h, s, v = 1.0) {
+  let r, g, b
+  const i = Math.floor(h / 60)
+  const f = h / 60 - i
+  const p = v * (1 - s)
+  const q = v * (1 - f * s)
+  const t = v * (1 - (1 - f) * s)
+
+  switch (i % 6) {
+    case 0: r = v; g = t; b = p; break
+    case 1: r = q; g = v; b = p; break
+    case 2: r = p; g = v; b = t; break
+    case 3: r = p; g = q; b = v; break
+    case 4: r = t; g = p; b = v; break
+    case 5: r = v; g = p; b = q; break
+  }
+
+  const toHex = (val) => Math.round(val * 255).toString(16).padStart(2, '0')
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`
+}
+
 export class IkeaBridge {
   constructor({ ip, token }) {
     if (!ip || !token) {
@@ -77,6 +98,7 @@ export class IkeaBridge {
                 color_temp:    attr.colorTemperature ? kelvinToMireds(attr.colorTemperature) : 370,
                 min_mireds:    153,
                 max_mireds:    500,
+                ...(attr.colorHue !== undefined && attr.colorSaturation !== undefined && { color: hsvToHex(attr.colorHue, attr.colorSaturation) }),
               }),
               friendly_name: attr.customName ?? d.name,
             },
@@ -104,6 +126,32 @@ export class IkeaBridge {
     }
     if (changes.color_temp !== undefined && !isOutlet) {
       attributes.colorTemperature = miredsToKelvin(changes.color_temp)
+    }
+    if (changes.color !== undefined && !isOutlet) {
+      attributes.isOn = true
+      const hex = changes.color.replace('#', '')
+      const r = parseInt(hex.substring(0, 2), 16) / 255
+      const g = parseInt(hex.substring(2, 4), 16) / 255
+      const b = parseInt(hex.substring(4, 6), 16) / 255
+
+      const max = Math.max(r, g, b)
+      const min = Math.min(r, g, b)
+      let h = 0
+      let s = 0
+      const d = max - min
+
+      if (max !== min) {
+        s = d / max
+        switch (max) {
+          case r: h = (g - b) / d + (g < b ? 6 : 0); break
+          case g: h = (b - r) / d + 2; break
+          case b: h = (r - g) / d + 4; break
+        }
+        h /= 6
+      }
+
+      attributes.colorHue = Math.round(h * 360)
+      attributes.colorSaturation = Math.round(s * 100) / 100
     }
 
     const endpoint = isOutlet ? 'outlets' : 'lights'
@@ -150,6 +198,7 @@ export class IkeaBridge {
                   attributes: {
                     ...(!devConfig.isOutlet && attr.lightLevel       !== undefined && { brightness: ikeaToStd(attr.lightLevel) }),
                     ...(!devConfig.isOutlet && attr.colorTemperature !== undefined && { color_temp: kelvinToMireds(attr.colorTemperature) }),
+                    ...(!devConfig.isOutlet && attr.colorHue !== undefined && attr.colorSaturation !== undefined && { color: hsvToHex(attr.colorHue, attr.colorSaturation) }),
                   },
                 },
               })
@@ -257,6 +306,7 @@ export class IkeaTradfriGateway {
             min_mireds:    153,
             max_mireds:    500,
             friendly_name: dev.name ?? d.name,
+            ...(light?.color && { color: `#${light.color}` }),
           },
         }
       })
@@ -288,6 +338,11 @@ export class IkeaTradfriGateway {
       // Mappa mireds (153-500) till procent (0-100) för färgtemperatur
       const pct = Math.round(((changes.color_temp - 153) / (500 - 153)) * 100)
       operation.colorTemperature = Math.max(0, Math.min(100, pct))
+    }
+
+    if (changes.color !== undefined && dev.type === AccessoryTypes.lightbulb) {
+      operation.onOff = true
+      operation.color = changes.color.replace('#', '')
     }
 
     try {

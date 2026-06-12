@@ -292,6 +292,9 @@ export default {
   light_color_temp_label: "Color temp for {name}",
   light_color_temp_title: "Color temperature",
   light_color_temp_cold: "Cold",
+  light_color_temp_warm: "Warm",
+  light_color_title: "Color",
+  light_color_label: "Color for {name}",
 
   // MediaCard
   media_status_unavailable: "Unavailable",

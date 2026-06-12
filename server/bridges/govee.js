@@ -38,6 +38,16 @@ export class GoveeBridge {
     const capabilities = data.payload?.capabilities ?? []
     const onOffCap = capabilities.find(c => c.instance === 'powerState')
     const brightnessCap = capabilities.find(c => c.instance === 'brightness')
+    const colorCap = capabilities.find(c => c.instance === 'colorRgb')
+
+    const rgbVal = colorCap?.state?.value
+    let colorAttr = null
+    if (rgbVal !== undefined && rgbVal !== null) {
+      const r = (rgbVal >> 16) & 255
+      const g = (rgbVal >> 8) & 255
+      const b = rgbVal & 255
+      colorAttr = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`
+    }
 
     return {
       entity_id: device.entity_id,
@@ -45,6 +55,7 @@ export class GoveeBridge {
       attributes: {
         brightness: brightnessCap?.state?.value ? Math.round((brightnessCap.state.value / 100) * 255) : 128,
         friendly_name: device.name,
+        ...(colorAttr && { color: colorAttr }),
       },
     }
   }
@@ -79,12 +90,19 @@ export class GoveeBridge {
     // Legacy returnerar properties som en array av enkla objekt
     const props = Object.assign({}, ...(data.data?.properties ?? []))
 
+    let colorAttr = null
+    if (props.color) {
+      const { r, g, b } = props.color
+      colorAttr = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`
+    }
+
     return {
       entity_id: device.entity_id,
       state: props.powerState === 'on' ? 'on' : 'off',
       attributes: {
         brightness:    props.brightness ? Math.round((props.brightness / 100) * 255) : 128,
         friendly_name: device.name,
+        ...(colorAttr && { color: colorAttr }),
       },
     }
   }
@@ -137,6 +155,14 @@ export class GoveeBridge {
         const kelvin = Math.round(1_000_000 / changes.color_temp)
         cmds.push(this.#sendCommandOpenAPI(deviceConfig, 'devices.capabilities.color_setting', 'colorTemperature', kelvin))
       }
+      if (changes.color !== undefined) {
+        const hex = changes.color.replace('#', '')
+        const r = parseInt(hex.substring(0, 2), 16)
+        const g = parseInt(hex.substring(2, 4), 16)
+        const b = parseInt(hex.substring(4, 6), 16)
+        const rgbVal = (r << 16) + (g << 8) + b
+        cmds.push(this.#sendCommandOpenAPI(deviceConfig, 'devices.capabilities.color_setting', 'colorRgb', rgbVal))
+      }
     } else {
       if (changes.state !== undefined) {
         cmds.push(this.#sendCommandLegacy(deviceConfig, 'turn', changes.state))
@@ -148,6 +174,13 @@ export class GoveeBridge {
       if (changes.color_temp !== undefined) {
         const kelvin = Math.round(1_000_000 / changes.color_temp)
         cmds.push(this.#sendCommandLegacy(deviceConfig, 'colorTem', kelvin))
+      }
+      if (changes.color !== undefined) {
+        const hex = changes.color.replace('#', '')
+        const r = parseInt(hex.substring(0, 2), 16)
+        const g = parseInt(hex.substring(2, 4), 16)
+        const b = parseInt(hex.substring(4, 6), 16)
+        cmds.push(this.#sendCommandLegacy(deviceConfig, 'color', { r, g, b }))
       }
     }
 
