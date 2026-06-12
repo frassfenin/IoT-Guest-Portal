@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { FolderOpen, Plus, Trash2, ArrowLeft, Settings, Check, HelpCircle, Home, Lightbulb, Sliders, Palette, Cast, Cpu, Wifi, Save, Power, RefreshCw, Search, Zap, Server, CheckCircle2, AlertCircle, Pin, AlertTriangle, Loader2, Download, Upload, Globe, Network } from 'lucide-react'
+import { FolderOpen, Plus, Trash2, ArrowLeft, Settings, Check, HelpCircle, Home, Lightbulb, Sliders, Palette, Cast, Cpu, Wifi, Save, Power, RefreshCw, Search, Zap, Server, CheckCircle2, AlertCircle, Pin, AlertTriangle, Loader2, Download, Upload, Globe, Network, User, LogOut } from 'lucide-react'
 import sv from '../languages/sv.js'
 import en from '../languages/en.js'
 
@@ -123,7 +123,7 @@ function LightConfigurator({ lights, onChange, rooms = [], onAddRoom, t }) {
   )
 }
 
-export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
+export default function SetupWizard({ onComplete, initialConfig, onCancel, initialStep }) {
   const [locale, setLocale] = useState(() => {
     const saved = localStorage.getItem('setup_wizard_locale')
     return saved === 'en' ? 'en' : 'sv'
@@ -143,6 +143,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
   }
 
   const [step, setStep] = useState(() => {
+    if (initialStep !== undefined) return initialStep
     if (initialConfig) {
       const isLargeScreen = typeof window !== 'undefined' && window.innerWidth >= 768
       return isLargeScreen ? 12 : 100
@@ -239,7 +240,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
     try {
       setLoading(true)
       setError(null)
-      const res = await fetch('/api/config')
+      const res = await fetch('/api/setup/config')
       if (!res.ok) throw new Error(t('fetch_config_error'))
       const data = await res.json()
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2))
@@ -315,6 +316,11 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
     name: 'GästPortal_WiFi',
     password: 'KännDigSomHemma'
   })
+
+  const [adminPasswordInput, setAdminPasswordInput] = useState('')
+  const [adminPasswordConfirmInput, setAdminPasswordConfirmInput] = useState('')
+  const [savingPassword, setSavingPassword] = useState(false)
+  const [passwordMessage, setPasswordMessage] = useState(null)
 
   const [notes, setNotes] = useState(() => {
     const savedLocale = localStorage.getItem('setup_wizard_locale')
@@ -1068,7 +1074,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
   // ── Navigering ──────────────────────────────────────────────
   const getActiveStepsList = () => {
     if (initialConfig) {
-      return [12, 11, 2, 3, 4, 6, 10, 8, 14]
+      return [12, 15, 11, 2, 3, 4, 6, 10, 8, 14]
     }
     const list = [1] // Välkommen
     list.push(13) // Välj integrationer (Kort-grid)
@@ -1110,6 +1116,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
 
   const editItems = [
     { id: 12, name: t('step_name_general'), iconComponent: Settings, colorClass: 'general', desc: t('general_settings_desc') },
+    { id: 15, name: t('step_name_account'), iconComponent: User, colorClass: 'account', desc: t('account_settings_desc') },
     { id: 11, name: t('step_name_rooms'), iconComponent: Home, colorClass: 'rooms', desc: t('room_builder_desc') },
     { id: 2, name: t('step_name_hue'), iconComponent: Lightbulb, colorClass: 'hue', desc: t('hue_desc') },
     { id: 3, name: t('step_name_ikea'), iconComponent: Sliders, colorClass: 'ikea', desc: t('ikea_desc') },
@@ -1124,6 +1131,7 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
     switch (stepId) {
       case 1: return t('step_name_welcome')
       case 12: return t('step_name_general')
+      case 15: return t('step_name_account')
       case 11: return t('step_name_rooms')
       case 13: return t('step_name_integrations')
       case 2: return t('step_name_hue')
@@ -1217,15 +1225,31 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
       <div className="setup-header">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h1 className="setup-title">{initialConfig ? t('wizard_title_edit') : t('wizard_title_new')}</h1>
-          {onCancel && (
-            <button
-              type="button"
-              className="setup-btn setup-btn--cancel"
-              onClick={handleClose}
-            >
-              ✕ {t('close_btn')}
-            </button>
-          )}
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            {sessionStorage.getItem('admin_password') && (
+              <button
+                type="button"
+                className="setup-btn setup-btn--danger"
+                onClick={() => {
+                  sessionStorage.removeItem('admin_password')
+                  window.location.reload()
+                }}
+                style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
+                <LogOut size={14} />
+                {t('log_out_btn')}
+              </button>
+            )}
+            {onCancel && (
+              <button
+                type="button"
+                className="setup-btn setup-btn--cancel"
+                onClick={handleClose}
+              >
+                ✕ {t('close_btn')}
+              </button>
+            )}
+          </div>
         </div>
         {!initialConfig ? (
           <>
@@ -1453,6 +1477,153 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel }) {
                 )}
               </div>
               
+              <div className="step-actions" style={{ marginTop: 24 }}>
+                {initialConfig ? (
+                  renderEditStepActions()
+                ) : (
+                  <>
+                    <button className="setup-btn setup-btn--text" onClick={prevStep}>{t('back_btn')}</button>
+                    <button className="setup-btn setup-btn--primary" onClick={nextStep}>{t('next_btn')}</button>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* STEG 15: Konto (Ändra lösenord) */}
+          {step === 15 && (
+            <div className="setup-card fade-in">
+              <div className="setup-icon-wrapper setup-icon-wrapper--general" style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' }}>
+                <User size={32} className="setup-icon-svg" />
+              </div>
+              <h2>{t('step_name_account')}</h2>
+              <p className="description" style={{ marginBottom: 24 }}>
+                {t('account_settings_desc')}
+              </p>
+
+              <div className="form-group" style={{ marginBottom: 24 }}>
+                <label style={{ display: 'block', fontWeight: 600, marginBottom: 8 }}>
+                  {t('admin_password_label')}
+                </label>
+                <input
+                  type="password"
+                  placeholder={t('admin_password_placeholder')}
+                  value={adminPasswordInput}
+                  onChange={(e) => setAdminPasswordInput(e.target.value)}
+                  style={{ width: '100%' }}
+                />
+                <p className="hint-text" style={{ fontSize: 'var(--text-xs)', color: 'var(--text-3)', marginTop: 8 }}>
+                  {t('admin_password_hint')}
+                </p>
+              </div>
+
+              <div className="form-group" style={{ marginBottom: 24 }}>
+                <label style={{ display: 'block', fontWeight: 600, marginBottom: 8 }}>
+                  {t('admin_password_confirm_label')}
+                </label>
+                <input
+                  type="password"
+                  placeholder={t('admin_password_confirm_placeholder')}
+                  value={adminPasswordConfirmInput}
+                  onChange={(e) => setAdminPasswordConfirmInput(e.target.value)}
+                  style={{ width: '100%' }}
+                />
+              </div>
+
+              {passwordMessage && (
+                <div 
+                  className={`alert-msg ${passwordMessage.type === 'success' ? 'alert-msg--success' : 'alert-msg--error'}`}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    padding: '12px 16px',
+                    borderRadius: 'var(--radius-xs)',
+                    marginBottom: 24,
+                    fontSize: 'var(--text-sm)',
+                    background: passwordMessage.type === 'success' ? 'rgba(16, 185, 129, 0.08)' : 'rgba(239, 68, 68, 0.08)',
+                    color: passwordMessage.type === 'success' ? '#10b981' : '#ef4444',
+                    border: passwordMessage.type === 'success' ? '1px solid rgba(16, 185, 129, 0.15)' : '1px solid rgba(239, 68, 68, 0.15)'
+                  }}
+                >
+                  {passwordMessage.type === 'success' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
+                  <span>{passwordMessage.text}</span>
+                </div>
+              )}
+
+              <button
+                type="button"
+                className="setup-btn setup-btn--primary"
+                onClick={async () => {
+                  if (!adminPasswordInput.trim()) {
+                    setPasswordMessage({ type: 'error', text: t('admin_password_placeholder') })
+                    return
+                  }
+                  if (adminPasswordInput !== adminPasswordConfirmInput) {
+                    setPasswordMessage({ type: 'error', text: t('passwords_dont_match') })
+                    return
+                  }
+                  setSavingPassword(true)
+                  setPasswordMessage(null)
+                  try {
+                    const res = await fetch('/api/setup/change-password', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json'
+                      },
+                      body: JSON.stringify({ password: adminPasswordInput })
+                    })
+                    const data = await res.json()
+                    if (!res.ok) {
+                      throw new Error(data.error || 'Fel vid byte av lösenord')
+                    }
+                    sessionStorage.setItem('admin_password', adminPasswordInput)
+                    setPasswordMessage({ type: 'success', text: t('pwd_save_success') })
+                    setAdminPasswordInput('')
+                    setAdminPasswordConfirmInput('')
+                  } catch (err) {
+                    setPasswordMessage({ type: 'error', text: err.message })
+                  } finally {
+                    setSavingPassword(false)
+                  }
+                }}
+                disabled={savingPassword}
+                style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+              >
+                {savingPassword ? (
+                  <>
+                    <Loader2 size={16} className="setup-btn-spin" />
+                    Sparar...
+                  </>
+                ) : (
+                  <>
+                    <Check size={16} />
+                    {t('save_btn')}
+                  </>
+                )}
+              </button>
+
+              <div style={{ marginTop: '32px', borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '24px' }}>
+                <h3 style={{ fontSize: 'var(--text-sm)', fontWeight: 600, color: 'var(--text-2)', marginBottom: '8px' }}>
+                  {t('log_out_btn')}
+                </h3>
+                <p style={{ fontSize: 'var(--text-xs)', color: 'var(--text-3)', marginBottom: '16px', lineHeight: 1.4 }}>
+                  {locale === 'en' ? 'Log out from the administrative session.' : 'Logga ut från administratörssessionen.'}
+                </p>
+                <button
+                  type="button"
+                  className="setup-btn setup-btn--danger"
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                  onClick={() => {
+                    sessionStorage.removeItem('admin_password')
+                    window.location.reload()
+                  }}
+                >
+                  <LogOut size={16} />
+                  {t('log_out_btn')}
+                </button>
+              </div>
+
               <div className="step-actions" style={{ marginTop: 24 }}>
                 {initialConfig ? (
                   renderEditStepActions()

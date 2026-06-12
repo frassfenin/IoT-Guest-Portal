@@ -218,6 +218,7 @@ export default {
   greeting_evening: "Good evening",
   connected: "Connected",
   disconnected: "Disconnected",
+  enter_admin_password: "Enter admin password:",
   setup_guide_btn: "Setup guide",
   organize_rooms_btn: "Organize rooms & lights",
   blur_bg_btn: "Blur background: {status}",
@@ -336,7 +337,25 @@ export default {
   info_wifi_copy_hint: "Press to copy the password",
   info_wifi_copied: "Copied to clipboard!",
   info_wifi_press_copy: "Press to copy",
-  info_useful_to_know: "Useful to know"
+  info_useful_to_know: "Useful to know",
+
+  // Admin and Account Settings
+  step_name_account: "Account",
+  account_settings_desc: "Manage administrative account and password.",
+  admin_password_label: "Admin password",
+  admin_password_placeholder: "Enter new password",
+  admin_password_hint: "This password is used to log in to the setup wizard from your home network.",
+  pwd_save_success: "Password saved successfully!",
+  login_modal_title: "Admin Login",
+  login_modal_helper: "Default password: 1234",
+  login_modal_submit: "Log In",
+  login_modal_error: "Incorrect password",
+  log_out_btn: "Log out",
+  log_in_btn: "Log in (admin)",
+  admin_settings_btn: "Admin Settings",
+  admin_password_confirm_label: "Confirm new password",
+  admin_password_confirm_placeholder: "Type the password again",
+  passwords_dont_match: "Passwords do not match!"
 };
 
 
