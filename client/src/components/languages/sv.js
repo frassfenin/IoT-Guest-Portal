@@ -232,7 +232,7 @@ export default {
   graph_instruction_title: "Valfri utvecklarfunktion",
   graph_instruction_desc: "Den här fliken visar en interaktiv visualisering av kodbasen. För att aktivera den lokalt på din maskin:",
   graph_instruction_step1: "Skapa en virtuell Python-miljö: python3 -m venv .venv",
-  graph_instruction_step2: "Installera Python-paket: .venv/bin/pip install networkx numpy rapidfuzz tree-sitter tree-sitter-python tree-sitter-javascript",
+  graph_instruction_step2: "Installera Python-paket: .venv/bin/pip install graphifyy networkx numpy rapidfuzz tree-sitter tree-sitter-python tree-sitter-javascript",
   graph_instruction_step3: "Bygg sedan grafen genom att köra: npm run graphify",
   graph_instruction_skip: "Om du inte vill använda denna funktion kan du bara klicka på Nästa eller stänga inställningarna.",
   status_on: "PÅ",
@@ -294,6 +294,9 @@ export default {
   light_color_temp_label: "Färgtemperatur för {name}",
   light_color_temp_title: "Färgtemperatur",
   light_color_temp_cold: "Kallt",
+  light_color_temp_warm: "Varmt",
+  light_color_title: "Färg",
+  light_color_label: "Färg för {name}",
 
   // MediaCard
   media_status_unavailable: "Inte tillgänglig",

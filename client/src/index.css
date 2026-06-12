@@ -1350,13 +1350,13 @@ input[type="range"] {
     var(--amber-light) 100%);
 }
 
-/* Color temp slider: warm → cool */
+/* Color temp slider: cool → warm */
 .slider--color-temp {
   background: linear-gradient(to right,
-    #ffb076 0%,
-    #fff8eb 40%,
-    #dbebff 75%,
-    #a3cfff 100%);
+    #a3cfff 0%,
+    #dbebff 25%,
+    #fff8eb 60%,
+    #ffb076 100%);
 }
 
 /* Slider thumb – WebKit */

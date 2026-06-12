@@ -231,7 +231,7 @@ export default {
   graph_instruction_title: "Optional Developer Feature",
   graph_instruction_desc: "This tab displays an interactive visualization of the codebase. To activate it locally on your machine:",
   graph_instruction_step1: "Create a Python virtual environment: python3 -m venv .venv",
-  graph_instruction_step2: "Install Python packages: .venv/bin/pip install networkx numpy rapidfuzz tree-sitter tree-sitter-python tree-sitter-javascript",
+  graph_instruction_step2: "Install Python packages: .venv/bin/pip install graphifyy networkx numpy rapidfuzz tree-sitter tree-sitter-python tree-sitter-javascript",
   graph_instruction_step3: "Then build the graph by running: npm run graphify",
   graph_instruction_skip: "If you do not wish to use this feature, you can simply click Next or close the settings.",
   status_on: "ON",
@@ -292,6 +292,9 @@ export default {
   light_color_temp_label: "Color temp for {name}",
   light_color_temp_title: "Color temperature",
   light_color_temp_cold: "Cold",
+  light_color_temp_warm: "Warm",
+  light_color_title: "Color",
+  light_color_label: "Color for {name}",
 
   // MediaCard
   media_status_unavailable: "Unavailable",
