@@ -339,7 +339,25 @@ export default {
   info_wifi_copy_hint: "Tryck för att kopiera lösenordet",
   info_wifi_copied: "Kopierat till urklipp!",
   info_wifi_press_copy: "Tryck för att kopiera",
-  info_useful_to_know: "Nyttigt att veta"
+  info_useful_to_know: "Nyttigt att veta",
+
+  // Admin and Account Settings
+  step_name_account: "Konto",
+  account_settings_desc: "Hantera administratörskonto och lösenord.",
+  admin_password_label: "Administratörslösenord",
+  admin_password_placeholder: "Ange nytt lösenord",
+  admin_password_hint: "Detta lösenord används för att logga in i inställningsguiden från hemmanätverket.",
+  pwd_save_success: "Lösenordet har sparats!",
+  login_modal_title: "Administratörsinloggning",
+  login_modal_helper: "Standardlösenord: 1234",
+  login_modal_submit: "Logga in",
+  login_modal_error: "Felaktigt lösenord",
+  log_out_btn: "Logga ut",
+  log_in_btn: "Logga in (admin)",
+  admin_settings_btn: "Inställningar (admin)",
+  admin_password_confirm_label: "Bekräfta nytt lösenord",
+  admin_password_confirm_placeholder: "Skriv lösenordet igen",
+  passwords_dont_match: "Lösenorden matchar inte!"
 };
 
 

@@ -24,7 +24,7 @@ function formatDate(date, locale) {
   return date.toLocaleDateString(code, { weekday: 'long', day: 'numeric', month: 'long' })
 }
 
-export default function Header({ connected, config, onOpenOrganizer, onOpenSetupWizard, blurEnabled, onToggleBlur, locale = 'sv', t }) {
+export default function Header({ connected, config, onOpenOrganizer, onOpenSetupWizard, blurEnabled, onToggleBlur, locale = 'sv', t, isAdminLoggedIn, onLogInOut }) {
   const translate = t || ((key) => key)
   const [now, setNow] = useState(new Date())
   const [dropdownOpen, setDropdownOpen] = useState(false)
@@ -92,7 +92,7 @@ export default function Header({ connected, config, onOpenOrganizer, onOpenSetup
               }}
             >
               <Sliders size={16} className="settings-dropdown__icon" style={{ strokeWidth: 2.2 }} />
-              {translate('setup_guide_btn')}
+              {translate('admin_settings_btn')}
             </button>
             <button 
               className="settings-dropdown__item" 
@@ -115,29 +115,33 @@ export default function Header({ connected, config, onOpenOrganizer, onOpenSetup
               <Eye size={16} className="settings-dropdown__icon" style={{ strokeWidth: 2.2 }} />
               {translate('blur_bg_btn', { status: blurEnabled ? translate('status_on') : translate('status_off') })}
             </button>
-            <div className="settings-dropdown__divider" />
-            <button 
-              className="settings-dropdown__item" 
-              role="menuitem"
-              onClick={() => {
-                setDropdownOpen(false)
-                alert(translate('alert_pwd_demo'))
-              }}
-            >
-              <KeyRound size={16} className="settings-dropdown__icon" style={{ strokeWidth: 2.2, color: 'var(--text-3)' }} />
-              {translate('change_pwd_btn')}
-            </button>
-            <button 
-              className="settings-dropdown__item" 
-              role="menuitem"
-              onClick={() => {
-                setDropdownOpen(false)
-                alert(translate('alert_login_gateway'))
-              }}
-            >
-              <LogOut size={16} className="settings-dropdown__icon" style={{ strokeWidth: 2.2, color: 'var(--text-3)' }} />
-              {translate('log_in_out_btn')}
-            </button>
+            {isAdminLoggedIn && (
+              <>
+                <div className="settings-dropdown__divider" />
+                <button 
+                  className="settings-dropdown__item" 
+                  role="menuitem"
+                  onClick={() => {
+                    setDropdownOpen(false)
+                    if (onOpenSetupWizard) onOpenSetupWizard(15)
+                  }}
+                >
+                  <KeyRound size={16} className="settings-dropdown__icon" style={{ strokeWidth: 2.2 }} />
+                  {translate('step_name_account')}
+                </button>
+                <button 
+                  className="settings-dropdown__item" 
+                  role="menuitem"
+                  onClick={() => {
+                    setDropdownOpen(false)
+                    if (onLogInOut) onLogInOut()
+                  }}
+                >
+                  <LogOut size={16} className="settings-dropdown__icon" style={{ strokeWidth: 2.2, color: 'var(--text-3)' }} />
+                  {translate('log_out_btn')}
+                </button>
+              </>
+            )}
             <div className="settings-dropdown__divider" />
             <a 
               href="https://github.com/frassfenin/IoT-Guest-Portal"

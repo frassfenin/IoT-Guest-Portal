@@ -261,6 +261,7 @@ app.get('/api/config', (_req, res) => {
       return rest
     })
   }
+  delete secureConfig.adminPassword
 
   // Lägg till Cast-enheter från runtimeConfig om setup är klar
   const rt = readRuntimeConfig()

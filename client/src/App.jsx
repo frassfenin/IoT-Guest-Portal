@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Sparkles, Wifi, FileText, Info, Lightbulb, LightbulbOff, Copy, Check, Loader2 } from 'lucide-react'
+import { Sparkles, Wifi, FileText, Info, Lightbulb, LightbulbOff, Copy, Check, Loader2, KeyRound, X } from 'lucide-react'
 import { io } from 'socket.io-client'
 import QRCode from 'qrcode'
 import Header from './components/Header.jsx'
@@ -74,6 +74,13 @@ export default function App() {
   const [showOrganizer, setShowOrganizer] = useState(false)
   const [showSetupWizard, setShowSetupWizard] = useState(false)
   const [fullConfig, setFullConfig] = useState(null)
+  const [setupStep, setSetupStep] = useState(undefined)
+  const [isDefaultPassword, setIsDefaultPassword] = useState(true)
+
+  const [showLoginModal, setShowLoginModal] = useState(false)
+  const [loginPassword, setLoginPassword] = useState('')
+  const [loginError, setLoginError] = useState(null)
+  const [pendingCallback, setPendingCallback] = useState(null)
 
   const checkAdminAccess = useCallback((callback) => {
     // Om setup inte är klar behövs inget lösenord
@@ -88,12 +95,36 @@ export default function App() {
       return
     }
 
-    const pwd = prompt(t('enter_admin_password') || 'Ange administratörslösenord:')
-    if (pwd === null) return // Avbruten
+    setPendingCallback(() => callback)
+    setLoginPassword('')
+    setLoginError(null)
+    setShowLoginModal(true)
+  }, [setupNeeded])
 
-    sessionStorage.setItem('admin_password', pwd)
-    callback()
-  }, [setupNeeded, t])
+  const handleLoginSubmit = async (e) => {
+    e.preventDefault()
+    setLoginError(null)
+    try {
+      const res = await fetch('/api/setup/config', {
+        headers: {
+          'X-Admin-Password': loginPassword
+        }
+      })
+      if (!res.ok) {
+        throw new Error(t('login_modal_error'))
+      }
+      const fullConfigData = await res.json()
+      sessionStorage.setItem('admin_password', loginPassword)
+      setFullConfig(fullConfigData)
+      setShowLoginModal(false)
+      if (pendingCallback) {
+        pendingCallback()
+        setPendingCallback(null)
+      }
+    } catch (err) {
+      setLoginError(err.message)
+    }
+  }
   const [activePopover, setActivePopover] = useState(null) // null | 'wifi' | 'notes' | 'status'
   const [qrMode, setQrMode] = useState('wifi') // 'wifi' | 'portal'
   const [qrDataUrl, setQrDataUrl] = useState('')
@@ -157,12 +188,12 @@ export default function App() {
     }
 
     try {
-      const res = await fetch('/api/setup/save', {
+      const res = await fetch('/api/setup/save-rooms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...updatedConfig,
-          cast: updatedConfig.cast || config.cast || []
+          lights: updatedLights,
+          rooms: updatedRooms
         })
       })
 
@@ -206,6 +237,7 @@ export default function App() {
       .then((r) => r.json())
       .then((data) => {
         setSetupNeeded(data.setupNeeded)
+        setIsDefaultPassword(data.isDefaultPassword !== false)
         if (!data.setupNeeded) {
           loadPortal()
         }
@@ -229,6 +261,7 @@ export default function App() {
         .then((r) => r.json())
         .then((data) => {
           setSetupNeeded(data.setupNeeded)
+          setIsDefaultPassword(data.isDefaultPassword !== false)
           if (!data.setupNeeded) {
             loadPortal()
           }
@@ -368,13 +401,14 @@ export default function App() {
           <Header 
             connected={connected} 
             config={config}
-            onOpenOrganizer={() => checkAdminAccess(() => setShowOrganizer(true))} 
-            onOpenSetupWizard={() => checkAdminAccess(async () => {
+            onOpenOrganizer={() => setShowOrganizer(true)} 
+            onOpenSetupWizard={(step) => checkAdminAccess(async () => {
               try {
                 const res = await fetch('/api/setup/config')
                 if (res.ok) {
                   const data = await res.json()
                   setFullConfig(data)
+                  setSetupStep(step)
                   setShowSetupWizard(true)
                 } else {
                   alert(t('fetch_config_error') || 'Kunde inte hämta administratörskonfiguration.')
@@ -388,6 +422,17 @@ export default function App() {
             onToggleBlur={toggleBlur}
             locale={locale}
             t={t}
+            isAdminLoggedIn={!!sessionStorage.getItem('admin_password')}
+            onLogInOut={() => {
+              if (sessionStorage.getItem('admin_password')) {
+                sessionStorage.removeItem('admin_password')
+                window.location.reload()
+              } else {
+                checkAdminAccess(() => {
+                  window.location.reload()
+                })
+              }
+            }}
           />
         </div>
 
@@ -723,9 +768,11 @@ export default function App() {
           <div className="setup-wizard-overlay">
             <SetupWizard
               initialConfig={fullConfig}
+              initialStep={setupStep}
               onComplete={() => {
                 setShowSetupWizard(false)
                 setFullConfig(null)
+                setSetupStep(undefined)
                 const saved = localStorage.getItem(LOCALE_STORAGE_KEY)
                 setLocale(saved === 'en' ? 'en' : 'sv')
                 socket.emit('setup_complete')
@@ -733,8 +780,169 @@ export default function App() {
               onCancel={() => {
                 setShowSetupWizard(false)
                 setFullConfig(null)
+                setSetupStep(undefined)
               }}
             />
+          </div>
+        )}
+
+        {/* ── Admin Login Modal Overlay ── */}
+        {showLoginModal && (
+          <div className="login-modal-overlay fade-in" style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px',
+            background: 'rgba(10, 10, 12, 0.45)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)'
+          }}>
+            <div className="login-modal-card" style={{
+              position: 'relative',
+              width: '100%',
+              maxWidth: '400px',
+              padding: '32px 28px',
+              borderRadius: '24px',
+              background: '#18181b',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+              color: '#ffffff',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '24px',
+              alignItems: 'stretch'
+            }}>
+              {/* Close Button */}
+              <button 
+                type="button"
+                onClick={() => {
+                  setShowLoginModal(false)
+                  setPendingCallback(null)
+                }}
+                style={{
+                  position: 'absolute',
+                  top: '20px',
+                  right: '20px',
+                  background: 'none',
+                  border: 'none',
+                  color: '#e4e4e7',
+                  cursor: 'pointer',
+                  padding: '6px',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'background 0.2s, color 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'
+                  e.currentTarget.style.color = '#ffffff'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'none'
+                  e.currentTarget.style.color = '#e4e4e7'
+                }}
+              >
+                <X size={18} />
+              </button>
+
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', textAlign: 'center' }}>
+                <div style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '56px',
+                  height: '56px',
+                  borderRadius: '16px',
+                  background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+                  color: '#ffffff',
+                  boxShadow: '0 8px 16px -4px rgba(59, 130, 246, 0.4)'
+                }}>
+                  <KeyRound size={24} />
+                </div>
+                <h2 style={{ fontSize: '1.25rem', fontWeight: 700, letterSpacing: '-0.025em', margin: '8px 0 2px 0', color: '#ffffff' }}>
+                  {t('login_modal_title')}
+                </h2>
+                {isDefaultPassword && (
+                  <p style={{ fontSize: '0.875rem', color: '#93c5fd', fontWeight: 500, margin: 0 }}>
+                    {t('login_modal_helper')}
+                  </p>
+                )}
+              </div>
+
+              <form onSubmit={handleLoginSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <input
+                    type="password"
+                    autoFocus
+                    placeholder={t('admin_password_placeholder') || 'Ange lösenord'}
+                    value={loginPassword}
+                    onChange={(e) => setLoginPassword(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '12px 16px',
+                      borderRadius: '12px',
+                      border: '1px solid #3f3f46',
+                      background: '#27272a',
+                      color: '#ffffff',
+                      fontSize: '0.9375rem',
+                      outline: 'none',
+                      transition: 'border-color 0.2s, box-shadow 0.2s'
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = '#3b82f6'
+                      e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.3)'
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = '#3f3f46'
+                      e.target.style.boxShadow = 'none'
+                    }}
+                  />
+                </div>
+
+                {loginError && (
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '10px 14px',
+                    borderRadius: '10px',
+                    background: 'rgba(239, 68, 68, 0.15)',
+                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                    color: '#fca5a5',
+                    fontSize: '0.8125rem',
+                    fontWeight: 500
+                  }}>
+                    <span>⚠️ {loginError}</span>
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  className="setup-btn setup-btn--primary"
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    borderRadius: '12px',
+                    fontWeight: 600,
+                    fontSize: '0.9375rem',
+                    background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+                    border: 'none',
+                    color: '#ffffff',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
+                    transition: 'opacity 0.2s'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
+                  onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+                >
+                  {t('login_modal_submit')}
+                </button>
+              </form>
+            </div>
           </div>
         )}
       </div>

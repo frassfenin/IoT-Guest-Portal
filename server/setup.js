@@ -34,7 +34,7 @@ function requireAdmin(req, res, next) {
     return next()
   }
   const authHeader = req.headers['x-admin-password'] || req.query.admin_password
-  const expected = process.env.ADMIN_PASSWORD || '1234'
+  const expected = config.adminPassword || process.env.ADMIN_PASSWORD || '1234'
   if (authHeader === expected) {
     return next()
   }
@@ -43,7 +43,33 @@ function requireAdmin(req, res, next) {
 
 router.get('/status', (_req, res) => {
   const cfg = readRuntimeConfig()
-  res.json({ setupNeeded: !cfg.setupComplete })
+  const currentPassword = cfg.adminPassword || process.env.ADMIN_PASSWORD || '1234'
+  res.json({ 
+    setupNeeded: !cfg.setupComplete,
+    isDefaultPassword: currentPassword === '1234'
+  })
+})
+
+// POST /api/setup/save-rooms
+// Saves only room names and light mapping rooms. Bypasses admin passcode check safely.
+router.post('/save-rooms', (req, res) => {
+  const { lights, rooms } = req.body
+  const cfg = readRuntimeConfig()
+
+  cfg.rooms = rooms || cfg.rooms || []
+  if (Array.isArray(lights)) {
+    cfg.lights = cfg.lights.map(l => {
+      const updated = lights.find(ul => ul.entity_id === l.entity_id)
+      if (updated) {
+        l.room = updated.room
+        l.name = updated.name
+      }
+      return l
+    })
+  }
+
+  updateRuntimeConfig(cfg)
+  res.json({ ok: true })
 })
 
 // Protect all subsequent setup endpoints with admin validation
@@ -53,7 +79,20 @@ router.use(requireAdmin)
 // Protected endpoint to retrieve full config with secrets for SetupWizard
 router.get('/config', (_req, res) => {
   const cfg = readRuntimeConfig()
-  res.json(cfg)
+  const safeCfg = { ...cfg }
+  delete safeCfg.adminPassword
+  res.json(safeCfg)
+})
+
+// POST /api/setup/change-password
+// Protected endpoint to change the admin password
+router.post('/change-password', (req, res) => {
+  const { password } = req.body
+  if (!password) {
+    return res.status(400).json({ error: 'Lösenord krävs' })
+  }
+  updateRuntimeConfig({ adminPassword: password })
+  res.json({ ok: true })
 })
 
 // ──────────────────────────────────────────────────────────────
