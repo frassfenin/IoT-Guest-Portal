@@ -255,7 +255,7 @@ router.post('/govee/lights', async (req, res) => {
 
   try {
     // 1. Testa nya Govee OpenAPI först
-    let r = await fetch('https://openapi.api.govee.com/v1/devices', {
+    let r = await fetch('https://openapi.api.govee.com/router/api/v1/user/devices', {
       headers: { 'Govee-API-Key': key },
     })
     
@@ -268,7 +268,7 @@ router.post('/govee/lights', async (req, res) => {
           lights: devices.map((d) => ({
             id: d.device,
             name: d.deviceName ?? d.device,
-            model: d.model,
+            model: d.sku || d.model,
             supports_brightness: true,
             supports_color_temp: true,
             apiVersion: 'openapi'
@@ -426,15 +426,37 @@ router.post('/govee/test', async (req, res) => {
   if (!apiKey) return res.status(400).json({ error: 'apiKey krävs' })
 
   try {
-    const r = await fetch('https://developer-api.govee.com/v1/devices', {
+    // 1. Testa OpenAPI först
+    let r = await fetch('https://openapi.api.govee.com/router/api/v1/user/devices', {
       headers: { 'Govee-API-Key': apiKey },
       signal: AbortSignal.timeout(5000),
     })
-    if (r.status === 401) return res.status(401).json({ error: 'Ogiltig API-nyckel' })
-    const { data } = await r.json()
+    
+    if (r.ok) {
+      const body = await r.json()
+      const devices = Array.isArray(body.data) ? body.data : (body.data?.devices ?? [])
+      updateRuntimeConfig({ govee: { apiKey } })
+      return res.json({ ok: true, deviceCount: devices.length })
+    }
 
-    updateRuntimeConfig({ govee: { apiKey } })
-    res.json({ ok: true, deviceCount: data?.devices?.length ?? 0 })
+    // 2. Fallback till Legacy API
+    const rLegacy = await fetch('https://developer-api.govee.com/v1/devices', {
+      headers: { 'Govee-API-Key': apiKey },
+      signal: AbortSignal.timeout(5000),
+    })
+    
+    if (rLegacy.ok) {
+      const bodyLegacy = await rLegacy.json()
+      const devicesLegacy = bodyLegacy.data?.devices ?? []
+      updateRuntimeConfig({ govee: { apiKey } })
+      return res.json({ ok: true, deviceCount: devicesLegacy.length })
+    }
+
+    if (r.status === 401 || rLegacy.status === 401) {
+      return res.status(401).json({ error: 'Ogiltig API-nyckel' })
+    }
+
+    throw new Error(`Govee API-fel (OpenAPI status: ${r.status}, Legacy status: ${rLegacy.status})`)
   } catch (err) {
     res.status(500).json({ error: `Anslutningsfel: ${err.message}` })
   }
