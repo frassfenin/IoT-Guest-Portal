@@ -26,7 +26,7 @@ Detta projekt är en helt **fristående, lokal och responsiv gästportal** för 
    - **Matter-enheter (Lokal)**: Inbyggd lokal Matter-commissioner och Controller (använder `@project-chip/matter.js`). Söker upp oparade enheter via mDNS (`_matterc._udp`) och kan para med Matter-koder också.
    - **Philips Hue**: Direkt kommunikation med Hue Bridge v2, med realtidsuppdateringar via Server-Sent Events (SSE).
    - **IKEA Smart Home**: Fullt stöd för både nya **Dirigera Hub** (lokalt REST API med PKCE) och äldre **Trådfri Gateway** (CoAP/DTLS), inklusive eluttag.
-   - **Govee Lights**: Stöd för Govees moderna **Cloud OpenAPI** samt det äldre **Developer API** (valjs automatiskt baserat på API-nyckeln). *Ännu buggigt*
+   - **Govee Lights**: Stöd för Govees moderna **Cloud OpenAPI** samt det äldre **Developer API** (väljs automatiskt baserat på API-nyckeln). Inkluderar fullt stöd för färgväljare och färgtemperaturreglering samt automatisk modellidentifiering.
    - **Google Cast**: TLS-socketstyrning av Google Streamers, Chromecasts och smarta högtalare direkt över port 8009. *EJ TESTAT*
 
 ---

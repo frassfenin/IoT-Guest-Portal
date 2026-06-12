@@ -4,6 +4,22 @@ All notable changes to the Local Standalone Guest Portal will be documented in t
 
 ---
 
+## [0.6.0] - 2026-06-12
+### Added
+- **Färgväljare (Color Picker)**: Lagt till en integrerad färg-väljare för alla lampor som stöder färg (Philips Hue, IKEA Smart Home och Govee).
+- **Återställning av modell (Govee SKU Auto-recovery)**: Implementerat automatisk hämtning av modell (SKU-kod) för Govee-enheter om fältet `govee_model` saknas i sparad konfiguration. Använder format- och skiftlägesoberoende MAC-adressmatchning för att para ihop enheter pålitligt.
+
+### Changed
+- **Govee OpenAPI Uppdatering**: Rättat alla OpenAPI-ändpunkter för Govee (till `/router/api/v1/` sökvägar) samt justerat metod och instansnamn (`powerSwitch` och `colorTemperatureK` istället för `powerState` och `colorTemperature`).
+- **Robustare JSON-parsning**: Lagt till textbaserad parsning av JSON-svar för Govee-kontrollanrop för att förhindra krascher (`Unexpected end of JSON input`) vid tomma framgångssvar (200 OK med 0 byte).
+- **Felsökning & Loggning**: Lagt till detaljerad felutskrift i terminalen för anslutningsfel eller rate limiting vid Govee-pollning.
+
+### Fixed
+- **Inverterat färgtemperatursreglage**: Åtgärdat en bugg där reglaget för färgtemperatur var inverterat (att dra mot kallare gjorde ljuset varmare och tvärtom). Reglaget har nu rätt visuell gradient (blått till vänster, orange till höger) och ikoner på rätt sidor (snöflinga till vänster, termometer till höger).
+- **Govee Color Picker Fallback**: Åtgärdat en bugg där färgväljaren dök upp och försvann för Govee-lampor beroende på om de var inställda på vit temperatur eller färg. Visar nu alltid färgväljaren om enheten stöder färg.
+
+---
+
 ## [0.5.2] - 2026-06-08
 ### Changed
 - **Settings-panel redesign**: Genomfört en komplett visuell uppgradering av inställningspanelen med frostig glassmorfisk bakgrund, förbättrad kontrast för ljusläge och shimmering Aurora Gradient-primärknappar.
