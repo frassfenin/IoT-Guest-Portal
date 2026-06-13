@@ -71,9 +71,10 @@ function LightConfigurator({ lights, onChange, rooms = [], onAddRoom, t }) {
                       }}
                     >
                       <option value="" disabled>{t('hue_room_select_placeholder')}</option>
-                      {rooms.map((room) => (
-                        <option key={room} value={room}>{room}</option>
-                      ))}
+                      {rooms.map((room) => {
+                        const roomName = typeof room === 'string' ? room : (room?.name || '')
+                        return <option key={roomName} value={roomName}>{roomName}</option>
+                      })}
                       <option value="__new__">{t('hue_create_room_option')}</option>
                     </select>
                   ) : (
@@ -179,8 +180,17 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel, initi
     const trimmed = roomName.trim()
     if (!trimmed) return
     const formatted = trimmed.charAt(0).toUpperCase() + trimmed.slice(1)
-    if (!rooms.includes(formatted)) {
-      setRooms([...rooms, formatted])
+    const exists = rooms.some(r => {
+      const rName = typeof r === 'string' ? r : (r?.name || '')
+      return rName.toLowerCase() === formatted.toLowerCase()
+    })
+    if (!exists) {
+      const hasObjects = rooms.some(r => typeof r === 'object')
+      if (hasObjects) {
+        setRooms([...rooms, { name: formatted, icon: '' }])
+      } else {
+        setRooms([...rooms, formatted])
+      }
       markDirty()
     }
   }
@@ -1859,19 +1869,25 @@ export default function SetupWizard({ onComplete, initialConfig, onCancel, initi
               </form>
 
               <div className="room-builder-list">
-                {rooms.map((room) => (
-                  <span key={room} className="room-builder-pill">
-                    <span>{room}</span>
-                    <button
-                      type="button"
-                      className="room-builder-pill__delete"
-                      onClick={() => setRooms(rooms.filter(r => r !== room))}
-                      title={`${t('room_builder_delete_title')} ${room}`}
-                    >
-                      ✕
-                    </button>
-                  </span>
-                ))}
+                {rooms.map((room) => {
+                  const roomName = typeof room === 'string' ? room : (room?.name || '')
+                  return (
+                    <span key={roomName} className="room-builder-pill">
+                      <span>{roomName}</span>
+                      <button
+                        type="button"
+                        className="room-builder-pill__delete"
+                        onClick={() => setRooms(rooms.filter(r => {
+                          const rName = typeof r === 'string' ? r : (r?.name || '')
+                          return rName !== roomName
+                        }))}
+                        title={`${t('room_builder_delete_title')} ${roomName}`}
+                      >
+                        ✕
+                      </button>
+                    </span>
+                  )
+                })}
               </div>
 
               <div className="step-actions">
