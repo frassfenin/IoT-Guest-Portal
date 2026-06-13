@@ -233,14 +233,16 @@ export default function LightCard({ config, state, onChange, t }) {
           </div>
           <div style={{ minWidth: 0, flex: 1 }}>
             <div className="light-card__name" style={{ fontWeight: 600 }}>{config.name}</div>
-            <div className="light-card__state">
-              {isMobile && isOn && !isExpanded ? getCompactStatusText() : (isOn ? stateText : translate('light_status_off'))}
-            </div>
+            {isOn && (
+              <div className="light-card__state">
+                {isMobile && !isExpanded ? getCompactStatusText() : stateText}
+              </div>
+            )}
           </div>
         </div>
 
         {/* Toggle-switch med valbar Chevron expansionspil på mobil */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div className="light-card__toggle-container" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <label className="toggle" htmlFor={toggleId} aria-label={`${config.name}: ${isOn ? translate('light_aria_turn_off') : translate('light_aria_turn_on')}`}>
             <input
               type="checkbox"
