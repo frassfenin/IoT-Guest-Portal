@@ -580,7 +580,7 @@ export default function App() {
             <div className={`floating-dock ${config.media_players.length > 0 ? 'floating-dock--has-media' : ''}`}>
               {/* Media widget on the left side of the dock */}
               {config.media_players.length > 0 && (
-                <div className="floating-dock__media" style={{ display: 'flex', alignItems: 'center', minWidth: 0, paddingRight: '20px', borderRight: '1px solid rgba(0, 0, 0, 0.08)' }}>
+                <div className="floating-dock__media" style={{ display: 'flex', alignItems: 'center', width: '360px', flexShrink: 0, paddingRight: '20px', borderRight: '1px solid rgba(0, 0, 0, 0.08)' }}>
                   <MediaCard
                     config={config.media_players[0]}
                     state={states[config.media_players[0].entity_id]}

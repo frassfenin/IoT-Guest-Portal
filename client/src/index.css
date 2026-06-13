@@ -578,6 +578,7 @@ input[type="range"] {
   background-position: 100% 50% !important;
   box-shadow: 0 8px 25px rgba(99, 102, 241, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
   border-color: rgba(255, 255, 255, 0.65) !important;
+  transform: none !important;
 }
 
 /* Popover bubblor - Premium Glassmorphic Popover */
@@ -689,19 +690,19 @@ input[type="range"] {
 
 /* Skifta pilarna (arrow) så de pekar exakt på respektive klickad knapp i dockan */
 .dock-popover.scenes-popover::after {
-  left: 31.5% !important;
+  left: 33.5% !important;
 }
 
 .dock-popover.wifi-popover::after {
-  left: 41.5% !important;
+  left: 42.5% !important;
 }
 
 .dock-popover.notes-popover::after {
-  left: 58.5% !important;
+  left: 57.5% !important;
 }
 
 .dock-popover.status-popover::after {
-  left: 75.5% !important;
+  left: 72.5% !important;
 }
 
 /* WiFi Popover Tabs Switcher */
@@ -1168,7 +1169,7 @@ input[type="range"] {
   border: 1px solid rgba(255, 255, 255, 0.65); /* Krispig och tunn reflekterande kant */
   border-radius: var(--radius-sm);
   padding: var(--space-3) var(--space-3);
-  transition: border-color var(--transition), box-shadow var(--transition), background var(--transition), transform var(--transition);
+  transition: border-color var(--transition), box-shadow var(--transition), background var(--transition), transform var(--transition), min-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.01), var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
@@ -1247,6 +1248,63 @@ input[type="range"] {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* Centered layout for LightCard when it is OFF */
+@media (hover: hover) {
+  .light-card:not(.light-card--on) {
+    position: relative;
+    min-height: 104px; /* Taller card */
+    cursor: pointer;
+  }
+
+  .light-card:not(.light-card--on) .light-card__header {
+    display: block; /* Break flex layout for absolute positioning */
+    height: 100%;
+  }
+
+  .light-card:not(.light-card--on) .light-card__info {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    transition: left 0.35s cubic-bezier(0.4, 0, 0.2, 1), transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    max-width: 85%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+  }
+
+  .light-card:not(.light-card--on) .light-card__toggle-container {
+    position: absolute;
+    top: 50%;
+    right: var(--space-4);
+    transform: translateY(-50%) scale(0.85);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* When hovered */
+  .light-card:not(.light-card--on):hover .light-card__info {
+    left: var(--space-3);
+    transform: translate(0, -50%);
+    max-width: calc(100% - 80px);
+  }
+
+  .light-card:not(.light-card--on):hover .light-card__toggle-container {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(-50%) scale(1);
+  }
+}
+
+/* Touch devices (no hover support) fallback */
+@media (hover: none) {
+  .light-card:not(.light-card--on) {
+    min-height: auto; /* Standard compact height on mobile */
+  }
 }
 
 /* Toggle Switch */
@@ -2376,6 +2434,7 @@ input[type="range"] {
 
 /* Floating dock action buttons capsule style */
 .floating-dock__actions {
+  position: relative; /* Make popovers align relative to the button capsule instead of the entire dock */
   display: flex;
   align-items: center;
   gap: 8px;
@@ -2400,7 +2459,6 @@ input[type="range"] {
   background: #ffffff;
   color: var(--text-1);
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
-  transform: translateY(-1px);
 }
 
 .floating-dock__actions .floating-dock__btn--active {
