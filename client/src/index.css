@@ -1163,6 +1163,7 @@ input[type="range"] {
 }
 
 .light-card {
+  contain: layout paint;
   background: rgba(255, 255, 255, 0.55); /* Hög transparens låter bakgrundsblobar lysa igenom */
   backdrop-filter: blur(16px) saturate(130%);
   -webkit-backdrop-filter: blur(16px) saturate(130%);
@@ -1541,6 +1542,7 @@ input[type="range"] {
    11. MEDIA CARD
    ────────────────────────────────────────── */
 .media-card {
+  contain: layout paint;
   background: rgba(255, 255, 255, 0.55); /* Matchar ljuskortens höga transparens */
   backdrop-filter: blur(16px) saturate(130%);
   -webkit-backdrop-filter: blur(16px) saturate(130%);
@@ -2764,7 +2766,7 @@ input[type="range"] {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 0 var(--space-4) 100px; /* Plats för tab-bar på mobil */
+  padding: 0 var(--space-4) 180px; /* Plats för flytande docka på mobil */
   gap: var(--space-4);
   transition: filter var(--transition-slow) ease, opacity var(--transition-slow) ease;
 }
@@ -2829,7 +2831,7 @@ input[type="range"] {
     display: grid;
     grid-template-columns: 1fr;
     gap: var(--space-6);
-    padding: var(--space-4) var(--space-5) var(--space-6);
+    padding: var(--space-4) var(--space-5) 180px; /* Plats för flytande docka på surfplatta */
   }
 
   .portal-col {
@@ -2861,7 +2863,7 @@ input[type="range"] {
     display: grid;
     grid-template-columns: 1fr; /* Full bredd */
     gap: var(--space-6);
-    padding: var(--space-4) var(--space-6) var(--space-8);
+    padding: var(--space-4) var(--space-6) 160px; /* Plats för flytande docka på desktop */
   }
 
   .portal-col {
@@ -4579,6 +4581,45 @@ input[type="range"] {
   font-weight: 700;
   color: var(--text-1);
   margin: 0;
+}
+
+/* ──────────────────────────────────────────
+   PERFORMANCE OPTIMIZATIONS FOR FIREFOX & MOBILE
+   ────────────────────────────────────────── */
+@media (max-width: 1023px) {
+  /* Disable expensive floating background blob animations on mobile & tablet viewports */
+  .bg-blob--sage,
+  .bg-blob--sand,
+  .bg-blob--blue,
+  .bg-blob--purple {
+    animation: none !important;
+  }
+
+  /* Disable expensive shadow pulse animations on mobile */
+  .light-card--on .light-card__icon,
+  .media-card--playing .media-card__icon-wrap {
+    animation: none !important;
+  }
+
+  /* Disable backdrop-filter blur on scrolling cards to ensure smooth scroll on mobile Firefox */
+  .room-section,
+  .light-card,
+  .media-card {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  .room-section {
+    background: rgba(255, 255, 255, 0.9) !important;
+  }
+
+  .light-card {
+    background: rgba(244, 244, 245, 0.95) !important;
+  }
+
+  .media-card {
+    background: rgba(244, 244, 245, 0.95) !important;
+  }
 }
 
 

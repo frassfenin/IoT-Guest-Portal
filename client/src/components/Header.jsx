@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, memo } from 'react'
 import { Settings, Sliders, LayoutGrid, Eye, KeyRound, LogOut, Network } from 'lucide-react'
 
 // Returnerar en hälsning baserad på tidpunkt
@@ -24,7 +24,7 @@ function formatDate(date, locale) {
   return date.toLocaleDateString(code, { weekday: 'long', day: 'numeric', month: 'long' })
 }
 
-export default function Header({ connected, config, onOpenOrganizer, onOpenSetupWizard, blurEnabled, onToggleBlur, locale = 'sv', t, isAdminLoggedIn, onLogInOut }) {
+const Header = memo(function Header({ connected, config, onOpenOrganizer, onOpenSetupWizard, blurEnabled, onToggleBlur, locale = 'sv', t, isAdminLoggedIn, onLogInOut }) {
   const translate = t || ((key) => key)
   const [now, setNow] = useState(new Date())
   const [dropdownOpen, setDropdownOpen] = useState(false)
@@ -182,5 +182,7 @@ export default function Header({ connected, config, onOpenOrganizer, onOpenSetup
       </div>
     </header>
   )
-}
+})
+
+export default Header
 
