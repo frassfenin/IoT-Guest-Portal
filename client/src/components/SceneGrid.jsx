@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, memo } from 'react'
 import { Flame, BookOpen, Moon, Sparkles, Loader2, Check } from 'lucide-react'
 
 function getSceneIcon(sceneId) {
@@ -16,7 +16,7 @@ function getSceneIcon(sceneId) {
   }
 }
 
-export default function SceneGrid({ scenes, onActivate }) {
+const SceneGrid = memo(function SceneGrid({ scenes, onActivate }) {
   // Spåra vilken scen som just aktiverades (för feedback-animation)
   const [activeScene, setActiveScene] = useState(null)
   const [loadingScene, setLoadingScene] = useState(null)
@@ -71,4 +71,6 @@ export default function SceneGrid({ scenes, onActivate }) {
       })}
     </div>
   )
-}
+})
+
+export default SceneGrid

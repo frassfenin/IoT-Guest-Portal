@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, memo } from 'react'
 import { Lightbulb, Plug, Sun, Thermometer, Snowflake, Palette, Lamp, ChevronDown } from 'lucide-react'
 import useDebounce from '../hooks/useDebounce.js'
 
@@ -24,7 +24,7 @@ function getLightIcon(config, isOn, activeColor) {
   );
 }
 
-export default function LightCard({ config, state, onChange, t }) {
+const LightCard = memo(function LightCard({ config, state, onChange, t }) {
   const translate = t || ((key, replaces = {}) => {
     let str = key
     Object.entries(replaces).forEach(([k, v]) => {
@@ -113,12 +113,6 @@ export default function LightCard({ config, state, onChange, t }) {
     const parts = [translate('status_on')];
     if (config.supports_brightness) {
       parts.push(`${brightnessPercent}%`);
-    }
-    if (state?.attributes?.color) {
-      parts.push(state.attributes.color.toUpperCase());
-    } else if (config.supports_color_temp) {
-      const kelvin = Math.round(1000000 / localColorTemp);
-      parts.push(`${kelvin}K`);
     }
     return parts.join(' • ');
   }
@@ -378,4 +372,6 @@ export default function LightCard({ config, state, onChange, t }) {
       </div>
     </div>
   )
-}
+})
+
+export default LightCard

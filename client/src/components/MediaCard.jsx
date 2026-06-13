@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, memo } from 'react'
 import { Tv, Speaker, Music, Cast, Play, Pause, Volume1, Volume2 } from 'lucide-react'
 import useDebounce from '../hooks/useDebounce.js'
 
@@ -17,7 +17,7 @@ function getMediaIcon(iconStr, color = 'var(--blue)') {
   return <Music size={20} style={{ strokeWidth: 2.2, color }} />
 }
 
-export default function MediaCard({ config, state, onControl, t, layout }) {
+const MediaCard = memo(function MediaCard({ config, state, onControl, t, layout }) {
   const translate = t || ((key, replaces = {}) => {
     let str = key
     Object.entries(replaces).forEach(([k, v]) => {
@@ -223,4 +223,6 @@ export default function MediaCard({ config, state, onControl, t, layout }) {
       )}
     </div>
   )
-}
+})
+
+export default MediaCard
