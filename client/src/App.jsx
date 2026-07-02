@@ -21,7 +21,10 @@ const locales = { sv, en }
 //  Socket.io-klient
 //  I dev-läge proxas detta via Vite till :3001
 // ──────────────────────────────────────────
-const socket = io({ path: '/socket.io', transports: ['websocket', 'polling'] })
+const socket = io({ 
+  path: `${import.meta.env.BASE_URL || '/'}socket.io`.replace(/\/+/g, '/'), 
+  transports: ['websocket', 'polling'] 
+})
 
 // Gruppera lampor per rum
 function groupByRoom(lights, defaultRoomName = 'Other') {
@@ -100,9 +103,16 @@ function getRoomIcon(roomName, config) {
   return <Home size={18} style={iconStyle} />;
 }
 
-// Global fetch interceptor to inject X-Admin-Password header for setup APIs
+// Global fetch interceptor to inject X-Admin-Password header for setup APIs and handle subdirectory paths
 const originalFetch = window.fetch;
 window.fetch = async function (url, options = {}) {
+  // Prepend BASE_URL for all relative/absolute API paths
+  if (typeof url === 'string' && url.startsWith('/api/')) {
+    const base = import.meta.env.BASE_URL || '/';
+    const cleanBase = base.endsWith('/') ? base : base + '/';
+    url = cleanBase + url.substring(1);
+  }
+
   const pwd = sessionStorage.getItem('admin_password');
   if (pwd && url.toString().includes('/api/setup')) {
     options.headers = options.headers || {};
