@@ -6,6 +6,8 @@ services:
     container_name: gastportal
     network_mode: host
     restart: unless-stopped
+    env_file:
+      - .env
     volumes:
       # Persist configs, setup credentials, matter fabric keys, and operational cache
       - ./server/data:/app/server/data
