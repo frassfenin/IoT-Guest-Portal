@@ -87,6 +87,42 @@ npm run graphify
 ```
 This builds a `graphify-out/graph.html` visualization file. You can access the visualizer through the Admin Settings menu or directly at http://localhost:3001/code-graph.
 
+### 5. Running with Docker & Nginx Proxy Manager (Subdirectory Routing)
+
+To run the guest portal inside Docker (using `network_mode: host` to allow local IoT discovery) and expose it under a subdirectory like `/iot/` using Nginx Proxy Manager:
+
+1. **Vite Configuration**:
+   The `client/vite.config.js` is pre-configured with `base: '/iot/'` to build assets under `/iot/`.
+2. **Docker Port Override**:
+   The `docker-compose.yml` file is configured to run the container on port `8085` automatically using:
+   ```yaml
+   environment:
+     - PORT=8085
+   ```
+3. **Run the container**:
+   ```bash
+   docker compose up -d --build
+   ```
+4. **Nginx Proxy Manager configuration**:
+   Under your Proxy Host settings in NPM, go to the **Advanced** tab and add the following configuration to handle the subdirectory routing and proxying to port `8085`:
+   ```nginx
+   location /iot {
+       rewrite ^/iot$ /iot/ permanent;
+       rewrite ^/iot/(.*)$ /$1 break;
+       proxy_pass http://<YOUR_SERVER_IP>:8085;
+       
+       proxy_set_header Host $host;
+       proxy_set_header X-Real-IP $remote_addr;
+       proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+       proxy_set_header X-Forwarded-Proto $scheme;
+       
+       proxy_http_version 1.1;
+       proxy_set_header Upgrade $http_upgrade;
+       proxy_set_header Connection "upgrade";
+   }
+   ```
+   *(Note: Ensure that **Websockets Support** is toggled ON in NPM since the portal uses Socket.IO for real-time light and media player status updates.)*
+
 ---
 
 ## Project Structure
