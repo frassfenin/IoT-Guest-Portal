@@ -8,6 +8,8 @@ services:
     restart: unless-stopped
     env_file:
       - .env
+    environment:
+      - PORT=8085
     volumes:
       # Persist configs, setup credentials, matter fabric keys, and operational cache
       - ./server/data:/app/server/data
